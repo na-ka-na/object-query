@@ -2,20 +2,22 @@ syntax = "proto2";
 
 package Example1;
 
-message Aaa{
-  optional int32 a = 1;
-  repeated int32 aa = 2;
-  optional Bbb b = 11;
-  repeated Ccc c = 12;
+message Company {
+  optional int32 founded = 1;
+  repeated int32 board_of_directors = 2;
+  optional Financial financial = 11;
+  repeated Employee all_employees = 12;
 }
 
-message Bbb {
-  optional string b = 1;
-  repeated string bb = 2;
+message Financial {
+  repeated float quarterly_profits = 1;
+  repeated float quarterly_revenues = 2;
 }
 
-message Ccc {
-  optional bool c = 1;
-  repeated bool cc = 2;
+message Employee {
+  optional int32 id = 1;
+  optional string name = 2;
+  optional bool active = 3;
+  repeated int32 active_direct_reports = 4;
 }
 

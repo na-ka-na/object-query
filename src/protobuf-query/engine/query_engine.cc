@@ -15,8 +15,8 @@ using namespace std;
 using namespace google::protobuf;
 
 const Message& getDefaultPbInstance(const string& className) {
-  if (className == "Example1.Aaa") {
-    static Example1::Aaa proto;
+  if (className == "Example1.Company") {
+    static Example1::Company proto;
     return proto;
   }
   throw runtime_error("No mapping defined for className: " + className);
@@ -110,10 +110,13 @@ void printPlan(QueryGraph& queryGraph) {
 }
 
 void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
-  queryGraph.root.objName = "root";
   const Message& rootProto = getDefaultPbInstance(query.fromRootProto);
+  const Descriptor* rootDescriptor = rootProto.GetDescriptor();
+  queryGraph.root.objName = rootDescriptor->name();
+  std::transform(queryGraph.root.objName.begin(), queryGraph.root.objName.end(),
+                 queryGraph.root.objName.begin(), ::tolower);
   for (const vector<string>& select : query.selects) {
-    const Descriptor* parentDescriptor = rootProto.GetDescriptor();
+    const Descriptor* parentDescriptor = rootDescriptor;
     Node* parent = &(queryGraph.root);
     Field field;
     for (size_t i=0; i<select.size(); i++) {
@@ -146,30 +149,27 @@ void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
           child.objName = fieldPart->name();
           parent = &child;
           field.fieldParts.clear();
-        } else {
-          parent->selectFields.push_back(field);
-          field.fieldParts.clear();
         }
+        parent->selectFields.push_back(field);
+        field.fieldParts.clear();
       }
     }
   }
 }
 
 void parseQuery(const string&, Query& query) {
-  /**
-   * SELECT a, aa, b.b, b.bb, c.c, c.cc
-   * FROM ($file, 'Example1.Aaa')
-   */
   query.selects = {
-      {"a"},
-      {"aa"},
-      {"b", "b"},
-      {"b", "bb"},
-      {"c", "c"},
-      {"c", "cc"},
+      {"founded"},
+      {"board_of_directors"},
+      {"financial", "quarterly_profits"},
+      {"financial", "quarterly_revenues"},
+      {"all_employees", "id"},
+      {"all_employees", "name"},
+      {"all_employees", "active"},
+      {"all_employees", "active_direct_reports"},
   };
   query.fromFile = "/tmp/example1.proto";
-  query.fromRootProto = "Example1.Aaa";
+  query.fromRootProto = "Example1.Company";
   // TODO: do some validation on query
 }
 
