@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+package Example1;
+
+message Aaa{
+  optional int32 a = 1;
+  repeated int32 aa = 2;
+  optional Bbb b = 11;
+  repeated Ccc c = 12;
+}
+
+message Bbb {
+  optional string b = 1;
+  repeated string bb = 2;
+}
+
+message Ccc {
+  optional bool c = 1;
+  repeated bool cc = 2;
+}
+
