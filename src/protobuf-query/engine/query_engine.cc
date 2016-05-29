@@ -14,6 +14,26 @@
 using namespace std;
 using namespace google::protobuf;
 
+template <typename T, typename It>
+static string join(const string& delim, It begin, It end,
+    const function<string(const T&)>& to_str) {
+  string joined = "[";
+  if (begin != end) {
+     joined += to_str(*begin);
+     while ((++begin) != end) {
+       joined += delim;
+       joined += to_str(*begin);
+     }
+  }
+  return joined + "]";
+}
+
+template <typename T>
+static string joinVec(const string& delim, const vector<T>& ts,
+    const function<string(const T&)>& to_str) {
+  return join<T>(delim, ts.cbegin(), ts.cend(), to_str);
+}
+
 const Message& getDefaultPbInstance(const string& className) {
   if (className == "Example1.Company") {
     static Example1::Company proto;
@@ -38,15 +58,28 @@ struct Field {
   }
 };
 
+enum NodeType {
+  ROOT, REPEATED_MESSAGE, REPEATED_PRIMITIVE
+};
+
+// Root will be a node and all repeated fields will be nodes
 struct Node {
+  // only the ROOT node will be marked ROOT
+  NodeType type;
+  // this is the variable name in the generated code
   string objName;
-  map<Field, Node> children; // repeated fields
+  // this will be set for non root nodes
+  Field repeatedField;
+  // children of this node, repeated fields, repeated field => Node.
+  map<Field, Node> children;
+  // list of non-repeating select fields for this node.
+  // Only populated for ROOT, REPEATED_MESSAGE
   vector<Field> selectFields;
 };
 
-using SelectFieldsFn = function<void(int indent, const string& objName, vector<Field> selectFields)>;
-using StartForAllFn = function<void(int indent, const string& name, const string& objName, const Field& repeatedField)>;
-using EndForAllFn = function<void(int indent, const Field& repeatedField)>;
+using SelectFieldsFn = function<void(int indent, const Node& node)>;
+using StartForAllFn = function<void(int indent, const Node& node, const Node& parent)>;
+using EndForAllFn = function<void(int indent, const Node& node)>;
 
 struct QueryGraph {
   Node root;
@@ -62,19 +95,18 @@ struct Query {
   vector<vector<string>> orderbys;
 };
 
-void walkNode(const Node& root,
+void walkNode(const Node& node,
               int& indent,
               const SelectFieldsFn& selectFieldsFn,
               const StartForAllFn& startForAllFn,
-              map<int, Field>& endFieldsMap) {
-  selectFieldsFn(indent, root.objName, root.selectFields);
-  for (const auto& e : root.children) {
-    const Field& repeatedField = e.first;
-    const Node& childNode = e.second;
-    startForAllFn(indent, childNode.objName, root.objName, repeatedField);
-    endFieldsMap.emplace(-indent, repeatedField);
+              map<int, const Node*>& endFieldsMap) {
+  selectFieldsFn(indent, node);
+  for (const auto& e : node.children) {
+    const Node& child = e.second;
+    startForAllFn(indent, child, node);
+    endFieldsMap.emplace(-indent, &child);
     indent += 2;
-    walkNode(childNode, indent, selectFieldsFn, startForAllFn, endFieldsMap);
+    walkNode(child, indent, selectFieldsFn, startForAllFn, endFieldsMap);
   }
 }
 
@@ -83,35 +115,71 @@ void walkNode(const Node& root,
               const StartForAllFn& startForAllFn,
               const EndForAllFn& endForAllFn) {
   int indent = 0;
-  map<int, Field> endFieldsMap;
-  walkNode(root, indent, selectFieldsFn, startForAllFn, endFieldsMap);
-  for (const auto& e : endFieldsMap) {
+  map<int, const Node*> endNodeMap;
+  walkNode(root, indent, selectFieldsFn, startForAllFn, endNodeMap);
+  for (const auto& e : endNodeMap) {
     int indent = -e.first;
-    const Field& repeatedField = e.second;
-    endForAllFn(indent, repeatedField);
+    const Node* node = e.second;
+    endForAllFn(indent, *node);
   }
 }
 
 void printPlan(QueryGraph& queryGraph) {
-  SelectFieldsFn selectFieldsFn = [](int indent, const string& objName, vector<Field> selectFields) {
-    for (const Field& field : selectFields) {
-      cout << string(indent, ' ') << "print " << objName << field.accessor() << endl;
+  SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {
+    if (node.type == REPEATED_PRIMITIVE) {
+      cout << string(indent, ' ') << "print " << node.objName << endl;
+    } else {
+      for (const Field& field : node.selectFields) {
+        cout << string(indent, ' ') << "print " << node.objName << field.accessor() << endl;
+      }
     }
   };
-  StartForAllFn startForAllFn = [](int indent, const string& name, const string& objName, const Field& repeatedField) {
-    cout << string(indent, ' ') << "for all " << name << " in " << objName << repeatedField.accessor()
-        << " {" << endl;
+  StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {
+    cout << string(indent, ' ') << "for each " << node.objName << " in "
+        << parent.objName << node.repeatedField.accessor() << " {" << endl;
   };
-  EndForAllFn endForAllFn = [](int indent, const Field& repeatedField) {
-    cout << string(indent, ' ') << "} //" << repeatedField.accessor()
-        << endl;
+  EndForAllFn endForAllFn = [](int indent, const Node& node) {
+    cout << string(indent, ' ') << "} //" << node.repeatedField.accessor() << endl;
   };
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
+}
+
+void printCode(QueryGraph& queryGraph) {
+  cout << "--------------------------------------" << endl;
+  SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {};
+  StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {};
+  EndForAllFn endForAllFn = [](int indent, const Node& node) {};
+
+  vector<const Field*> allSelectFields;
+  selectFieldsFn = [&](int indent, const Node& node) {
+    if (node.type == REPEATED_PRIMITIVE) {
+      allSelectFields.push_back(&node.repeatedField);
+    } else {
+      for (const Field& field : node.selectFields) {
+        allSelectFields.push_back(&field);
+      }
+    }
+  };
+  walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
+
+  string tupleType = "using TupleType = tuple<";
+  tupleType += joinVec<const Field*>(", ", allSelectFields, [](const Field* field) {
+    return field->fieldParts.back()->cpp_type_name();
+  });
+  tupleType += ">;";
+  cout << tupleType << endl;
+}
+
+string constructObjNameForRepeated(const FieldDescriptor* field) {
+  string fieldName = field->name();
+  return (fieldName[fieldName.size()-1] == 's') ?
+      fieldName.substr(0, fieldName.size()-1) : fieldName;
 }
 
 void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
   const Message& rootProto = getDefaultPbInstance(query.fromRootProto);
   const Descriptor* rootDescriptor = rootProto.GetDescriptor();
+  queryGraph.root.type = ROOT;
   queryGraph.root.objName = rootDescriptor->name();
   std::transform(queryGraph.root.objName.begin(), queryGraph.root.objName.end(),
                  queryGraph.root.objName.begin(), ::tolower);
@@ -134,7 +202,9 @@ void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
         }
         if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
           Node& child = parent->children[field];
-          child.objName = fieldPart->name();
+          child.type = REPEATED_MESSAGE;
+          child.objName = constructObjNameForRepeated(fieldPart);
+          child.repeatedField = field;
           parent = &child;
           field.fieldParts.clear();
         }
@@ -146,12 +216,12 @@ void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
         }
         if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
           Node& child = parent->children[field];
-          child.objName = fieldPart->name();
-          parent = &child;
-          field.fieldParts.clear();
+          child.type = REPEATED_PRIMITIVE;
+          child.objName = constructObjNameForRepeated(fieldPart);
+          child.repeatedField = field;
+        } else {
+          parent->selectFields.push_back(field);
         }
-        parent->selectFields.push_back(field);
-        field.fieldParts.clear();
       }
     }
   }
@@ -179,5 +249,6 @@ int main(int /*argc*/, char** /*argv*/) {
   QueryGraph queryGraph;
   calculateQueryGraph(query, queryGraph);
   printPlan(queryGraph);
+  printCode(queryGraph);
 }
 
