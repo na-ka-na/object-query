@@ -34,12 +34,19 @@ static string joinVec(const string& delim, const vector<T>& ts,
   return join<T>(delim, ts.cbegin(), ts.cend(), to_str);
 }
 
-const Message& getDefaultPbInstance(const string& className) {
-  if (className == "Example1.Company") {
-    static Example1::Company proto;
-    return proto;
+struct Proto {
+  const Message* defaultInstance;
+  const char* protoCppClassName;
+};
+
+void getProtoDetails(const string& protoName, Proto& proto) {
+  if (protoName == "Example1.Company") {
+    static Example1::Company defaultInstance;
+    proto.defaultInstance = &defaultInstance;
+    proto.protoCppClassName = "Example1::Company";
+  } else {
+    throw runtime_error("No mapping defined for protoName: " + protoName);
   }
-  throw runtime_error("No mapping defined for className: " + className);
 }
 
 struct Field {
@@ -82,6 +89,7 @@ using StartForAllFn = function<void(int indent, const Node& node, const Node& pa
 using EndForAllFn = function<void(int indent, const Node& node)>;
 
 struct QueryGraph {
+  Proto proto;
   Node root;
 };
 
@@ -145,7 +153,6 @@ void printPlan(QueryGraph& queryGraph) {
 }
 
 void printCode(QueryGraph& queryGraph) {
-  cout << "--------------------------------------" << endl;
   SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {};
   StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {};
   EndForAllFn endForAllFn = [](int indent, const Node& node) {};
@@ -173,6 +180,11 @@ void printCode(QueryGraph& queryGraph) {
       });
   tupleType += ">;";
   cout << tupleType << endl;
+  cout << endl;
+  cout << "void runSelect(" << endl;
+  cout << "    const " << queryGraph.proto.protoCppClassName << "& proto," << endl;
+  cout << "    vector<TupleType>& tuples) {" << endl;
+  cout << "}" << endl;
 }
 
 string constructObjNameForRepeated(const FieldDescriptor* field) {
@@ -182,8 +194,9 @@ string constructObjNameForRepeated(const FieldDescriptor* field) {
 }
 
 void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
-  const Message& rootProto = getDefaultPbInstance(query.fromRootProto);
-  const Descriptor* rootDescriptor = rootProto.GetDescriptor();
+  getProtoDetails(query.fromRootProto, queryGraph.proto);
+  const Descriptor* rootDescriptor =
+      queryGraph.proto.defaultInstance->GetDescriptor();
   queryGraph.root.type = ROOT;
   queryGraph.root.objName = rootDescriptor->name();
   std::transform(queryGraph.root.objName.begin(), queryGraph.root.objName.end(),
@@ -253,7 +266,9 @@ int main(int /*argc*/, char** /*argv*/) {
   parseQuery("", query);
   QueryGraph queryGraph;
   calculateQueryGraph(query, queryGraph);
+  cout << "/*" << endl;
   printPlan(queryGraph);
+  cout << "*/" << endl;
   printCode(queryGraph);
 }
 
