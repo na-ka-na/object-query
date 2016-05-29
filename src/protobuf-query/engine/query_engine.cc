@@ -17,7 +17,7 @@ using namespace google::protobuf;
 template <typename T, typename It>
 static string join(const string& delim, It begin, It end,
     const function<string(const T&)>& to_str) {
-  string joined = "[";
+  string joined;
   if (begin != end) {
      joined += to_str(*begin);
      while ((++begin) != end) {
@@ -25,7 +25,7 @@ static string join(const string& delim, It begin, It end,
        joined += to_str(*begin);
      }
   }
-  return joined + "]";
+  return joined;
 }
 
 template <typename T>
@@ -163,9 +163,14 @@ void printCode(QueryGraph& queryGraph) {
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
 
   string tupleType = "using TupleType = tuple<";
-  tupleType += joinVec<const Field*>(", ", allSelectFields, [](const Field* field) {
-    return field->fieldParts.back()->cpp_type_name();
-  });
+  tupleType += joinVec<const Field*>(
+      ",\n" + string(tupleType.size(), ' '),
+      allSelectFields,
+      [](const Field* field) {
+          string type = field->fieldParts.back()->cpp_type_name();
+          return type + string(6-type.size(), ' ') +
+                 " /*" + field->accessor() + "*/";
+      });
   tupleType += ">;";
   cout << tupleType << endl;
 }
