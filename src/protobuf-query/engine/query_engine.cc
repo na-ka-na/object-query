@@ -34,16 +34,18 @@ static string joinVec(const string& delim, const vector<T>& ts,
   return join<T>(delim, ts.cbegin(), ts.cend(), to_str);
 }
 
+const function<string(const string&)> string2str = [](const string& str) {return str;};
+
 struct Proto {
   const Message* defaultInstance;
-  const char* protoCppClassName;
+  const char* protoNamespace;
 };
 
 void getProtoDetails(const string& protoName, Proto& proto) {
   if (protoName == "Example1.Company") {
     static Example1::Company defaultInstance;
     proto.defaultInstance = &defaultInstance;
-    proto.protoCppClassName = "Example1::Company";
+    proto.protoNamespace = "Example1";
   } else {
     throw runtime_error("No mapping defined for protoName: " + protoName);
   }
@@ -56,10 +58,41 @@ struct Field {
     return fieldParts < other.fieldParts;
   }
 
-  string accessor() const {
-    string str;
+  string type() const {
+    if (fieldParts.empty()) {
+      throw runtime_error("Can't determine type of empty field");
+    }
+    const FieldDescriptor* lastPart = fieldParts.back();
+    if (lastPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
+      const Descriptor* msgType = lastPart->message_type();
+      return msgType->name();
+    } else {
+      return lastPart->cpp_type_name();
+    }
+  }
+
+  string accessor(const string& objName) const {
+    string str = objName;
     for (const FieldDescriptor* part : fieldParts) {
-      str += "." + part->name();
+      str += "." + part->name() + "()";
+    }
+    return str;
+  }
+
+  string hasAccessor(const string& objName, uint32_t end) const {
+    string str = objName;
+    for (uint32_t i=0; i<end; i++) {
+      str += string(".") + ((i==(end-1)) ? "has_" : "") +
+             fieldParts[i]->name() + "()";
+    }
+    return str;
+  }
+
+  string sizeAccessor(const string& objName) const {
+    string str = objName;
+    for (uint32_t i=0; i<fieldParts.size(); i++) {
+      str += string(".") + fieldParts[i]->name() +
+             ((i==(fieldParts.size()-1)) ? "_size" : "") + "()";
     }
     return str;
   }
@@ -107,24 +140,28 @@ void walkNode(const Node& node,
               int& indent,
               const SelectFieldsFn& selectFieldsFn,
               const StartForAllFn& startForAllFn,
+              const uint32_t indentInc,
               map<int, const Node*>& endFieldsMap) {
   selectFieldsFn(indent, node);
   for (const auto& e : node.children) {
     const Node& child = e.second;
     startForAllFn(indent, child, node);
     endFieldsMap.emplace(-indent, &child);
-    indent += 2;
-    walkNode(child, indent, selectFieldsFn, startForAllFn, endFieldsMap);
+    indent += indentInc;
+    walkNode(child, indent, selectFieldsFn, startForAllFn,
+             indentInc, endFieldsMap);
   }
 }
 
 void walkNode(const Node& root,
               const SelectFieldsFn& selectFieldsFn,
               const StartForAllFn& startForAllFn,
-              const EndForAllFn& endForAllFn) {
+              const EndForAllFn& endForAllFn,
+              const uint32_t indentInc = 2) {
   int indent = 0;
   map<int, const Node*> endNodeMap;
-  walkNode(root, indent, selectFieldsFn, startForAllFn, endNodeMap);
+  walkNode(root, indent, selectFieldsFn, startForAllFn,
+           indentInc, endNodeMap);
   for (const auto& e : endNodeMap) {
     int indent = -e.first;
     const Node* node = e.second;
@@ -138,21 +175,22 @@ void printPlan(QueryGraph& queryGraph) {
       cout << string(indent, ' ') << "print " << node.objName << endl;
     } else {
       for (const Field& field : node.selectFields) {
-        cout << string(indent, ' ') << "print " << node.objName << field.accessor() << endl;
+        cout << string(indent, ' ') << "print " << field.accessor(node.objName) << endl;
       }
     }
   };
   StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {
     cout << string(indent, ' ') << "for each " << node.objName << " in "
-        << parent.objName << node.repeatedField.accessor() << " {" << endl;
+        << node.repeatedField.accessor(parent.objName) << " {" << endl;
   };
   EndForAllFn endForAllFn = [](int indent, const Node& node) {
-    cout << string(indent, ' ') << "} //" << node.repeatedField.accessor() << endl;
+    cout << string(indent, ' ') << "} //" << node.objName << endl;
   };
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
 }
 
 void printCode(QueryGraph& queryGraph) {
+  cout << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl;
   SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {};
   StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {};
   EndForAllFn endForAllFn = [](int indent, const Node& node) {};
@@ -168,22 +206,63 @@ void printCode(QueryGraph& queryGraph) {
     }
   };
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
+  map<const Field*, string> selectFieldVarMap;
+  for (uint32_t i=0; i<allSelectFields.size(); i++) {
+    const Field* field = allSelectFields[i];
+    selectFieldVarMap[field] = "s" + to_string(i);
+  }
 
   string tupleType = "using TupleType = tuple<";
   tupleType += joinVec<const Field*>(
       ",\n" + string(tupleType.size(), ' '),
       allSelectFields,
-      [](const Field* field) {
-          string type = field->fieldParts.back()->cpp_type_name();
+      [&](const Field* field) {
+          string type = field->type();
           return type + string(6-type.size(), ' ') +
-                 " /*" + field->accessor() + "*/";
+                 " /*" + field->accessor("") + "*/";
       });
   tupleType += ">;";
   cout << tupleType << endl;
   cout << endl;
-  cout << "void runSelect(" << endl;
-  cout << "    const " << queryGraph.proto.protoCppClassName << "& proto," << endl;
-  cout << "    vector<TupleType>& tuples) {" << endl;
+  cout << "void runSelect(const "
+      << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
+      << queryGraph.root.objName << ", vector<TupleType>& tuples) {" << endl;
+  selectFieldsFn = [&](int indent, const Node& node) {
+    string ind = string(indent+2, ' ');
+    if (node.type == REPEATED_PRIMITIVE) {
+      const Field* field = &node.repeatedField;
+      cout << ind << "const " << field->type() << "* " <<
+          selectFieldVarMap[field] << " = &(" << node.objName << ");" << endl;
+    } else {
+      for (const Field& field : node.selectFields) {
+        cout << ind << "const " << field.type() << "* " <<
+            selectFieldVarMap[&field] << " = nullptr;" << endl;
+        vector<string> checks;
+        for (uint32_t i=0; i<field.fieldParts.size(); i++) {
+          checks.push_back(field.hasAccessor(node.objName, i+1));
+        }
+        cout << ind << "if(" << joinVec<string>(" && ", checks, string2str)
+            << ") {" << endl;
+        cout << ind << "  " << selectFieldVarMap[&field] << " = &("
+            << field.accessor(node.objName) << ");" << endl;
+        cout << ind << "}" << endl;
+      }
+    }
+  };
+  startForAllFn = [](int indent, const Node& node, const Node& parent) {
+    string ind = string(indent+2, ' ');
+    cout << ind << "if (" << node.repeatedField.sizeAccessor(parent.objName)
+        << " > 0) {" << endl;
+    cout << ind << "  for (const " << node.repeatedField.type() << "& " <<
+        node.objName << " : " << node.repeatedField.accessor(parent.objName) <<
+        ") {" << endl;
+  };
+  endForAllFn = [](int indent, const Node& node) {
+    string ind = string(indent+2, ' ');
+    cout << string(indent+4, ' ') << "}" << endl;
+    cout << string(indent+2, ' ') << "} //" << node.objName << endl;
+  };
+  walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn, 4);
   cout << "}" << endl;
 }
 
