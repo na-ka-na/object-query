@@ -213,19 +213,22 @@ void printCode(QueryGraph& queryGraph) {
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
 
   map<const Field*, string> selectFieldVarMap;
+  map<const Field*, string> selectFieldTypeMap;
+  map<const Field*, string> selectFieldDefaultMap;
   for (uint32_t i=0; i<allSelectFields.size(); i++) {
     const Field* field = allSelectFields[i];
     selectFieldVarMap[field] = "s" + to_string(i);
+    selectFieldTypeMap[field] = "S" + to_string(i);
+    selectFieldDefaultMap[field] = "nullptr";
+    string type = "const " + field->type() + "*";
+    string spaces((((14-type.size()) > 0) ? (14-type.size()) : 0), ' ');
+    cout << "using " << selectFieldTypeMap[field] << " = " << type << spaces
+        << " /*" << field->accessor("") << "*/;" << endl;
   }
   string tupleType = "using TupleType = tuple<";
   tupleType += joinVec<const Field*>(
-      ",\n" + string(tupleType.size(), ' '),
-      allSelectFields,
-      [&](const Field* field) {
-          string type = field->type();
-          string spaces((((8-type.size()) > 0) ? (8-type.size()) : 0), ' ');
-          return type + spaces + " /*" + field->accessor("") + "*/";
-      });
+      ", ", allSelectFields,
+      [&](const Field* field) {return selectFieldTypeMap[field];});
   tupleType += ">;";
   cout << tupleType << endl;
   cout << endl;
@@ -237,13 +240,14 @@ void printCode(QueryGraph& queryGraph) {
     string ind = string(indent+2, ' ');
     if (node.type == REPEATED_PRIMITIVE) {
       const Field* field = &node.repeatedField;
-      cout << ind << "const " << field->type() << "* "
+      cout << ind << selectFieldTypeMap[field] << " "
           << selectFieldVarMap[field] << " = &(" << node.objName << ");" << endl;
       selectFieldsProcessed.push_back(field);
     } else {
       for (const Field& field : node.selectFields) {
-        cout << ind << "const " << field.type() << "* "
-            << selectFieldVarMap[&field] << " = nullptr;" << endl;
+        cout << ind << selectFieldTypeMap[&field] << " "
+            << selectFieldVarMap[&field] << " = "
+            << selectFieldDefaultMap[&field] << ";" << endl;
         vector<string> checks;
         for (uint32_t i=0; i<field.fieldParts.size(); i++) {
           checks.push_back(field.hasAccessor(node.objName, i+1));
@@ -270,27 +274,23 @@ void printCode(QueryGraph& queryGraph) {
         node.objName << " : " << node.repeatedField.accessor(parent.objName) <<
         ") {" << endl;
   };
+  set<const Field*> endedFieldSet;
   endForAllFn = [&](int indent, const Node& node) {
     string ind = string(indent+2, ' ');
     cout << ind << "  }" << endl;
     cout << ind << "} else { // no " << node.objName << endl;
     if (node.type == REPEATED_PRIMITIVE) {
-      auto it = std::find(
-          selectFieldsProcessed.begin(), selectFieldsProcessed.end(),
-          &node.repeatedField);
-      *it = nullptr;
+      endedFieldSet.insert(&node.repeatedField);
     } else {
       for (const Field& field : node.selectFields) {
-        auto it = std::find(
-            selectFieldsProcessed.begin(), selectFieldsProcessed.end(),
-            &field);
-        *it = nullptr;
+        endedFieldSet.insert(&field);
       }
     }
     string selectList = joinVec<const Field*>(
         ", ", selectFieldsProcessed,
         [&](const Field* field) {
-            return field ? selectFieldVarMap[field] : "nullptr";
+            return endedFieldSet.find(field) == endedFieldSet.end() ?
+                selectFieldVarMap[field] : selectFieldDefaultMap[field];
         });
     cout << ind << "  " << "tuples.emplace(" + selectList + ");" << endl;
     cout << ind << "}" << endl;
