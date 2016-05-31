@@ -39,6 +39,7 @@ const function<string(const string&)> string2str = [](const string& str) {return
 struct Proto {
   const Message* defaultInstance;
   const char* protoNamespace;
+  const char* protoHeaderInclude;
 };
 
 void getProtoDetails(const string& protoName, Proto& proto) {
@@ -46,6 +47,7 @@ void getProtoDetails(const string& protoName, Proto& proto) {
     static Example1::Company defaultInstance;
     proto.defaultInstance = &defaultInstance;
     proto.protoNamespace = "Example1";
+    proto.protoHeaderInclude = "example1.pb.h";
   } else {
     throw runtime_error("No mapping defined for protoName: " + protoName);
   }
@@ -190,6 +192,9 @@ void printPlan(QueryGraph& queryGraph) {
 }
 
 void printCode(QueryGraph& queryGraph) {
+  cout << "#include <tuple>" << endl;
+  cout << "#include \"" << queryGraph.proto.protoHeaderInclude << "\"" << endl;
+  cout << "using namespace std;" << endl;
   cout << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl;
   SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {};
   StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {};
@@ -218,8 +223,8 @@ void printCode(QueryGraph& queryGraph) {
       allSelectFields,
       [&](const Field* field) {
           string type = field->type();
-          return type + string(6-type.size(), ' ') +
-                 " /*" + field->accessor("") + "*/";
+          string spaces((((8-type.size()) > 0) ? (8-type.size()) : 0), ' ');
+          return type + spaces + " /*" + field->accessor("") + "*/";
       });
   tupleType += ">;";
   cout << tupleType << endl;
