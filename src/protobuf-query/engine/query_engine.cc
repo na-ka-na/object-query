@@ -193,7 +193,9 @@ void printPlan(QueryGraph& queryGraph) {
 
 void printCode(QueryGraph& queryGraph) {
   cout << "#include <tuple>" << endl;
+  cout << "#include <vector>" << endl;
   cout << "#include \"" << queryGraph.proto.protoHeaderInclude << "\"" << endl;
+  cout << "#include \"generated_common.h\"" << endl;
   cout << "using namespace std;" << endl;
   cout << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl;
   SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {};
@@ -219,11 +221,11 @@ void printCode(QueryGraph& queryGraph) {
     const Field* field = allSelectFields[i];
     selectFieldVarMap[field] = "s" + to_string(i);
     selectFieldTypeMap[field] = "S" + to_string(i);
-    selectFieldDefaultMap[field] = "nullptr";
-    string type = "const " + field->type() + "*";
-    string spaces((((14-type.size()) > 0) ? (14-type.size()) : 0), ' ');
-    cout << "using " << selectFieldTypeMap[field] << " = " << type << spaces
-        << " /*" << field->accessor("") << "*/;" << endl;
+    selectFieldDefaultMap[field] = selectFieldTypeMap[field] + "()";
+    string type = "optional<" + field->type() + ">";
+    string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
+    cout << "using " << selectFieldTypeMap[field] << " = " << type << ";"
+        << spaces << " /*" << field->accessor("") << "*/" << endl;
   }
   string tupleType = "using TupleType = tuple<";
   tupleType += joinVec<const Field*>(
@@ -241,7 +243,7 @@ void printCode(QueryGraph& queryGraph) {
     if (node.type == REPEATED_PRIMITIVE) {
       const Field* field = &node.repeatedField;
       cout << ind << selectFieldTypeMap[field] << " "
-          << selectFieldVarMap[field] << " = &(" << node.objName << ");" << endl;
+          << selectFieldVarMap[field] << " = " << node.objName << ";" << endl;
       selectFieldsProcessed.push_back(field);
     } else {
       for (const Field& field : node.selectFields) {
@@ -254,8 +256,8 @@ void printCode(QueryGraph& queryGraph) {
         }
         cout << ind << "if(" << joinVec<string>(" && ", checks, string2str)
             << ") {" << endl;
-        cout << ind << "  " << selectFieldVarMap[&field] << " = &("
-            << field.accessor(node.objName) << ");" << endl;
+        cout << ind << "  " << selectFieldVarMap[&field] << " = "
+            << field.accessor(node.objName) << ";" << endl;
         cout << ind << "}" << endl;
         selectFieldsProcessed.push_back(&field);
       }
@@ -263,7 +265,7 @@ void printCode(QueryGraph& queryGraph) {
     if (selectFieldsProcessed.size() == allSelectFields.size()) {
       string selectList = joinVec<const Field*>(", ", allSelectFields,
           [&](const Field* field) {return selectFieldVarMap[field];});
-      cout << ind << "tuples.emplace(" + selectList + ");" << endl;
+      cout << ind << "tuples.emplace_back(" + selectList + ");" << endl;
     }
   };
   startForAllFn = [](int indent, const Node& node, const Node& parent) {
@@ -292,7 +294,7 @@ void printCode(QueryGraph& queryGraph) {
             return endedFieldSet.find(field) == endedFieldSet.end() ?
                 selectFieldVarMap[field] : selectFieldDefaultMap[field];
         });
-    cout << ind << "  " << "tuples.emplace(" + selectList + ");" << endl;
+    cout << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
     cout << ind << "}" << endl;
   };
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn, 4);
