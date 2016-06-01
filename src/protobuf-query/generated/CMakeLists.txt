@@ -4,5 +4,5 @@ include_directories(
 )
 
 add_executable(sql1 sql1.cc)
-target_link_libraries(sql1)
+target_link_libraries(sql1 ExampleProtos)
 

@@ -18,12 +18,22 @@ for each board_of_director in company.board_of_directors() {
   } //quarterly_profit
 } //board_of_director
 */
-#include <tuple>
-#include <vector>
 #include "example1.pb.h"
 #include "generated_common.h"
+
 using namespace std;
 using namespace Example1;
+
+vector<string> header = {
+  "financial.quarterly_profits",
+  "financial.quarterly_revenues",
+  "all_employees.id",
+  "all_employees.name",
+  "all_employees.active",
+  "all_employees.active_direct_reports",
+  "founded",
+  "board_of_directors",
+};
 using S0 = optional<int32>;  /*.founded()*/
 using S1 = optional<int32>;  /*.board_of_directors()*/
 using S2 = optional<float>;  /*.financial().quarterly_profits()*/
@@ -86,4 +96,49 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
   } else { // no board_of_director
     tuples.emplace_back(s0, S1(), S2(), S3(), S4(), S5(), S6(), S7());
   }
+}
+
+void printTuples(const vector<TupleType>& tuples) {
+  vector<size_t> sizes;
+  for (size_t i=0; i<header.size(); i++) {
+    sizes.push_back(header[i].size());
+  }
+  for (const TupleType& t : tuples) {
+    sizes[0] = max(sizes[0], stringify(get<2>(t)).size());
+    sizes[1] = max(sizes[1], stringify(get<3>(t)).size());
+    sizes[2] = max(sizes[2], stringify(get<4>(t)).size());
+    sizes[3] = max(sizes[3], stringify(get<5>(t)).size());
+    sizes[4] = max(sizes[4], stringify(get<6>(t)).size());
+    sizes[5] = max(sizes[5], stringify(get<7>(t)).size());
+    sizes[6] = max(sizes[6], stringify(get<0>(t)).size());
+    sizes[7] = max(sizes[7], stringify(get<1>(t)).size());
+  }
+  cout << left;
+  for (size_t i=0; i<header.size(); i++) {
+    cout << ((i==0) ? "" : " | ") << setw(sizes[i]) << header[i];
+  }
+  cout << endl;
+  for (size_t i=0; i<header.size(); i++) {
+    cout << ((i==0) ? "" : " | ") << string(sizes[i], '-');
+  }
+  cout << endl;
+  for(const TupleType& t : tuples) {
+    cout <<          setw(sizes[0]) << stringify(get<2>(t));
+    cout << " | " << setw(sizes[1]) << stringify(get<3>(t));
+    cout << " | " << setw(sizes[2]) << stringify(get<4>(t));
+    cout << " | " << setw(sizes[3]) << stringify(get<5>(t));
+    cout << " | " << setw(sizes[4]) << stringify(get<6>(t));
+    cout << " | " << setw(sizes[5]) << stringify(get<7>(t));
+    cout << " | " << setw(sizes[6]) << stringify(get<0>(t));
+    cout << " | " << setw(sizes[7]) << stringify(get<1>(t));
+    cout << endl;
+  }
+}
+
+int main(int argc, char** argv) {
+  Company company;
+  parsePbFromFile(argv[1], company);
+  vector<TupleType> tuples;
+  runSelect(company, tuples);
+  printTuples(tuples);
 }

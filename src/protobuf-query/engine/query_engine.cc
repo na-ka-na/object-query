@@ -60,6 +60,10 @@ struct Field {
     return fieldParts < other.fieldParts;
   }
 
+  bool operator==(const Field& other) const {
+    return fieldParts == other.fieldParts;
+  }
+
   string type() const {
     if (fieldParts.empty()) {
       throw runtime_error("Can't determine type of empty field");
@@ -126,6 +130,8 @@ using EndForAllFn = function<void(int indent, const Node& node)>;
 struct QueryGraph {
   Proto proto;
   Node root;
+  // 1:1 with query.selects, order is maintained
+  vector<Field> querySelects;
 };
 
 struct Query {
@@ -191,13 +197,11 @@ void printPlan(QueryGraph& queryGraph) {
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
 }
 
-void printCode(QueryGraph& queryGraph) {
-  cout << "#include <tuple>" << endl;
-  cout << "#include <vector>" << endl;
+void printCode(const Query& query, const QueryGraph& queryGraph) {
   cout << "#include \"" << queryGraph.proto.protoHeaderInclude << "\"" << endl;
-  cout << "#include \"generated_common.h\"" << endl;
+  cout << "#include \"generated_common.h\"" << endl << endl;
   cout << "using namespace std;" << endl;
-  cout << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl;
+  cout << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl << endl;
   SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {};
   StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {};
   EndForAllFn endForAllFn = [](int indent, const Node& node) {};
@@ -213,6 +217,33 @@ void printCode(QueryGraph& queryGraph) {
     }
   };
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
+
+  // select fields header
+  if (queryGraph.querySelects.size() != query.selects.size()) {
+    throw runtime_error(
+        "queryGraph.querySelects.size()=" + to_string(queryGraph.querySelects.size()) +
+        "query.selects.size()=" + to_string(query.selects.size()));
+  }
+  string header = "vector<string> header = {\n";
+  map<uint32_t, uint32_t> querySelectsIdxToTupleIdxMap;
+  for (size_t i=0; i<queryGraph.querySelects.size(); i++) {
+    int idx = -1;
+    for (size_t j=0; j<allSelectFields.size(); j++) {
+      if (*allSelectFields[j] == queryGraph.querySelects[i]) {
+        idx = j;
+        break;
+      }
+    }
+    if (idx == -1) {
+      throw runtime_error(
+          "Unable to find " + queryGraph.querySelects[i].accessor("") +
+          " in tuples list");
+    }
+    querySelectsIdxToTupleIdxMap[i] = idx;
+    header += "  \"" + joinVec(".", query.selects[i], string2str) + "\",\n";
+  }
+  header += "};";
+  cout << header << endl;
 
   map<const Field*, string> selectFieldVarMap;
   map<const Field*, string> selectFieldTypeMap;
@@ -234,6 +265,7 @@ void printCode(QueryGraph& queryGraph) {
   tupleType += ">;";
   cout << tupleType << endl;
   cout << endl;
+
   cout << "void runSelect(const "
       << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
       << queryGraph.root.objName << ", vector<TupleType>& tuples) {" << endl;
@@ -299,6 +331,53 @@ void printCode(QueryGraph& queryGraph) {
   };
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn, 4);
   cout << "}" << endl;
+
+  // print tuples
+  cout << R"fff(
+void printTuples(const vector<TupleType>& tuples) {
+  vector<size_t> sizes;
+  for (size_t i=0; i<header.size(); i++) {
+    sizes.push_back(header[i].size());
+  }
+)fff";
+  cout << "  for (const TupleType& t : tuples) {" << endl;
+  for (size_t i=0; i<query.selects.size(); i++) {
+    cout << "    sizes[" << i << "] = max(sizes[" << i << "], stringify(get<"
+        << querySelectsIdxToTupleIdxMap[i] << ">(t)).size());" << endl;
+  }
+  cout << "  }" << endl;
+  cout << "  cout << left;";
+  cout << R"fff(
+  for (size_t i=0; i<header.size(); i++) {
+    cout << ((i==0) ? "" : " | ") << setw(sizes[i]) << header[i];
+  }
+  cout << endl;
+  for (size_t i=0; i<header.size(); i++) {
+    cout << ((i==0) ? "" : " | ") << string(sizes[i], '-');
+  }
+  cout << endl;
+)fff";
+  cout << "  for(const TupleType& t : tuples) {" << endl;
+  for (size_t i=0; i<query.selects.size(); i++) {
+    cout << "    cout << " << ((i==0) ? "         " : "\" | \" << ")
+        << "setw(sizes[" << i << "]) << "
+        << "stringify(get<" << querySelectsIdxToTupleIdxMap[i]
+        << ">(t));" << endl;
+  }
+  cout << "    cout << endl;" << endl;
+  cout << "  }" << endl;
+  cout << "}" << endl << endl;
+
+  // main
+  cout << "int main(int argc, char** argv) {" << endl;
+  cout << "  " << queryGraph.proto.defaultInstance->GetDescriptor()->name()
+      << " " << queryGraph.root.objName << ";" << endl;
+  cout << "  parsePbFromFile(argv[1], " << queryGraph.root.objName << ");"
+      << endl;
+  cout << "  vector<TupleType> tuples;" << endl;
+  cout << "  runSelect(company, tuples);" << endl;
+  cout << "  printTuples(tuples);" << endl;
+  cout << "}" << endl;
 }
 
 string constructObjNameForRepeated(const FieldDescriptor* field) {
@@ -315,22 +394,22 @@ void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
   queryGraph.root.objName = rootDescriptor->name();
   std::transform(queryGraph.root.objName.begin(), queryGraph.root.objName.end(),
                  queryGraph.root.objName.begin(), ::tolower);
-  for (const vector<string>& select : query.selects) {
+  for (size_t i=0; i<query.selects.size(); i++) {
     const Descriptor* parentDescriptor = rootDescriptor;
     Node* parent = &(queryGraph.root);
     Field field;
-    for (size_t i=0; i<select.size(); i++) {
+    for (size_t j=0; j<query.selects[i].size(); j++) {
       const FieldDescriptor* fieldPart =
-          parentDescriptor->FindFieldByName(select[i]);
+          parentDescriptor->FindFieldByName(query.selects[i][j]);
       if (fieldPart == nullptr) {
-        throw runtime_error("No fieldPart by name " + select[i]);
+        throw runtime_error("No fieldPart by name " + query.selects[i][j]);
       }
       field.fieldParts.push_back(fieldPart);
-      if (i != (select.size()-1)) {
+      if (j != (query.selects[i].size()-1)) {
         if (fieldPart->type() != FieldDescriptor::Type::TYPE_MESSAGE) {
           throw runtime_error(
-              "FieldPart " + select[i] + " expected to be message but found" +
-              fieldPart->type_name());
+              "FieldPart " + query.selects[i][j] +
+              " expected to be message but found" + fieldPart->type_name());
         }
         if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
           Node& child = parent->children[field];
@@ -343,16 +422,18 @@ void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
         parentDescriptor = fieldPart->message_type();
       } else {
         if (fieldPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
-          throw runtime_error(
-              "FieldPart " + select[i] + " not expected to be message ");
+          throw runtime_error("FieldPart " + query.selects[i][j] +
+                              " not expected to be message ");
         }
         if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
           Node& child = parent->children[field];
           child.type = REPEATED_PRIMITIVE;
           child.objName = constructObjNameForRepeated(fieldPart);
           child.repeatedField = field;
+          queryGraph.querySelects.push_back(field);
         } else {
           parent->selectFields.push_back(field);
+          queryGraph.querySelects.push_back(field);
         }
       }
     }
@@ -361,14 +442,14 @@ void calculateQueryGraph(const Query& query, QueryGraph& queryGraph) {
 
 void parseQuery(const string&, Query& query) {
   query.selects = {
-      {"founded"},
-      {"board_of_directors"},
       {"financial", "quarterly_profits"},
       {"financial", "quarterly_revenues"},
       {"all_employees", "id"},
       {"all_employees", "name"},
       {"all_employees", "active"},
       {"all_employees", "active_direct_reports"},
+      {"founded"},
+      {"board_of_directors"},
   };
   query.fromFile = "/tmp/example1.proto";
   query.fromRootProto = "Example1.Company";
@@ -383,6 +464,6 @@ int main(int /*argc*/, char** /*argv*/) {
   cout << "/*" << endl;
   printPlan(queryGraph);
   cout << "*/" << endl;
-  printCode(queryGraph);
+  printCode(query, queryGraph);
 }
 
