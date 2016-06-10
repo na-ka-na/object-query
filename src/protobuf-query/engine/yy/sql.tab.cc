@@ -49,7 +49,7 @@
 
 #line 51 "sql.tab.cc" // lalr1.cc:412
 // Unqualified %code blocks.
-#line 20 "sql.yy" // lalr1.cc:413
+#line 20 "../sql.yy" // lalr1.cc:413
 
 #include "../select_query.h"
 
@@ -328,21 +328,21 @@ namespace yy {
     {
             case 28: // "identifier"
 
-#line 59 "sql.yy" // lalr1.cc:636
+#line 59 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 334 "sql.tab.cc" // lalr1.cc:636
         break;
 
       case 29: // "long"
 
-#line 59 "sql.yy" // lalr1.cc:636
+#line 59 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< long > (); }
 #line 341 "sql.tab.cc" // lalr1.cc:636
         break;
 
       case 30: // "double"
 
-#line 59 "sql.yy" // lalr1.cc:636
+#line 59 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< double > (); }
 #line 348 "sql.tab.cc" // lalr1.cc:636
         break;
@@ -574,19 +574,19 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 68 "sql.yy" // lalr1.cc:859
+#line 68 "../sql.yy" // lalr1.cc:859
     {}
 #line 580 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 10:
-#line 75 "sql.yy" // lalr1.cc:859
+#line 75 "../sql.yy" // lalr1.cc:859
     {}
 #line 586 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 11:
-#line 77 "sql.yy" // lalr1.cc:859
+#line 77 "../sql.yy" // lalr1.cc:859
     {}
 #line 592 "sql.tab.cc" // lalr1.cc:859
     break;
@@ -1014,7 +1014,7 @@ namespace yy {
 
 } // yy
 #line 1017 "sql.tab.cc" // lalr1.cc:1167
-#line 116 "sql.yy" // lalr1.cc:1168
+#line 116 "../sql.yy" // lalr1.cc:1168
 
 void yy::SqlParser::error(const yy::SqlParser::location_type& l,
                           const std::string& m) {

@@ -1,2 +1,4 @@
 # Generating yy::SqlParser
-/usr/local/opt/bison/bin/bison -Wall --report=all -d sql.yy
+# all of yy directory is generated
+cd yy
+/usr/local/opt/bison/bin/bison -Wall --report=all -d ../sql.yy

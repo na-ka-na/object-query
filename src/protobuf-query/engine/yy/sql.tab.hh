@@ -40,7 +40,7 @@
 #ifndef YY_YY_SQL_TAB_HH_INCLUDED
 # define YY_YY_SQL_TAB_HH_INCLUDED
 // //                    "%code requires" blocks.
-#line 10 "sql.yy" // lalr1.cc:392
+#line 10 "../sql.yy" // lalr1.cc:392
 
 #include <string>
 class SelectQuery;
