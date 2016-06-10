@@ -1,0 +1,2 @@
+# Generating yy::SqlParser
+/usr/local/opt/bison/bin/bison -Wall --report=all -d sql.yy
