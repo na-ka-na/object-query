@@ -323,32 +323,33 @@ namespace yy {
         TOK_SELECT = 258,
         TOK_FROM = 259,
         TOK_WHERE = 260,
-        TOK_GROUP_BY = 261,
+        TOK_GROUP = 261,
         TOK_HAVING = 262,
-        TOK_ORDER_BY = 263,
-        TOK_COMMA = 264,
-        TOK_PLUS = 265,
-        TOK_MINUS = 266,
-        TOK_MULT = 267,
-        TOK_DIVIDE = 268,
-        TOK_EQUALS = 269,
-        TOK_LT = 270,
-        TOK_GT = 271,
-        TOK_LE = 272,
-        TOK_GE = 273,
-        TOK_LIKE = 274,
-        TOK_AND = 275,
-        TOK_OR = 276,
-        TOK_QUOTE = 277,
-        TOK_LPAREN = 278,
-        TOK_RPAREN = 279,
-        TOK_SUM = 280,
-        TOK_COUNT = 281,
-        TOK_DISTINCT = 282,
-        TOK_IDENTIFIER = 283,
-        TOK_LONG = 284,
-        TOK_DOUBLE = 285,
-        TOK_UMINUS = 286
+        TOK_ORDER = 263,
+        TOK_BY = 264,
+        TOK_COMMA = 265,
+        TOK_PLUS = 266,
+        TOK_MINUS = 267,
+        TOK_MULT = 268,
+        TOK_DIVIDE = 269,
+        TOK_EQUALS = 270,
+        TOK_LT = 271,
+        TOK_GT = 272,
+        TOK_LE = 273,
+        TOK_GE = 274,
+        TOK_LIKE = 275,
+        TOK_AND = 276,
+        TOK_OR = 277,
+        TOK_QUOTE = 278,
+        TOK_LPAREN = 279,
+        TOK_RPAREN = 280,
+        TOK_SUM = 281,
+        TOK_COUNT = 282,
+        TOK_DISTINCT = 283,
+        TOK_IDENTIFIER = 284,
+        TOK_LONG = 285,
+        TOK_DOUBLE = 286,
+        TOK_UMINUS = 287
       };
     };
 
@@ -477,7 +478,7 @@ namespace yy {
 
     static inline
     symbol_type
-    make_GROUP_BY (const location_type& l);
+    make_GROUP (const location_type& l);
 
     static inline
     symbol_type
@@ -485,7 +486,11 @@ namespace yy {
 
     static inline
     symbol_type
-    make_ORDER_BY (const location_type& l);
+    make_ORDER (const location_type& l);
+
+    static inline
+    symbol_type
+    make_BY (const location_type& l);
 
     static inline
     symbol_type
@@ -664,7 +669,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const signed char yycheck_[];
+  static const unsigned char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -784,12 +789,12 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 104,     ///< Last index in yytable_.
+      yylast_ = 98,     ///< Last index in yytable_.
       yynnts_ = 13,  ///< Number of nonterminal symbols.
       yyfinal_ = 11, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 32  ///< Number of tokens.
+      yyntokens_ = 33  ///< Number of tokens.
     };
 
 
@@ -834,9 +839,9 @@ namespace yy {
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31
+      25,    26,    27,    28,    29,    30,    31,    32
     };
-    const unsigned int user_token_number_max_ = 286;
+    const unsigned int user_token_number_max_ = 287;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -869,15 +874,15 @@ namespace yy {
   {
       switch (other.type_get ())
     {
-      case 30: // "double"
+      case 31: // "double"
         value.copy< double > (other.value);
         break;
 
-      case 29: // "long"
+      case 30: // "long"
         value.copy< long > (other.value);
         break;
 
-      case 28: // "identifier"
+      case 29: // "identifier"
         value.copy< std::string > (other.value);
         break;
 
@@ -898,15 +903,15 @@ namespace yy {
     (void) v;
       switch (this->type_get ())
     {
-      case 30: // "double"
+      case 31: // "double"
         value.copy< double > (v);
         break;
 
-      case 29: // "long"
+      case 30: // "long"
         value.copy< long > (v);
         break;
 
-      case 28: // "identifier"
+      case 29: // "identifier"
         value.copy< std::string > (v);
         break;
 
@@ -972,15 +977,15 @@ namespace yy {
     // Type destructor.
     switch (yytype)
     {
-      case 30: // "double"
+      case 31: // "double"
         value.template destroy< double > ();
         break;
 
-      case 29: // "long"
+      case 30: // "long"
         value.template destroy< long > ();
         break;
 
-      case 28: // "identifier"
+      case 29: // "identifier"
         value.template destroy< std::string > ();
         break;
 
@@ -1007,15 +1012,15 @@ namespace yy {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 30: // "double"
+      case 31: // "double"
         value.move< double > (s.value);
         break;
 
-      case 29: // "long"
+      case 30: // "long"
         value.move< long > (s.value);
         break;
 
-      case 28: // "identifier"
+      case 29: // "identifier"
         value.move< std::string > (s.value);
         break;
 
@@ -1077,7 +1082,7 @@ namespace yy {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286
+     285,   286,   287
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1107,9 +1112,9 @@ namespace yy {
   }
 
   SqlParser::symbol_type
-  SqlParser::make_GROUP_BY (const location_type& l)
+  SqlParser::make_GROUP (const location_type& l)
   {
-    return symbol_type (token::TOK_GROUP_BY, l);
+    return symbol_type (token::TOK_GROUP, l);
   }
 
   SqlParser::symbol_type
@@ -1119,9 +1124,15 @@ namespace yy {
   }
 
   SqlParser::symbol_type
-  SqlParser::make_ORDER_BY (const location_type& l)
+  SqlParser::make_ORDER (const location_type& l)
   {
-    return symbol_type (token::TOK_ORDER_BY, l);
+    return symbol_type (token::TOK_ORDER, l);
+  }
+
+  SqlParser::symbol_type
+  SqlParser::make_BY (const location_type& l)
+  {
+    return symbol_type (token::TOK_BY, l);
   }
 
   SqlParser::symbol_type
@@ -1265,7 +1276,7 @@ namespace yy {
 
 
 } // yy
-#line 1269 "sql.tab.hh" // lalr1.cc:392
+#line 1280 "sql.tab.hh" // lalr1.cc:392
 
 
 

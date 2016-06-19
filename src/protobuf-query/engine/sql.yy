@@ -28,9 +28,10 @@ class SelectQuery;
   SELECT     "SELECT"
   FROM       "FROM"
   WHERE      "WHERE"
-  GROUP_BY   "GROUP BY"
+  GROUP      "GROUP"
   HAVING     "HAVING"
-  ORDER_BY   "ORDER BY"
+  ORDER      "ORDER"
+  BY         "BY"
   COMMA      ","
   PLUS       "+"
   MINUS      "-"
@@ -107,11 +108,11 @@ expr:
  | "double"
  ;
 
-group_by_stmt: %empty | "GROUP BY" identifiers;
+group_by_stmt: %empty | "GROUP" "BY" identifiers;
 
 having_stmt: %empty | "HAVING" boolean_expr;
 
-order_by_stmt: %empty | "ORDER BY" identifiers;
+order_by_stmt: %empty | "ORDER" "BY" identifiers;
 
 %%
 void yy::SqlParser::error(const yy::SqlParser::location_type& l,

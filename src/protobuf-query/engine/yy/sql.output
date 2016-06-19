@@ -47,13 +47,13 @@ Grammar
    30     | "double"
 
    31 group_by_stmt: %empty
-   32              | "GROUP BY" identifiers
+   32              | "GROUP" "BY" identifiers
 
    33 having_stmt: %empty
    34            | "HAVING" boolean_expr
 
    35 order_by_stmt: %empty
-   36              | "ORDER BY" identifiers
+   36              | "ORDER" "BY" identifiers
 
 
 Terminals, with rules where they appear
@@ -63,62 +63,63 @@ error (256)
 "SELECT" (258) 9
 "FROM" (259) 10
 "WHERE" (260) 12
-"GROUP BY" (261) 32
+"GROUP" (261) 32
 "HAVING" (262) 34
-"ORDER BY" (263) 36
-"," (264) 8 10
-"+" (265) 23
-"-" (266) 24 27
-"*" (267) 25
-"/" (268) 26
-"=" (269) 16
-"<" (270) 18
-">" (271) 17
-"<=" (272) 20
-">=" (273) 19
-"LIKE" (274) 21
-"AND" (275) 14
-"OR" (276) 15
-"'" (277)
-"(" (278) 6 10 13 22
-")" (279) 6 10 13 22
-"SUM" (280) 2
-"COUNT" (281) 3
-"DISTINCT" (282) 4
-"identifier" (283) 5 10
-"long" (284) 29
-"double" (285) 30
-UMINUS (286)
+"ORDER" (263) 36
+"BY" (264) 32 36
+"," (265) 8 10
+"+" (266) 23
+"-" (267) 24 27
+"*" (268) 25
+"/" (269) 26
+"=" (270) 16
+"<" (271) 18
+">" (272) 17
+"<=" (273) 20
+">=" (274) 19
+"LIKE" (275) 21
+"AND" (276) 14
+"OR" (277) 15
+"'" (278)
+"(" (279) 6 10 13 22
+")" (280) 6 10 13 22
+"SUM" (281) 2
+"COUNT" (282) 3
+"DISTINCT" (283) 4
+"identifier" (284) 5 10
+"long" (285) 29
+"double" (286) 30
+UMINUS (287)
 
 
 Nonterminals, with rules where they appear
 
-$accept (32)
+$accept (33)
     on left: 0
-query (33)
+query (34)
     on left: 1, on right: 0
-fn (34)
+fn (35)
     on left: 2 3 4, on right: 6
-fn_identifier (35)
+fn_identifier (36)
     on left: 5 6, on right: 6 7 8 28
-identifiers (36)
+identifiers (37)
     on left: 7 8, on right: 8 9 32 36
-select_stmt (37)
+select_stmt (38)
     on left: 9, on right: 1
-from_stmt (38)
+from_stmt (39)
     on left: 10, on right: 1
-where_stmt (39)
+where_stmt (40)
     on left: 11 12, on right: 1
-boolean_expr (40)
+boolean_expr (41)
     on left: 13 14 15 16 17 18 19 20 21, on right: 12 13 14 15 34
-expr (41)
+expr (42)
     on left: 22 23 24 25 26 27 28 29 30, on right: 16 17 18 19 20 21
     22 23 24 25 26 27
-group_by_stmt (42)
+group_by_stmt (43)
     on left: 31 32, on right: 1
-having_stmt (43)
+having_stmt (44)
     on left: 33 34, on right: 1
-order_by_stmt (44)
+order_by_stmt (45)
     on left: 35 36, on right: 1
 
 
@@ -241,7 +242,7 @@ State 12
 State 13
 
     1 query: select_stmt from_stmt . where_stmt group_by_stmt having_stmt order_by_stmt
-   11 where_stmt: . %empty  ["end of file", "GROUP BY", "HAVING", "ORDER BY"]
+   11 where_stmt: . %empty  ["end of file", "GROUP", "HAVING", "ORDER"]
    12           | . "WHERE" boolean_expr
 
     "WHERE"  shift, and go to state 17
@@ -339,10 +340,10 @@ State 17
 State 18
 
     1 query: select_stmt from_stmt where_stmt . group_by_stmt having_stmt order_by_stmt
-   31 group_by_stmt: . %empty  ["end of file", "HAVING", "ORDER BY"]
-   32              | . "GROUP BY" identifiers
+   31 group_by_stmt: . %empty  ["end of file", "HAVING", "ORDER"]
+   32              | . "GROUP" "BY" identifiers
 
-    "GROUP BY"  shift, and go to state 29
+    "GROUP"  shift, and go to state 29
 
     $default  reduce using rule 31 (group_by_stmt)
 
@@ -468,7 +469,7 @@ State 26
 
 State 27
 
-   12 where_stmt: "WHERE" boolean_expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY"]
+   12 where_stmt: "WHERE" boolean_expr .  ["end of file", "GROUP", "HAVING", "ORDER"]
    14 boolean_expr: boolean_expr . "AND" boolean_expr
    15             | boolean_expr . "OR" boolean_expr
 
@@ -505,29 +506,15 @@ State 28
 
 State 29
 
-    2 fn: . "SUM"
-    3   | . "COUNT"
-    4   | . "DISTINCT"
-    5 fn_identifier: . "identifier"
-    6              | . fn "(" fn_identifier ")"
-    7 identifiers: . fn_identifier
-    8            | . identifiers "," fn_identifier
-   32 group_by_stmt: "GROUP BY" . identifiers
+   32 group_by_stmt: "GROUP" . "BY" identifiers
 
-    "SUM"         shift, and go to state 4
-    "COUNT"       shift, and go to state 5
-    "DISTINCT"    shift, and go to state 6
-    "identifier"  shift, and go to state 7
-
-    fn             go to state 8
-    fn_identifier  go to state 9
-    identifiers    go to state 49
+    "BY"  shift, and go to state 49
 
 
 State 30
 
     1 query: select_stmt from_stmt where_stmt group_by_stmt . having_stmt order_by_stmt
-   33 having_stmt: . %empty  ["end of file", "ORDER BY"]
+   33 having_stmt: . %empty  ["end of file", "ORDER"]
    34            | . "HAVING" boolean_expr
 
     "HAVING"  shift, and go to state 50
@@ -589,7 +576,7 @@ State 34
    24     | expr . "-" expr
    25     | expr . "*" expr
    26     | expr . "/" expr
-   27     | "-" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "+", "-", "*", "/", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   27     | "-" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "+", "-", "*", "/", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
 
     $default  reduce using rule 27 (expr)
 
@@ -1043,12 +1030,23 @@ State 48
 
 State 49
 
-    8 identifiers: identifiers . "," fn_identifier
-   32 group_by_stmt: "GROUP BY" identifiers .  ["end of file", "HAVING", "ORDER BY"]
+    2 fn: . "SUM"
+    3   | . "COUNT"
+    4   | . "DISTINCT"
+    5 fn_identifier: . "identifier"
+    6              | . fn "(" fn_identifier ")"
+    7 identifiers: . fn_identifier
+    8            | . identifiers "," fn_identifier
+   32 group_by_stmt: "GROUP" "BY" . identifiers
 
-    ","  shift, and go to state 15
+    "SUM"         shift, and go to state 4
+    "COUNT"       shift, and go to state 5
+    "DISTINCT"    shift, and go to state 6
+    "identifier"  shift, and go to state 7
 
-    $default  reduce using rule 32 (group_by_stmt)
+    fn             go to state 8
+    fn_identifier  go to state 9
+    identifiers    go to state 68
 
 
 State 50
@@ -1089,7 +1087,7 @@ State 50
 
     fn             go to state 8
     fn_identifier  go to state 26
-    boolean_expr   go to state 68
+    boolean_expr   go to state 69
     expr           go to state 28
 
 
@@ -1097,20 +1095,20 @@ State 51
 
     1 query: select_stmt from_stmt where_stmt group_by_stmt having_stmt . order_by_stmt
    35 order_by_stmt: . %empty  ["end of file"]
-   36              | . "ORDER BY" identifiers
+   36              | . "ORDER" "BY" identifiers
 
-    "ORDER BY"  shift, and go to state 69
+    "ORDER"  shift, and go to state 70
 
     $default  reduce using rule 35 (order_by_stmt)
 
-    order_by_stmt  go to state 70
+    order_by_stmt  go to state 71
 
 
 State 52
 
    10 from_stmt: "FROM" "(" "identifier" "," "identifier" . ")"
 
-    ")"  shift, and go to state 71
+    ")"  shift, and go to state 72
 
 
 State 53
@@ -1145,7 +1143,7 @@ State 55
 State 56
 
    14 boolean_expr: boolean_expr . "AND" boolean_expr
-   14             | boolean_expr "AND" boolean_expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "AND", ")"]
+   14             | boolean_expr "AND" boolean_expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", ")"]
    15             | boolean_expr . "OR" boolean_expr
 
     "OR"  shift, and go to state 38
@@ -1160,7 +1158,7 @@ State 57
 
    14 boolean_expr: boolean_expr . "AND" boolean_expr
    15             | boolean_expr . "OR" boolean_expr
-   15             | boolean_expr "OR" boolean_expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "AND", "OR", ")"]
+   15             | boolean_expr "OR" boolean_expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
 
     $default  reduce using rule 15 (boolean_expr)
 
@@ -1171,7 +1169,7 @@ State 57
 State 58
 
    23 expr: expr . "+" expr
-   23     | expr "+" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "+", "-", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   23     | expr "+" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "+", "-", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
    24     | expr . "-" expr
    25     | expr . "*" expr
    26     | expr . "/" expr
@@ -1191,7 +1189,7 @@ State 59
 
    23 expr: expr . "+" expr
    24     | expr . "-" expr
-   24     | expr "-" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "+", "-", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   24     | expr "-" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "+", "-", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
    25     | expr . "*" expr
    26     | expr . "/" expr
 
@@ -1211,7 +1209,7 @@ State 60
    23 expr: expr . "+" expr
    24     | expr . "-" expr
    25     | expr . "*" expr
-   25     | expr "*" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "+", "-", "*", "/", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   25     | expr "*" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "+", "-", "*", "/", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
    26     | expr . "/" expr
 
     $default  reduce using rule 25 (expr)
@@ -1228,7 +1226,7 @@ State 61
    24     | expr . "-" expr
    25     | expr . "*" expr
    26     | expr . "/" expr
-   26     | expr "/" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "+", "-", "*", "/", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   26     | expr "/" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "+", "-", "*", "/", "=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
 
     $default  reduce using rule 26 (expr)
 
@@ -1240,7 +1238,7 @@ State 61
 
 State 62
 
-   16 boolean_expr: expr "=" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "AND", "OR", ")"]
+   16 boolean_expr: expr "=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    23 expr: expr . "+" expr
    24     | expr . "-" expr
    25     | expr . "*" expr
@@ -1256,7 +1254,7 @@ State 62
 
 State 63
 
-   18 boolean_expr: expr "<" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "AND", "OR", ")"]
+   18 boolean_expr: expr "<" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    23 expr: expr . "+" expr
    24     | expr . "-" expr
    25     | expr . "*" expr
@@ -1272,7 +1270,7 @@ State 63
 
 State 64
 
-   17 boolean_expr: expr ">" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "AND", "OR", ")"]
+   17 boolean_expr: expr ">" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    23 expr: expr . "+" expr
    24     | expr . "-" expr
    25     | expr . "*" expr
@@ -1288,7 +1286,7 @@ State 64
 
 State 65
 
-   20 boolean_expr: expr "<=" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "AND", "OR", ")"]
+   20 boolean_expr: expr "<=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    23 expr: expr . "+" expr
    24     | expr . "-" expr
    25     | expr . "*" expr
@@ -1304,7 +1302,7 @@ State 65
 
 State 66
 
-   19 boolean_expr: expr ">=" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "AND", "OR", ")"]
+   19 boolean_expr: expr ">=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    23 expr: expr . "+" expr
    24     | expr . "-" expr
    25     | expr . "*" expr
@@ -1320,7 +1318,7 @@ State 66
 
 State 67
 
-   21 boolean_expr: expr "LIKE" expr .  ["end of file", "GROUP BY", "HAVING", "ORDER BY", "AND", "OR", ")"]
+   21 boolean_expr: expr "LIKE" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    23 expr: expr . "+" expr
    24     | expr . "-" expr
    25     | expr . "*" expr
@@ -1336,9 +1334,19 @@ State 67
 
 State 68
 
+    8 identifiers: identifiers . "," fn_identifier
+   32 group_by_stmt: "GROUP" "BY" identifiers .  ["end of file", "HAVING", "ORDER"]
+
+    ","  shift, and go to state 15
+
+    $default  reduce using rule 32 (group_by_stmt)
+
+
+State 69
+
    14 boolean_expr: boolean_expr . "AND" boolean_expr
    15             | boolean_expr . "OR" boolean_expr
-   34 having_stmt: "HAVING" boolean_expr .  ["end of file", "ORDER BY"]
+   34 having_stmt: "HAVING" boolean_expr .  ["end of file", "ORDER"]
 
     "AND"  shift, and go to state 37
     "OR"   shift, and go to state 38
@@ -1346,7 +1354,28 @@ State 68
     $default  reduce using rule 34 (having_stmt)
 
 
-State 69
+State 70
+
+   36 order_by_stmt: "ORDER" . "BY" identifiers
+
+    "BY"  shift, and go to state 73
+
+
+State 71
+
+    1 query: select_stmt from_stmt where_stmt group_by_stmt having_stmt order_by_stmt .
+
+    $default  reduce using rule 1 (query)
+
+
+State 72
+
+   10 from_stmt: "FROM" "(" "identifier" "," "identifier" ")" .
+
+    $default  reduce using rule 10 (from_stmt)
+
+
+State 73
 
     2 fn: . "SUM"
     3   | . "COUNT"
@@ -1355,7 +1384,7 @@ State 69
     6              | . fn "(" fn_identifier ")"
     7 identifiers: . fn_identifier
     8            | . identifiers "," fn_identifier
-   36 order_by_stmt: "ORDER BY" . identifiers
+   36 order_by_stmt: "ORDER" "BY" . identifiers
 
     "SUM"         shift, and go to state 4
     "COUNT"       shift, and go to state 5
@@ -1364,27 +1393,13 @@ State 69
 
     fn             go to state 8
     fn_identifier  go to state 9
-    identifiers    go to state 72
+    identifiers    go to state 74
 
 
-State 70
-
-    1 query: select_stmt from_stmt where_stmt group_by_stmt having_stmt order_by_stmt .
-
-    $default  reduce using rule 1 (query)
-
-
-State 71
-
-   10 from_stmt: "FROM" "(" "identifier" "," "identifier" ")" .
-
-    $default  reduce using rule 10 (from_stmt)
-
-
-State 72
+State 74
 
     8 identifiers: identifiers . "," fn_identifier
-   36 order_by_stmt: "ORDER BY" identifiers .  ["end of file"]
+   36 order_by_stmt: "ORDER" "BY" identifiers .  ["end of file"]
 
     ","  shift, and go to state 15
 
