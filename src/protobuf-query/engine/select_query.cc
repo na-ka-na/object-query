@@ -13,12 +13,18 @@ void SelectQuery::parse() {
   }
   YY_BUFFER_STATE buffer = yy_scan_string(rawSql.c_str(), yyscanner);
 
-  yy::SqlParser::token_type token;
-  do {
-    yy::SqlParser::symbol_type symbol = yylex_flex(*this, yyscanner);
-    token = symbol.token();
-    cout << "TOKEN: " << token << " location: " << symbol.location << endl;
-  } while (token != yy::SqlParser::token_type::TOK_END);
+//  yy::SqlParser::token_type token;
+//  do {
+//    yy::SqlParser::symbol_type symbol = yylex_flex(*this, yyscanner);
+//    token = symbol.token();
+//    cout << "TOKEN: " << token << " location: " << symbol.location << endl;
+//  } while (token != yy::SqlParser::token_type::TOK_END);
+
+  yy::SqlParser parser(*this);
+  int res = parser.parse();
+  if (res != 0) {
+    cerr << "Parsing select query failed" << endl;
+  }
 
   yy_delete_buffer(buffer, yyscanner);
   if (yylex_destroy(yyscanner) != 0) {
