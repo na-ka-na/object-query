@@ -10,6 +10,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/gzip_stream.h>
 #include "example1.pb.h"
+#include "select_query.h"
 
 using namespace std;
 using namespace google::protobuf;
@@ -456,14 +457,21 @@ void parseQuery(const string&, Query& query) {
   // TODO: do some validation on query
 }
 
-int main(int /*argc*/, char** /*argv*/) {
-  Query query;
-  parseQuery("", query);
-  QueryGraph queryGraph;
-  calculateQueryGraph(query, queryGraph);
-  cout << "/*" << endl;
-  printPlan(queryGraph);
-  cout << "*/" << endl;
-  printCode(query, queryGraph);
+int main(int argc, char** argv) {
+  if (argc < 2) {
+    cerr << "Usage: ./QueryEngine <sql-query>" << endl;
+    exit(1);
+  }
+  SelectQuery query(argv[1]);
+  query.parse();
+
+//  Query query;
+//  parseQuery("", query);
+//  QueryGraph queryGraph;
+//  calculateQueryGraph(query, queryGraph);
+//  cout << "/*" << endl;
+//  printPlan(queryGraph);
+//  cout << "*/" << endl;
+//  printCode(query, queryGraph);
 }
 

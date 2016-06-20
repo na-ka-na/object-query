@@ -15,9 +15,23 @@ typedef void* yyscan_t;
 #define YY_DECL yy::SqlParser::symbol_type yylex_flex(SelectQuery& query, yyscan_t yyscanner)
 YY_DECL;
 
+// Fwd declaration of flex functions, generated header file doesn't work for us
+// for some reason
+int yylex_init(yyscan_t*);
+struct yy_buffer_state;
+#ifndef YY_TYPEDEF_YY_BUFFER_STATE
+#define YY_TYPEDEF_YY_BUFFER_STATE
+typedef struct yy_buffer_state* YY_BUFFER_STATE;
+#endif
+YY_BUFFER_STATE yy_scan_string(const char*, yyscan_t);
+void yy_delete_buffer(YY_BUFFER_STATE, yyscan_t);
+int yylex_destroy(yyscan_t);
+
 class SelectQuery {
 public:
+  SelectQuery(const std::string& rawSql) : rawSql(rawSql) {}
   std::string rawSql;
   yy::location loc;
-  yyscan_t yyscan;
+  yyscan_t yyscanner = nullptr;
+  void parse();
 };
