@@ -1,0 +1,9 @@
+# Generating yy::SqlParser
+# all of yy directory is generated
+cd yy
+
+/usr/local/opt/bison/bin/bison -Wall --report=all -d ../sql.yy
+# Generates location.hh, position.hh, sql.tab.hh, sql.tab.cc, stack.hh
+
+/usr/local/opt/flex/bin/flex --outfile=sql.lex.cc ../sql.ll
+# Generates sql.lex.cc

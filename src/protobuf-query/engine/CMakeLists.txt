@@ -4,7 +4,7 @@ include_directories(
     yy
 )
 
-add_library(SqlParser yy/sql.tab.cc select_query.cc)
+add_library(SqlParser select_query.cc yy/sql.tab.cc yy/sql.lex.cc)
 
 add_executable(QueryEngine query_engine.cc)
 target_link_libraries(QueryEngine ExampleProtos SqlParser)
