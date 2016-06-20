@@ -45,7 +45,6 @@ class SelectQuery;
   LIKE       "LIKE"
   AND        "AND"
   OR         "OR"
-  QUOTE      "'"
   LPAREN     "("
   RPAREN     ")"
   SUM        "SUM"
@@ -54,6 +53,7 @@ class SelectQuery;
 ;
 
 %token <std::string> IDENTIFIER "identifier"
+%token <std::string> STRING "string"
 %token <long> LONG "long"
 %token <double> DOUBLE "double"
 
@@ -106,6 +106,7 @@ expr:
  | fn_identifier
  | "long"
  | "double"
+ | "string"
  ;
 
 group_by_stmt: %empty | "GROUP" "BY" identifiers;

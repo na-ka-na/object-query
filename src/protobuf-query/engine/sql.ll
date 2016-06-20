@@ -7,7 +7,7 @@
 
 %option reentrant noyywrap nounput batch debug noinput
 
-string  \"[^\n"]+\"
+string  '[^\n']+'
 ws      [ \t]
 alpha   [A-Za-z]
 dig     [0-9]
@@ -50,12 +50,13 @@ query.loc.step();
 "LIKE"      return yy::SqlParser::make_LIKE(query.loc);
 "AND"       return yy::SqlParser::make_AND(query.loc);
 "OR"        return yy::SqlParser::make_OR(query.loc);
-"'"         return yy::SqlParser::make_QUOTE(query.loc);
 "("         return yy::SqlParser::make_LPAREN(query.loc);
 ")"         return yy::SqlParser::make_RPAREN(query.loc);
 "SUM"       return yy::SqlParser::make_SUM(query.loc);
 "COUNT"     return yy::SqlParser::make_COUNT(query.loc);
 "DISTINCT"  return yy::SqlParser::make_DISTINCT(query.loc);
+
+{string}    return yy::SqlParser::make_STRING(yytext, query.loc);
 
 {dig}+      {long n = std::strtol(yytext, NULL, 10);
              return yy::SqlParser::make_LONG(n, query.loc);}

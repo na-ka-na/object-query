@@ -296,6 +296,7 @@ namespace yy {
       char dummy2[sizeof(long)];
 
       // "identifier"
+      // "string"
       char dummy3[sizeof(std::string)];
 };
 
@@ -340,13 +341,13 @@ namespace yy {
         TOK_LIKE = 275,
         TOK_AND = 276,
         TOK_OR = 277,
-        TOK_QUOTE = 278,
-        TOK_LPAREN = 279,
-        TOK_RPAREN = 280,
-        TOK_SUM = 281,
-        TOK_COUNT = 282,
-        TOK_DISTINCT = 283,
-        TOK_IDENTIFIER = 284,
+        TOK_LPAREN = 278,
+        TOK_RPAREN = 279,
+        TOK_SUM = 280,
+        TOK_COUNT = 281,
+        TOK_DISTINCT = 282,
+        TOK_IDENTIFIER = 283,
+        TOK_STRING = 284,
         TOK_LONG = 285,
         TOK_DOUBLE = 286,
         TOK_UMINUS = 287
@@ -546,10 +547,6 @@ namespace yy {
 
     static inline
     symbol_type
-    make_QUOTE (const location_type& l);
-
-    static inline
-    symbol_type
     make_LPAREN (const location_type& l);
 
     static inline
@@ -571,6 +568,10 @@ namespace yy {
     static inline
     symbol_type
     make_IDENTIFIER (const std::string& v, const location_type& l);
+
+    static inline
+    symbol_type
+    make_STRING (const std::string& v, const location_type& l);
 
     static inline
     symbol_type
@@ -669,7 +670,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -789,7 +790,7 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 98,     ///< Last index in yytable_.
+      yylast_ = 109,     ///< Last index in yytable_.
       yynnts_ = 13,  ///< Number of nonterminal symbols.
       yyfinal_ = 11, ///< Termination state number.
       yyterror_ = 1,
@@ -882,7 +883,8 @@ namespace yy {
         value.copy< long > (other.value);
         break;
 
-      case 29: // "identifier"
+      case 28: // "identifier"
+      case 29: // "string"
         value.copy< std::string > (other.value);
         break;
 
@@ -911,7 +913,8 @@ namespace yy {
         value.copy< long > (v);
         break;
 
-      case 29: // "identifier"
+      case 28: // "identifier"
+      case 29: // "string"
         value.copy< std::string > (v);
         break;
 
@@ -985,7 +988,8 @@ namespace yy {
         value.template destroy< long > ();
         break;
 
-      case 29: // "identifier"
+      case 28: // "identifier"
+      case 29: // "string"
         value.template destroy< std::string > ();
         break;
 
@@ -1020,7 +1024,8 @@ namespace yy {
         value.move< long > (s.value);
         break;
 
-      case 29: // "identifier"
+      case 28: // "identifier"
+      case 29: // "string"
         value.move< std::string > (s.value);
         break;
 
@@ -1214,12 +1219,6 @@ namespace yy {
   }
 
   SqlParser::symbol_type
-  SqlParser::make_QUOTE (const location_type& l)
-  {
-    return symbol_type (token::TOK_QUOTE, l);
-  }
-
-  SqlParser::symbol_type
   SqlParser::make_LPAREN (const location_type& l)
   {
     return symbol_type (token::TOK_LPAREN, l);
@@ -1256,6 +1255,12 @@ namespace yy {
   }
 
   SqlParser::symbol_type
+  SqlParser::make_STRING (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_STRING, v, l);
+  }
+
+  SqlParser::symbol_type
   SqlParser::make_LONG (const long& v, const location_type& l)
   {
     return symbol_type (token::TOK_LONG, v, l);
@@ -1276,7 +1281,7 @@ namespace yy {
 
 
 } // yy
-#line 1280 "sql.tab.hh" // lalr1.cc:392
+#line 1285 "sql.tab.hh" // lalr1.cc:392
 
 
 
