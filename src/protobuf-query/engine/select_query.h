@@ -2,7 +2,10 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include "yy/sql.tab.hh"
+
+using namespace std;
 
 // declare yylex for bison
 yy::SqlParser::symbol_type yylex(SelectQuery& query);
@@ -27,17 +30,28 @@ YY_BUFFER_STATE yy_scan_string(const char*, yyscan_t);
 void yy_delete_buffer(YY_BUFFER_STATE, yyscan_t);
 int yylex_destroy(yyscan_t);
 
+struct SelectField;
+
 class SelectQuery {
 public:
-  SelectQuery(const std::string& rawSql) : rawSql(rawSql) {}
-  std::string rawSql;
+  SelectQuery(const string& rawSql) : rawSql(rawSql) {}
+  string rawSql;
   yy::location loc;
   yyscan_t yyscanner = nullptr;
+
+  vector<SelectField> selectFields;
+  string fromFile;
+  string fromRootProto;
 
   bool parse();
 
   void mark_lexer_invalid_char(char c);
   void mark_parse_error(
       const yy::SqlParser::location_type& loc,
-      const std::string& msg);
+      const string& msg);
 };
+
+struct SelectField {
+  string identifier;
+};
+

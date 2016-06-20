@@ -57,6 +57,8 @@ class SelectQuery;
 %token <long> LONG "long"
 %token <double> DOUBLE "double"
 
+
+
 %printer { yyoutput << $$; } <*>;
 %%
 
@@ -68,12 +70,12 @@ query: select_stmt
        order_by_stmt
 {};
 
-fn: "SUM" | "COUNT" | "DISTINCT";
+fn: "SUM" | "COUNT";
 fn_identifier: "identifier" | fn "(" fn_identifier ")";
-identifiers: fn_identifier | identifiers "," fn_identifier;
 
-select_stmt: "SELECT" identifiers
-{};
+select_stmt: "SELECT" select_fields | "SELECT" "DISTINCT" select_fields;
+select_fields: select_field | select_fields "," select_field;
+select_field: "identifier";
 
 from_stmt: "FROM" "(" "string" "," "string" ")" {};
 
@@ -109,11 +111,15 @@ expr:
  | "string"
  ;
 
-group_by_stmt: %empty | "GROUP" "BY" identifiers;
+group_by_stmt: %empty | "GROUP" "BY" group_by_fields;
+group_by_fields: group_by_field | group_by_fields "," group_by_field;
+group_by_field: "identifier";
 
 having_stmt: %empty | "HAVING" boolean_expr;
 
-order_by_stmt: %empty | "ORDER" "BY" identifiers;
+order_by_stmt: %empty | "ORDER" "BY" order_by_fields;
+order_by_fields: order_by_field | order_by_fields "," order_by_field;
+order_by_field: "identifier";
 
 %%
 void yy::SqlParser::error(const yy::SqlParser::location_type& loc,
