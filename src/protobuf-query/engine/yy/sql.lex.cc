@@ -1195,7 +1195,7 @@ return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
 case 32:
 YY_RULE_SETUP
 #line 69 "../sql.ll"
-std::cerr << "Ignoring invalid character at " << query.loc << std::endl;
+query.mark_lexer_invalid_char(yytext[0]);
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 70 "../sql.ll"

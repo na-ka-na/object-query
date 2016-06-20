@@ -16,7 +16,7 @@ Grammar
 
     9 select_stmt: "SELECT" identifiers
 
-   10 from_stmt: "FROM" "(" "identifier" "," "identifier" ")"
+   10 from_stmt: "FROM" "(" "string" "," "string" ")"
 
    11 where_stmt: %empty
    12           | "WHERE" boolean_expr
@@ -81,8 +81,8 @@ error (256)
 "SUM" (280) 2
 "COUNT" (281) 3
 "DISTINCT" (282) 4
-"identifier" (283) 5 10
-"string" (284) 31
+"identifier" (283) 5
+"string" (284) 10 31
 "long" (285) 29
 "double" (286) 30
 UMINUS (287)
@@ -162,7 +162,7 @@ State 2
 State 3
 
     1 query: select_stmt . from_stmt where_stmt group_by_stmt having_stmt order_by_stmt
-   10 from_stmt: . "FROM" "(" "identifier" "," "identifier" ")"
+   10 from_stmt: . "FROM" "(" "string" "," "string" ")"
 
     "FROM"  shift, and go to state 12
 
@@ -230,7 +230,7 @@ State 11
 
 State 12
 
-   10 from_stmt: "FROM" . "(" "identifier" "," "identifier" ")"
+   10 from_stmt: "FROM" . "(" "string" "," "string" ")"
 
     "("  shift, and go to state 16
 
@@ -286,9 +286,9 @@ State 15
 
 State 16
 
-   10 from_stmt: "FROM" "(" . "identifier" "," "identifier" ")"
+   10 from_stmt: "FROM" "(" . "string" "," "string" ")"
 
-    "identifier"  shift, and go to state 21
+    "string"  shift, and go to state 21
 
 
 State 17
@@ -364,7 +364,7 @@ State 20
 
 State 21
 
-   10 from_stmt: "FROM" "(" "identifier" . "," "identifier" ")"
+   10 from_stmt: "FROM" "(" "string" . "," "string" ")"
 
     ","  shift, and go to state 33
 
@@ -542,9 +542,9 @@ State 32
 
 State 33
 
-   10 from_stmt: "FROM" "(" "identifier" "," . "identifier" ")"
+   10 from_stmt: "FROM" "(" "string" "," . "string" ")"
 
-    "identifier"  shift, and go to state 53
+    "string"  shift, and go to state 53
 
 
 State 34
@@ -1143,7 +1143,7 @@ State 52
 
 State 53
 
-   10 from_stmt: "FROM" "(" "identifier" "," "identifier" . ")"
+   10 from_stmt: "FROM" "(" "string" "," "string" . ")"
 
     ")"  shift, and go to state 73
 
@@ -1407,7 +1407,7 @@ State 72
 
 State 73
 
-   10 from_stmt: "FROM" "(" "identifier" "," "identifier" ")" .
+   10 from_stmt: "FROM" "(" "string" "," "string" ")" .
 
     $default  reduce using rule 10 (from_stmt)
 

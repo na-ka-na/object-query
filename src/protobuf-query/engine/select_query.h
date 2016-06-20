@@ -33,5 +33,11 @@ public:
   std::string rawSql;
   yy::location loc;
   yyscan_t yyscanner = nullptr;
-  void parse();
+
+  bool parse();
+
+  void mark_lexer_invalid_char(char c);
+  void mark_parse_error(
+      const yy::SqlParser::location_type& loc,
+      const std::string& msg);
 };

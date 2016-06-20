@@ -66,7 +66,7 @@ query.loc.step();
 
 {name}      return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
 
-.           std::cerr << "Ignoring invalid character at " << query.loc << std::endl;
+.           query.mark_lexer_invalid_char(yytext[0]);
 <<EOF>>     return yy::SqlParser::make_END(query.loc);
 %%
 

@@ -463,7 +463,10 @@ int main(int argc, char** argv) {
     exit(1);
   }
   SelectQuery query(argv[1]);
-  query.parse();
+  if (!query.parse()) {
+    cerr << "parsing select query failed" << endl;
+    exit(1);
+  }
 
 //  Query query;
 //  parseQuery("", query);

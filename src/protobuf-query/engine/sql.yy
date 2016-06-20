@@ -75,7 +75,7 @@ identifiers: fn_identifier | identifiers "," fn_identifier;
 select_stmt: "SELECT" identifiers
 {};
 
-from_stmt: "FROM" "(" "identifier" "," "identifier" ")" {};
+from_stmt: "FROM" "(" "string" "," "string" ")" {};
 
 where_stmt: %empty | "WHERE" boolean_expr;
 
@@ -116,7 +116,7 @@ having_stmt: %empty | "HAVING" boolean_expr;
 order_by_stmt: %empty | "ORDER" "BY" identifiers;
 
 %%
-void yy::SqlParser::error(const yy::SqlParser::location_type& l,
-                          const std::string& m) {
-  std::cerr << "error at: " << l << " msg: " << m << std::endl;
+void yy::SqlParser::error(const yy::SqlParser::location_type& loc,
+                          const std::string& msg) {
+  query.mark_parse_error(loc, msg);
 }
