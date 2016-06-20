@@ -1,5 +1,6 @@
 
 #include "select_query.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -42,3 +43,21 @@ void SelectQuery::mark_parse_error(
     const std::string& msg) {
   cerr << "parse error at " << loc << ": " << msg << endl;
 }
+
+string SelectField::str() const {
+  return identifier;
+}
+
+string SelectStmt::str() const {
+  return (distinct ? "DISTINCT " : "") +
+         joinVec(", ", selectFields, strfn<SelectField>());
+}
+
+string FromStmt::str() const {
+  return "('" + fromFile + "', '" + fromRootProto + "')";
+}
+
+string SelectQuery::str() const {
+  return "SELECT " + selectStmt.str() + " FROM " + fromStmt.str();
+}
+

@@ -42,10 +42,9 @@
 // //                    "%code requires" blocks.
 #line 10 "../sql.yy" // lalr1.cc:392
 
-#include <string>
-class SelectQuery;
+#include "../select_parts.h"
 
-#line 49 "sql.tab.hh" // lalr1.cc:392
+#line 48 "sql.tab.hh" // lalr1.cc:392
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -122,7 +121,7 @@ class SelectQuery;
 
 
 namespace yy {
-#line 126 "sql.tab.hh" // lalr1.cc:392
+#line 125 "sql.tab.hh" // lalr1.cc:392
 
 
 
@@ -289,15 +288,27 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // from_stmt
+      char dummy1[sizeof(FromStmt)];
+
+      // select_field
+      char dummy2[sizeof(SelectField)];
+
+      // select_stmt
+      char dummy3[sizeof(SelectStmt)];
+
       // "double"
-      char dummy1[sizeof(double)];
+      char dummy4[sizeof(double)];
 
       // "long"
-      char dummy2[sizeof(long)];
+      char dummy5[sizeof(long)];
 
       // "identifier"
       // "string"
-      char dummy3[sizeof(std::string)];
+      char dummy6[sizeof(std::string)];
+
+      // select_fields
+      char dummy7[sizeof(std::vector<SelectField>)];
 };
 
     /// Symbol semantic values.
@@ -388,11 +399,19 @@ namespace yy {
 
   basic_symbol (typename Base::kind_type t, const location_type& l);
 
+  basic_symbol (typename Base::kind_type t, const FromStmt v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const SelectField v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const SelectStmt v, const location_type& l);
+
   basic_symbol (typename Base::kind_type t, const double v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const long v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const std::vector<SelectField> v, const location_type& l);
 
 
       /// Constructor for symbols with semantic value.
@@ -875,6 +894,18 @@ namespace yy {
   {
       switch (other.type_get ())
     {
+      case 40: // from_stmt
+        value.copy< FromStmt > (other.value);
+        break;
+
+      case 39: // select_field
+        value.copy< SelectField > (other.value);
+        break;
+
+      case 37: // select_stmt
+        value.copy< SelectStmt > (other.value);
+        break;
+
       case 31: // "double"
         value.copy< double > (other.value);
         break;
@@ -886,6 +917,10 @@ namespace yy {
       case 28: // "identifier"
       case 29: // "string"
         value.copy< std::string > (other.value);
+        break;
+
+      case 38: // select_fields
+        value.copy< std::vector<SelectField> > (other.value);
         break;
 
       default:
@@ -905,6 +940,18 @@ namespace yy {
     (void) v;
       switch (this->type_get ())
     {
+      case 40: // from_stmt
+        value.copy< FromStmt > (v);
+        break;
+
+      case 39: // select_field
+        value.copy< SelectField > (v);
+        break;
+
+      case 37: // select_stmt
+        value.copy< SelectStmt > (v);
+        break;
+
       case 31: // "double"
         value.copy< double > (v);
         break;
@@ -916,6 +963,10 @@ namespace yy {
       case 28: // "identifier"
       case 29: // "string"
         value.copy< std::string > (v);
+        break;
+
+      case 38: // select_fields
+        value.copy< std::vector<SelectField> > (v);
         break;
 
       default:
@@ -930,6 +981,27 @@ namespace yy {
   SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
     , value ()
+    , location (l)
+  {}
+
+  template <typename Base>
+  SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const FromStmt v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const SelectField v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const SelectStmt v, const location_type& l)
+    : Base (t)
+    , value (v)
     , location (l)
   {}
 
@@ -949,6 +1021,13 @@ namespace yy {
 
   template <typename Base>
   SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<SelectField> v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -980,6 +1059,18 @@ namespace yy {
     // Type destructor.
     switch (yytype)
     {
+      case 40: // from_stmt
+        value.template destroy< FromStmt > ();
+        break;
+
+      case 39: // select_field
+        value.template destroy< SelectField > ();
+        break;
+
+      case 37: // select_stmt
+        value.template destroy< SelectStmt > ();
+        break;
+
       case 31: // "double"
         value.template destroy< double > ();
         break;
@@ -991,6 +1082,10 @@ namespace yy {
       case 28: // "identifier"
       case 29: // "string"
         value.template destroy< std::string > ();
+        break;
+
+      case 38: // select_fields
+        value.template destroy< std::vector<SelectField> > ();
         break;
 
       default:
@@ -1016,6 +1111,18 @@ namespace yy {
     super_type::move(s);
       switch (this->type_get ())
     {
+      case 40: // from_stmt
+        value.move< FromStmt > (s.value);
+        break;
+
+      case 39: // select_field
+        value.move< SelectField > (s.value);
+        break;
+
+      case 37: // select_stmt
+        value.move< SelectStmt > (s.value);
+        break;
+
       case 31: // "double"
         value.move< double > (s.value);
         break;
@@ -1027,6 +1134,10 @@ namespace yy {
       case 28: // "identifier"
       case 29: // "string"
         value.move< std::string > (s.value);
+        break;
+
+      case 38: // select_fields
+        value.move< std::vector<SelectField> > (s.value);
         break;
 
       default:
@@ -1281,7 +1392,7 @@ namespace yy {
 
 
 } // yy
-#line 1285 "sql.tab.hh" // lalr1.cc:392
+#line 1396 "sql.tab.hh" // lalr1.cc:392
 
 
 

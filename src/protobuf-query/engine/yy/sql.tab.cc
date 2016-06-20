@@ -49,7 +49,7 @@
 
 #line 51 "sql.tab.cc" // lalr1.cc:412
 // Unqualified %code blocks.
-#line 20 "../sql.yy" // lalr1.cc:413
+#line 19 "../sql.yy" // lalr1.cc:413
 
 #include "../select_query.h"
 
@@ -251,6 +251,18 @@ namespace yy {
   {
       switch (that.type_get ())
     {
+      case 40: // from_stmt
+        value.move< FromStmt > (that.value);
+        break;
+
+      case 39: // select_field
+        value.move< SelectField > (that.value);
+        break;
+
+      case 37: // select_stmt
+        value.move< SelectStmt > (that.value);
+        break;
+
       case 31: // "double"
         value.move< double > (that.value);
         break;
@@ -262,6 +274,10 @@ namespace yy {
       case 28: // "identifier"
       case 29: // "string"
         value.move< std::string > (that.value);
+        break;
+
+      case 38: // select_fields
+        value.move< std::vector<SelectField> > (that.value);
         break;
 
       default:
@@ -279,6 +295,18 @@ namespace yy {
     state = that.state;
       switch (that.type_get ())
     {
+      case 40: // from_stmt
+        value.copy< FromStmt > (that.value);
+        break;
+
+      case 39: // select_field
+        value.copy< SelectField > (that.value);
+        break;
+
+      case 37: // select_stmt
+        value.copy< SelectStmt > (that.value);
+        break;
+
       case 31: // "double"
         value.copy< double > (that.value);
         break;
@@ -290,6 +318,10 @@ namespace yy {
       case 28: // "identifier"
       case 29: // "string"
         value.copy< std::string > (that.value);
+        break;
+
+      case 38: // select_fields
+        value.copy< std::vector<SelectField> > (that.value);
         break;
 
       default:
@@ -330,30 +362,58 @@ namespace yy {
     {
             case 28: // "identifier"
 
-#line 62 "../sql.yy" // lalr1.cc:636
+#line 65 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 336 "sql.tab.cc" // lalr1.cc:636
+#line 368 "sql.tab.cc" // lalr1.cc:636
         break;
 
       case 29: // "string"
 
-#line 62 "../sql.yy" // lalr1.cc:636
+#line 65 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 343 "sql.tab.cc" // lalr1.cc:636
+#line 375 "sql.tab.cc" // lalr1.cc:636
         break;
 
       case 30: // "long"
 
-#line 62 "../sql.yy" // lalr1.cc:636
+#line 65 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< long > (); }
-#line 350 "sql.tab.cc" // lalr1.cc:636
+#line 382 "sql.tab.cc" // lalr1.cc:636
         break;
 
       case 31: // "double"
 
-#line 62 "../sql.yy" // lalr1.cc:636
+#line 65 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< double > (); }
-#line 357 "sql.tab.cc" // lalr1.cc:636
+#line 389 "sql.tab.cc" // lalr1.cc:636
+        break;
+
+      case 37: // select_stmt
+
+#line 65 "../sql.yy" // lalr1.cc:636
+        { yyoutput << yysym.value.template as< SelectStmt > (); }
+#line 396 "sql.tab.cc" // lalr1.cc:636
+        break;
+
+      case 38: // select_fields
+
+#line 65 "../sql.yy" // lalr1.cc:636
+        { yyoutput << yysym.value.template as< std::vector<SelectField> > (); }
+#line 403 "sql.tab.cc" // lalr1.cc:636
+        break;
+
+      case 39: // select_field
+
+#line 65 "../sql.yy" // lalr1.cc:636
+        { yyoutput << yysym.value.template as< SelectField > (); }
+#line 410 "sql.tab.cc" // lalr1.cc:636
+        break;
+
+      case 40: // from_stmt
+
+#line 65 "../sql.yy" // lalr1.cc:636
+        { yyoutput << yysym.value.template as< FromStmt > (); }
+#line 417 "sql.tab.cc" // lalr1.cc:636
         break;
 
 
@@ -553,6 +613,18 @@ namespace yy {
          when using variants.  */
         switch (yyr1_[yyn])
     {
+      case 40: // from_stmt
+        yylhs.value.build< FromStmt > ();
+        break;
+
+      case 39: // select_field
+        yylhs.value.build< SelectField > ();
+        break;
+
+      case 37: // select_stmt
+        yylhs.value.build< SelectStmt > ();
+        break;
+
       case 31: // "double"
         yylhs.value.build< double > ();
         break;
@@ -564,6 +636,10 @@ namespace yy {
       case 28: // "identifier"
       case 29: // "string"
         yylhs.value.build< std::string > ();
+        break;
+
+      case 38: // select_fields
+        yylhs.value.build< std::vector<SelectField> > ();
         break;
 
       default:
@@ -584,19 +660,50 @@ namespace yy {
           switch (yyn)
             {
   case 2:
-#line 71 "../sql.yy" // lalr1.cc:859
-    {}
-#line 590 "sql.tab.cc" // lalr1.cc:859
+#line 74 "../sql.yy" // lalr1.cc:859
+    {query.selectStmt = yystack_[5].value.as< SelectStmt > ();
+  query.fromStmt = yystack_[4].value.as< FromStmt > ();}
+#line 667 "sql.tab.cc" // lalr1.cc:859
+    break;
+
+  case 7:
+#line 81 "../sql.yy" // lalr1.cc:859
+    {yylhs.value.as< SelectStmt > ()=SelectStmt(); yylhs.value.as< SelectStmt > ().selectFields=yystack_[0].value.as< std::vector<SelectField> > ();}
+#line 673 "sql.tab.cc" // lalr1.cc:859
+    break;
+
+  case 8:
+#line 82 "../sql.yy" // lalr1.cc:859
+    {yylhs.value.as< SelectStmt > ()=SelectStmt(); yylhs.value.as< SelectStmt > ().distinct=true; yylhs.value.as< SelectStmt > ().selectFields=yystack_[0].value.as< std::vector<SelectField> > ();}
+#line 679 "sql.tab.cc" // lalr1.cc:859
+    break;
+
+  case 9:
+#line 84 "../sql.yy" // lalr1.cc:859
+    {yylhs.value.as< std::vector<SelectField> > ()=vector<SelectField>{yystack_[0].value.as< SelectField > ()};}
+#line 685 "sql.tab.cc" // lalr1.cc:859
+    break;
+
+  case 10:
+#line 85 "../sql.yy" // lalr1.cc:859
+    {yylhs.value.as< std::vector<SelectField> > ()=yystack_[2].value.as< std::vector<SelectField> > (); yylhs.value.as< std::vector<SelectField> > ().push_back(yystack_[0].value.as< SelectField > ());}
+#line 691 "sql.tab.cc" // lalr1.cc:859
+    break;
+
+  case 11:
+#line 87 "../sql.yy" // lalr1.cc:859
+    {yylhs.value.as< SelectField > ()=SelectField(); yylhs.value.as< SelectField > ().identifier=yystack_[0].value.as< std::string > ();}
+#line 697 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 12:
-#line 80 "../sql.yy" // lalr1.cc:859
-    {}
-#line 596 "sql.tab.cc" // lalr1.cc:859
+#line 90 "../sql.yy" // lalr1.cc:859
+    {yylhs.value.as< FromStmt > ()=FromStmt(); yylhs.value.as< FromStmt > ().fromFile=yystack_[3].value.as< std::string > (); yylhs.value.as< FromStmt > ().fromRootProto=yystack_[1].value.as< std::string > ();}
+#line 703 "sql.tab.cc" // lalr1.cc:859
     break;
 
 
-#line 600 "sql.tab.cc" // lalr1.cc:859
+#line 707 "sql.tab.cc" // lalr1.cc:859
             default:
               break;
             }
@@ -986,11 +1093,11 @@ namespace yy {
   const unsigned char
   SqlParser::yyrline_[] =
   {
-       0,    65,    65,    73,    73,    74,    74,    76,    76,    77,
-      77,    78,    80,    82,    82,    87,    88,    89,    90,    91,
-      92,    93,    94,    95,   102,   103,   104,   105,   106,   107,
-     108,   109,   110,   111,   114,   114,   115,   115,   116,   118,
-     118,   120,   120,   121,   121,   122
+       0,    68,    68,    78,    78,    79,    79,    81,    82,    84,
+      85,    87,    89,    93,    93,    98,    99,   100,   101,   102,
+     103,   104,   105,   106,   113,   114,   115,   116,   117,   118,
+     119,   120,   121,   122,   125,   125,   126,   126,   127,   129,
+     129,   131,   131,   132,   132,   133
   };
 
   // Print the state stack on the debug stream.
@@ -1025,8 +1132,8 @@ namespace yy {
 
 
 } // yy
-#line 1029 "sql.tab.cc" // lalr1.cc:1167
-#line 124 "../sql.yy" // lalr1.cc:1168
+#line 1136 "sql.tab.cc" // lalr1.cc:1167
+#line 135 "../sql.yy" // lalr1.cc:1168
 
 void yy::SqlParser::error(const yy::SqlParser::location_type& loc,
                           const std::string& msg) {

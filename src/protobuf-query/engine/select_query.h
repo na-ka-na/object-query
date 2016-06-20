@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "select_parts.h"
 #include "yy/sql.tab.hh"
 
 using namespace std;
@@ -30,8 +31,6 @@ YY_BUFFER_STATE yy_scan_string(const char*, yyscan_t);
 void yy_delete_buffer(YY_BUFFER_STATE, yyscan_t);
 int yylex_destroy(yyscan_t);
 
-struct SelectField;
-
 class SelectQuery {
 public:
   SelectQuery(const string& rawSql) : rawSql(rawSql) {}
@@ -39,19 +38,15 @@ public:
   yy::location loc;
   yyscan_t yyscanner = nullptr;
 
-  vector<SelectField> selectFields;
-  string fromFile;
-  string fromRootProto;
+  SelectStmt selectStmt;
+  FromStmt fromStmt;
 
   bool parse();
+  string str() const;
 
   void mark_lexer_invalid_char(char c);
   void mark_parse_error(
       const yy::SqlParser::location_type& loc,
       const string& msg);
-};
-
-struct SelectField {
-  string identifier;
 };
 
