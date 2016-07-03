@@ -341,9 +341,11 @@ void printTuples(const vector<TupleType>& tuples) {
   // main
   cout << "int main(int argc, char** argv) {" << endl;
   cout << "  " << queryGraph.proto.defaultInstance->GetDescriptor()->name()
-      << " " << queryGraph.root.objName << ";" << endl;
-  cout << "  parsePbFromFile(argv[1], " << queryGraph.root.objName << ");"
-      << endl;
+       << " " << queryGraph.root.objName << ";" << endl;
+  string fromFile = (query.fromStmt.fromFile.find("argv") == 0) ?
+      query.fromStmt.fromFile : ("\"" + query.fromStmt.fromFile + "\"");
+  cout << "  parsePbFromFile(" << fromFile << ", " << queryGraph.root.objName
+       << ");" << endl;
   cout << "  vector<TupleType> tuples;" << endl;
   cout << "  runSelect(company, tuples);" << endl;
   cout << "  printTuples(tuples);" << endl;
