@@ -56,7 +56,8 @@ query.loc.step();
 "COUNT"     return yy::SqlParser::make_COUNT(query.loc);
 "DISTINCT"  return yy::SqlParser::make_DISTINCT(query.loc);
 
-{string}    return yy::SqlParser::make_STRING(yytext, query.loc);
+{string}    {string s = yytext; s = s.substr(1, s.size()-2);
+             return yy::SqlParser::make_STRING(s, query.loc);}
 
 {dig}+      {long n = std::strtol(yytext, NULL, 10);
              return yy::SqlParser::make_LONG(n, query.loc);}

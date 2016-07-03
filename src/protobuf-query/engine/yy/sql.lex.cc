@@ -599,8 +599,8 @@ static yyconst flex_int16_t yy_rule_linenum[33] =
     {   0,
        31,   32,   33,   34,   35,   36,   37,   38,   39,   40,
        41,   42,   43,   44,   45,   46,   47,   48,   49,   50,
-       51,   52,   53,   54,   55,   56,   57,   59,   61,   64,
-       67,   69
+       51,   52,   53,   54,   55,   56,   57,   59,   62,   65,
+       68,   70
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1173,40 +1173,41 @@ return yy::SqlParser::make_DISTINCT(query.loc);
 case 28:
 YY_RULE_SETUP
 #line 59 "../sql.ll"
-return yy::SqlParser::make_STRING(yytext, query.loc);
+{string s = yytext; s = s.substr(1, s.size()-2);
+             return yy::SqlParser::make_STRING(s, query.loc);}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 61 "../sql.ll"
+#line 62 "../sql.ll"
 {long n = std::strtol(yytext, NULL, 10);
              return yy::SqlParser::make_LONG(n, query.loc);}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 64 "../sql.ll"
+#line 65 "../sql.ll"
 {double d = std::strtod(yytext, NULL);
              return yy::SqlParser::make_DOUBLE(d, query.loc);}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 67 "../sql.ll"
+#line 68 "../sql.ll"
 return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 69 "../sql.ll"
+#line 70 "../sql.ll"
 query.mark_lexer_invalid_char(yytext[0]);
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 70 "../sql.ll"
+#line 71 "../sql.ll"
 return yy::SqlParser::make_END(query.loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 71 "../sql.ll"
+#line 72 "../sql.ll"
 ECHO;
 	YY_BREAK
-#line 1210 "sql.lex.cc"
+#line 1211 "sql.lex.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2479,7 +2480,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 /* %ok-for-header */
 
-#line 71 "../sql.ll"
+#line 72 "../sql.ll"
 
 
 
