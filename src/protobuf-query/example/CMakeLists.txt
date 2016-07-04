@@ -5,3 +5,6 @@ include_directories(
 
 add_executable(RunQuery run_query.cc)
 target_link_libraries(RunQuery ExampleProtos QueryEngine)
+
+add_executable(GeneratedQuery generated_query.cc)
+target_link_libraries(GeneratedQuery ExampleProtos)

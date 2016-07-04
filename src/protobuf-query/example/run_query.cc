@@ -1,4 +1,4 @@
-
+#include <fstream>
 #include "query_engine.h"
 #include "example1.pb.h"
 
@@ -20,6 +20,10 @@ int main(int argc, char** argv) {
     cerr << "Usage: ./QueryEngine <sql-query>" << endl;
     exit(1);
   }
-  QueryEngine engine(argv[1], cout);
+  string thisFile = __FILE__;
+  auto idx = thisFile.rfind("/");
+  string generatedFile = thisFile.substr(0, idx) + "/generated_query.cc";
+  ofstream generated(generatedFile, ios::out | ios::trunc);
+  QueryEngine engine(argv[1], generated);
   engine.process();
 }
