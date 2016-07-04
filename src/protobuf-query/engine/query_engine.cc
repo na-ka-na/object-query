@@ -70,7 +70,8 @@ string Field::sizeAccessor(const string& objName) const {
   return str;
 }
 
-QueryEngine::QueryEngine(const string& rawSql) : query(rawSql) {}
+QueryEngine::QueryEngine(const string& rawSql, ostream& out) :
+    query(SelectQuery(rawSql)), out(out) {}
 
 string QueryEngine::constructObjNameForRepeated(const FieldDescriptor* field) {
   string fieldName = field->name();
@@ -167,30 +168,30 @@ void QueryEngine::walkNode(const Node& root,
 }
 
 void QueryEngine::printPlan() {
-  SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {
+  SelectFieldsFn selectFieldsFn = [this](int indent, const Node& node) {
     if (node.type == REPEATED_PRIMITIVE) {
-      cout << string(indent, ' ') << "print " << node.objName << endl;
+      out << string(indent, ' ') << "print " << node.objName << endl;
     } else {
       for (const Field& field : node.selectFields) {
-        cout << string(indent, ' ') << "print " << field.accessor(node.objName) << endl;
+        out << string(indent, ' ') << "print " << field.accessor(node.objName) << endl;
       }
     }
   };
-  StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {
-    cout << string(indent, ' ') << "for each " << node.objName << " in "
+  StartForAllFn startForAllFn = [this](int indent, const Node& node, const Node& parent) {
+    out << string(indent, ' ') << "for each " << node.objName << " in "
         << node.repeatedField.accessor(parent.objName) << " {" << endl;
   };
-  EndForAllFn endForAllFn = [](int indent, const Node& node) {
-    cout << string(indent, ' ') << "} //" << node.objName << endl;
+  EndForAllFn endForAllFn = [this](int indent, const Node& node) {
+    out << string(indent, ' ') << "} //" << node.objName << endl;
   };
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
 }
 
 void QueryEngine::printCode() {
-  cout << "#include \"" << queryGraph.proto.protoHeaderInclude << "\"" << endl;
-  cout << "#include \"generated_common.h\"" << endl << endl;
-  cout << "using namespace std;" << endl;
-  cout << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl << endl;
+  out << "#include \"" << queryGraph.proto.protoHeaderInclude << "\"" << endl;
+  out << "#include \"generated_common.h\"" << endl << endl;
+  out << "using namespace std;" << endl;
+  out << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl << endl;
   SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {};
   StartForAllFn startForAllFn = [](int indent, const Node& node, const Node& parent) {};
   EndForAllFn endForAllFn = [](int indent, const Node& node) {};
@@ -232,7 +233,7 @@ void QueryEngine::printCode() {
     header += "  \"" + query.selectStmt.selectFields[i].identifier + "\",\n";
   }
   header += "};";
-  cout << header << endl;
+  out << header << endl;
 
   map<const Field*, string> selectFieldVarMap;
   map<const Field*, string> selectFieldTypeMap;
@@ -244,7 +245,7 @@ void QueryEngine::printCode() {
     selectFieldDefaultMap[field] = selectFieldTypeMap[field] + "()";
     string type = "optional<" + field->type() + ">";
     string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
-    cout << "using " << selectFieldTypeMap[field] << " = " << type << ";"
+    out << "using " << selectFieldTypeMap[field] << " = " << type << ";"
         << spaces << " /*" << field->accessor("") << "*/" << endl;
   }
   string tupleType = "using TupleType = tuple<";
@@ -252,10 +253,10 @@ void QueryEngine::printCode() {
       ", ", allSelectFields,
       [&](const Field* field) {return selectFieldTypeMap[field];});
   tupleType += ">;";
-  cout << tupleType << endl;
-  cout << endl;
+  out << tupleType << endl;
+  out << endl;
 
-  cout << "void runSelect(const "
+  out << "void runSelect(const "
       << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
       << queryGraph.root.objName << ", vector<TupleType>& tuples) {" << endl;
   vector<const Field*> selectFieldsProcessed;
@@ -263,45 +264,45 @@ void QueryEngine::printCode() {
     string ind = string(indent+2, ' ');
     if (node.type == REPEATED_PRIMITIVE) {
       const Field* field = &node.repeatedField;
-      cout << ind << selectFieldTypeMap[field] << " "
+      out << ind << selectFieldTypeMap[field] << " "
           << selectFieldVarMap[field] << " = " << node.objName << ";" << endl;
       selectFieldsProcessed.push_back(field);
     } else {
       for (const Field& field : node.selectFields) {
-        cout << ind << selectFieldTypeMap[&field] << " "
+        out << ind << selectFieldTypeMap[&field] << " "
             << selectFieldVarMap[&field] << " = "
             << selectFieldDefaultMap[&field] << ";" << endl;
         vector<string> checks;
         for (uint32_t i=0; i<field.fieldParts.size(); i++) {
           checks.push_back(field.hasAccessor(node.objName, i+1));
         }
-        cout << ind << "if(" << joinVec<string>(" && ", checks, string2str)
+        out << ind << "if(" << joinVec<string>(" && ", checks, string2str)
             << ") {" << endl;
-        cout << ind << "  " << selectFieldVarMap[&field] << " = "
+        out << ind << "  " << selectFieldVarMap[&field] << " = "
             << field.accessor(node.objName) << ";" << endl;
-        cout << ind << "}" << endl;
+        out << ind << "}" << endl;
         selectFieldsProcessed.push_back(&field);
       }
     }
     if (selectFieldsProcessed.size() == allSelectFields.size()) {
       string selectList = joinVec<const Field*>(", ", allSelectFields,
           [&](const Field* field) {return selectFieldVarMap[field];});
-      cout << ind << "tuples.emplace_back(" + selectList + ");" << endl;
+      out << ind << "tuples.emplace_back(" + selectList + ");" << endl;
     }
   };
-  startForAllFn = [](int indent, const Node& node, const Node& parent) {
+  startForAllFn = [this](int indent, const Node& node, const Node& parent) {
     string ind = string(indent+2, ' ');
-    cout << ind << "if (" << node.repeatedField.sizeAccessor(parent.objName)
+    out << ind << "if (" << node.repeatedField.sizeAccessor(parent.objName)
         << " > 0) {" << endl;
-    cout << ind << "  for (const " << node.repeatedField.type() << "& " <<
-        node.objName << " : " << node.repeatedField.accessor(parent.objName) <<
-        ") {" << endl;
+    out << ind << "  for (const " << node.repeatedField.type() << "& "
+        << node.objName << " : " << node.repeatedField.accessor(parent.objName)
+        << ") {" << endl;
   };
   set<const Field*> endedFieldSet;
   endForAllFn = [&](int indent, const Node& node) {
     string ind = string(indent+2, ' ');
-    cout << ind << "  }" << endl;
-    cout << ind << "} else { // no " << node.objName << endl;
+    out << ind << "  }" << endl;
+    out << ind << "} else { // no " << node.objName << endl;
     if (node.type == REPEATED_PRIMITIVE) {
       endedFieldSet.insert(&node.repeatedField);
     } else {
@@ -315,28 +316,28 @@ void QueryEngine::printCode() {
             return endedFieldSet.find(field) == endedFieldSet.end() ?
                 selectFieldVarMap[field] : selectFieldDefaultMap[field];
         });
-    cout << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
-    cout << ind << "}" << endl;
+    out << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
+    out << ind << "}" << endl;
   };
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn, 4);
-  cout << "}" << endl;
+  out << "}" << endl;
 
   // print tuples
-  cout << R"fff(
+  out << R"fff(
 void printTuples(const vector<TupleType>& tuples) {
   vector<size_t> sizes;
   for (size_t i=0; i<header.size(); i++) {
     sizes.push_back(header[i].size());
   }
 )fff";
-  cout << "  for (const TupleType& t : tuples) {" << endl;
+  out << "  for (const TupleType& t : tuples) {" << endl;
   for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
-    cout << "    sizes[" << i << "] = max(sizes[" << i << "], stringify(get<"
+    out << "    sizes[" << i << "] = max(sizes[" << i << "], stringify(get<"
         << querySelectsIdxToTupleIdxMap[i] << ">(t)).size());" << endl;
   }
-  cout << "  }" << endl;
-  cout << "  cout << left;";
-  cout << R"fff(
+  out << "  }" << endl;
+  out << "  cout << left;";
+  out << R"fff(
   for (size_t i=0; i<header.size(); i++) {
     cout << ((i==0) ? "" : " | ") << setw(sizes[i]) << header[i];
   }
@@ -346,40 +347,40 @@ void printTuples(const vector<TupleType>& tuples) {
   }
   cout << endl;
 )fff";
-  cout << "  for(const TupleType& t : tuples) {" << endl;
+  out << "  for(const TupleType& t : tuples) {" << endl;
   for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
-    cout << "    cout << " << ((i==0) ? "         " : "\" | \" << ")
+    out << "    cout << " << ((i==0) ? "         " : "\" | \" << ")
         << "setw(sizes[" << i << "]) << "
         << "stringify(get<" << querySelectsIdxToTupleIdxMap[i]
         << ">(t));" << endl;
   }
-  cout << "    cout << endl;" << endl;
-  cout << "  }" << endl;
-  cout << "}" << endl << endl;
+  out << "    cout << endl;" << endl;
+  out << "  }" << endl;
+  out << "}" << endl << endl;
 
   // main
-  cout << "int main(int argc, char** argv) {" << endl;
-  cout << "  " << queryGraph.proto.defaultInstance->GetDescriptor()->name()
-       << " " << queryGraph.root.objName << ";" << endl;
+  out << "int main(int argc, char** argv) {" << endl;
+  out << "  " << queryGraph.proto.defaultInstance->GetDescriptor()->name()
+      << " " << queryGraph.root.objName << ";" << endl;
   string fromFile = (query.fromStmt.fromFile.find("argv") == 0) ?
       query.fromStmt.fromFile : ("\"" + query.fromStmt.fromFile + "\"");
-  cout << "  parsePbFromFile(" << fromFile << ", " << queryGraph.root.objName
-       << ");" << endl;
-  cout << "  vector<TupleType> tuples;" << endl;
-  cout << "  runSelect(company, tuples);" << endl;
-  cout << "  printTuples(tuples);" << endl;
-  cout << "}" << endl;
+  out << "  parsePbFromFile(" << fromFile << ", " << queryGraph.root.objName
+      << ");" << endl;
+  out << "  vector<TupleType> tuples;" << endl;
+  out << "  runSelect(company, tuples);" << endl;
+  out << "  printTuples(tuples);" << endl;
+  out << "}" << endl;
 }
 
 void QueryEngine::process() {
   if (!query.parse()) {
     throw runtime_error("Parsing select query failed");
   }
-  cout << "/*" << endl;
-  cout << query.str() << endl << endl;
+  out << "/*" << endl;
+  out << query.str() << endl << endl;
   calculateQueryGraph();
   printPlan();
-  cout << "*/" << endl;
+  out << "*/" << endl;
   printCode();
 }
 
@@ -388,7 +389,7 @@ int main(int argc, char** argv) {
     cerr << "Usage: ./QueryEngine <sql-query>" << endl;
     exit(1);
   }
-  QueryEngine engine(argv[1]);
+  QueryEngine engine(argv[1], cout);
   engine.process();
 }
 

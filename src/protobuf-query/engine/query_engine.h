@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <functional>
+#include <ostream>
 #include <google/protobuf/message.h>
 #include "select_query.h"
 
@@ -62,12 +63,13 @@ struct QueryGraph {
 
 class QueryEngine {
 public:
-  QueryEngine(const string& rawSql);
+  QueryEngine(const string& rawSql, ostream& out);
   void process();
 
 private:
   SelectQuery query;
   QueryGraph queryGraph;
+  ostream& out;
 
   static string constructObjNameForRepeated(const FieldDescriptor* field);
   void calculateQueryGraph();
