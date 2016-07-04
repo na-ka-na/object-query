@@ -1,27 +1,10 @@
 
-#include <fcntl.h>
-#include <tuple>
 #include <algorithm>
-#include <iostream>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include <google/protobuf/io/gzip_stream.h>
-#include "example1.pb.h"
 #include "utils.h"
 #include "query_engine.h"
 
 using namespace std;
 using namespace google::protobuf;
-
-void Proto::initProto(const string& protoName, Proto& proto) {
-  if (protoName == "Example1.Company") {
-    static Example1::Company defaultInstance;
-    proto.defaultInstance = &defaultInstance;
-    proto.protoNamespace = "Example1";
-    proto.protoHeaderInclude = "example1.pb.h";
-  } else {
-    throw runtime_error("No mapping defined for protoName: " + protoName);
-  }
-}
 
 bool Field::operator<(const Field& other) const {
   return fieldParts < other.fieldParts;
@@ -383,13 +366,3 @@ void QueryEngine::process() {
   out << "*/" << endl;
   printCode();
 }
-
-int main(int argc, char** argv) {
-  if (argc < 2) {
-    cerr << "Usage: ./QueryEngine <sql-query>" << endl;
-    exit(1);
-  }
-  QueryEngine engine(argv[1], cout);
-  engine.process();
-}
-

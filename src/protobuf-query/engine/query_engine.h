@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 #include <functional>
-#include <ostream>
+#include <iostream>
 #include <google/protobuf/message.h>
 #include "select_query.h"
 
