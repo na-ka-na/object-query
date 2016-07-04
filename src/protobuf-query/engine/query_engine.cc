@@ -1,28 +1,18 @@
 
 #include <fcntl.h>
-#include <string>
 #include <tuple>
 #include <algorithm>
-#include <map>
 #include <iostream>
-#include <functional>
-#include <google/protobuf/message.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/gzip_stream.h>
 #include "example1.pb.h"
 #include "utils.h"
-#include "select_query.h"
+#include "query_engine.h"
 
 using namespace std;
 using namespace google::protobuf;
 
-struct Proto {
-  const Message* defaultInstance;
-  const char* protoNamespace;
-  const char* protoHeaderInclude;
-};
-
-void getProtoDetails(const string& protoName, Proto& proto) {
+void Proto::initProto(const string& protoName, Proto& proto) {
   if (protoName == "Example1.Company") {
     static Example1::Company defaultInstance;
     proto.defaultInstance = &defaultInstance;
@@ -33,93 +23,122 @@ void getProtoDetails(const string& protoName, Proto& proto) {
   }
 }
 
-struct Field {
-  vector<const FieldDescriptor*> fieldParts;
+bool Field::operator<(const Field& other) const {
+  return fieldParts < other.fieldParts;
+}
 
-  bool operator<(const Field& other) const {
-    return fieldParts < other.fieldParts;
+bool Field::operator==(const Field& other) const {
+  return fieldParts == other.fieldParts;
+}
+
+string Field::type() const {
+  if (fieldParts.empty()) {
+    throw runtime_error("Can't determine type of empty field");
   }
-
-  bool operator==(const Field& other) const {
-    return fieldParts == other.fieldParts;
+  const FieldDescriptor* lastPart = fieldParts.back();
+  if (lastPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
+    const Descriptor* msgType = lastPart->message_type();
+    return msgType->name();
+  } else {
+    return lastPart->cpp_type_name();
   }
+}
 
-  string type() const {
-    if (fieldParts.empty()) {
-      throw runtime_error("Can't determine type of empty field");
+string Field::accessor(const string& objName) const {
+  string str = objName;
+  for (const FieldDescriptor* part : fieldParts) {
+    str += "." + part->name() + "()";
+  }
+  return str;
+}
+
+string Field::hasAccessor(const string& objName, uint32_t end) const {
+  string str = objName;
+  for (uint32_t i=0; i<end; i++) {
+    str += string(".") + ((i==(end-1)) ? "has_" : "") +
+           fieldParts[i]->name() + "()";
+  }
+  return str;
+}
+
+string Field::sizeAccessor(const string& objName) const {
+  string str = objName;
+  for (uint32_t i=0; i<fieldParts.size(); i++) {
+    str += string(".") + fieldParts[i]->name() +
+           ((i==(fieldParts.size()-1)) ? "_size" : "") + "()";
+  }
+  return str;
+}
+
+QueryEngine::QueryEngine(const string& rawSql) : query(rawSql) {}
+
+string QueryEngine::constructObjNameForRepeated(const FieldDescriptor* field) {
+  string fieldName = field->name();
+  return (fieldName[fieldName.size()-1] == 's') ?
+      fieldName.substr(0, fieldName.size()-1) : fieldName;
+}
+
+void QueryEngine::calculateQueryGraph() {
+  Proto::initProto(query.fromStmt.fromRootProto, queryGraph.proto);
+  const Descriptor* rootDescriptor =
+      queryGraph.proto.defaultInstance->GetDescriptor();
+  queryGraph.root.type = ROOT;
+  queryGraph.root.objName = rootDescriptor->name();
+  std::transform(queryGraph.root.objName.begin(), queryGraph.root.objName.end(),
+                 queryGraph.root.objName.begin(), ::tolower);
+  for (const SelectField& selectField : query.selectStmt.selectFields) {
+    const Descriptor* parentDescriptor = rootDescriptor;
+    Node* parent = &(queryGraph.root);
+    Field field;
+    vector<string> selectFieldParts = splitString(selectField.identifier, '.');
+    for (size_t j=0; j<selectFieldParts.size(); j++) {
+      const FieldDescriptor* fieldPart =
+          parentDescriptor->FindFieldByName(selectFieldParts[j]);
+      if (fieldPart == nullptr) {
+        throw runtime_error("No fieldPart by name " + selectFieldParts[j]);
+      }
+      field.fieldParts.push_back(fieldPart);
+      if (j != (selectFieldParts.size()-1)) {
+        if (fieldPart->type() != FieldDescriptor::Type::TYPE_MESSAGE) {
+          throw runtime_error(
+              "FieldPart " + selectFieldParts[j] +
+              " expected to be message but found" + fieldPart->type_name());
+        }
+        if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
+          Node& child = parent->children[field];
+          child.type = REPEATED_MESSAGE;
+          child.objName = constructObjNameForRepeated(fieldPart);
+          child.repeatedField = field;
+          parent = &child;
+          field.fieldParts.clear();
+        }
+        parentDescriptor = fieldPart->message_type();
+      } else {
+        if (fieldPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
+          throw runtime_error("FieldPart " + selectFieldParts[j] +
+                              " not expected to be message ");
+        }
+        if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
+          Node& child = parent->children[field];
+          child.type = REPEATED_PRIMITIVE;
+          child.objName = constructObjNameForRepeated(fieldPart);
+          child.repeatedField = field;
+          queryGraph.selectFields.push_back(field);
+        } else {
+          parent->selectFields.push_back(field);
+          queryGraph.selectFields.push_back(field);
+        }
+      }
     }
-    const FieldDescriptor* lastPart = fieldParts.back();
-    if (lastPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
-      const Descriptor* msgType = lastPart->message_type();
-      return msgType->name();
-    } else {
-      return lastPart->cpp_type_name();
-    }
   }
+}
 
-  string accessor(const string& objName) const {
-    string str = objName;
-    for (const FieldDescriptor* part : fieldParts) {
-      str += "." + part->name() + "()";
-    }
-    return str;
-  }
-
-  string hasAccessor(const string& objName, uint32_t end) const {
-    string str = objName;
-    for (uint32_t i=0; i<end; i++) {
-      str += string(".") + ((i==(end-1)) ? "has_" : "") +
-             fieldParts[i]->name() + "()";
-    }
-    return str;
-  }
-
-  string sizeAccessor(const string& objName) const {
-    string str = objName;
-    for (uint32_t i=0; i<fieldParts.size(); i++) {
-      str += string(".") + fieldParts[i]->name() +
-             ((i==(fieldParts.size()-1)) ? "_size" : "") + "()";
-    }
-    return str;
-  }
-};
-
-enum NodeType {
-  ROOT, REPEATED_MESSAGE, REPEATED_PRIMITIVE
-};
-
-// Root will be a node and all repeated fields will be nodes
-struct Node {
-  // only the ROOT node will be marked ROOT
-  NodeType type;
-  // this is the variable name in the generated code
-  string objName;
-  // this will be set for non root nodes
-  Field repeatedField;
-  // children of this node, repeated fields, repeated field => Node.
-  map<Field, Node> children;
-  // list of non-repeating select fields for this node.
-  // Only populated for ROOT, REPEATED_MESSAGE
-  vector<Field> selectFields;
-};
-
-using SelectFieldsFn = function<void(int indent, const Node& node)>;
-using StartForAllFn = function<void(int indent, const Node& node, const Node& parent)>;
-using EndForAllFn = function<void(int indent, const Node& node)>;
-
-struct QueryGraph {
-  Proto proto;
-  Node root;
-  // 1:1 with query.selects, order is maintained
-  vector<Field> selectFields;
-};
-
-void walkNode(const Node& node,
-              int& indent,
-              const SelectFieldsFn& selectFieldsFn,
-              const StartForAllFn& startForAllFn,
-              const uint32_t indentInc,
-              map<int, const Node*>& endFieldsMap) {
+void QueryEngine::walkNode(const Node& node,
+                           int& indent,
+                           const SelectFieldsFn& selectFieldsFn,
+                           const StartForAllFn& startForAllFn,
+                           const uint32_t indentInc,
+                           map<int, const Node*>& endFieldsMap) {
   selectFieldsFn(indent, node);
   for (const auto& e : node.children) {
     const Node& child = e.second;
@@ -131,11 +150,11 @@ void walkNode(const Node& node,
   }
 }
 
-void walkNode(const Node& root,
-              const SelectFieldsFn& selectFieldsFn,
-              const StartForAllFn& startForAllFn,
-              const EndForAllFn& endForAllFn,
-              const uint32_t indentInc = 2) {
+void QueryEngine::walkNode(const Node& root,
+                           const SelectFieldsFn& selectFieldsFn,
+                           const StartForAllFn& startForAllFn,
+                           const EndForAllFn& endForAllFn,
+                           const uint32_t indentInc) {
   int indent = 0;
   map<int, const Node*> endNodeMap;
   walkNode(root, indent, selectFieldsFn, startForAllFn,
@@ -147,7 +166,7 @@ void walkNode(const Node& root,
   }
 }
 
-void printPlan(QueryGraph& queryGraph) {
+void QueryEngine::printPlan() {
   SelectFieldsFn selectFieldsFn = [](int indent, const Node& node) {
     if (node.type == REPEATED_PRIMITIVE) {
       cout << string(indent, ' ') << "print " << node.objName << endl;
@@ -167,7 +186,7 @@ void printPlan(QueryGraph& queryGraph) {
   walkNode(queryGraph.root, selectFieldsFn, startForAllFn, endForAllFn);
 }
 
-void printCode(const SelectQuery& query, const QueryGraph& queryGraph) {
+void QueryEngine::printCode() {
   cout << "#include \"" << queryGraph.proto.protoHeaderInclude << "\"" << endl;
   cout << "#include \"generated_common.h\"" << endl << endl;
   cout << "using namespace std;" << endl;
@@ -352,65 +371,16 @@ void printTuples(const vector<TupleType>& tuples) {
   cout << "}" << endl;
 }
 
-string constructObjNameForRepeated(const FieldDescriptor* field) {
-  string fieldName = field->name();
-  return (fieldName[fieldName.size()-1] == 's') ?
-      fieldName.substr(0, fieldName.size()-1) : fieldName;
-}
-
-void calculateQueryGraph(const SelectQuery& query, QueryGraph& queryGraph) {
-  getProtoDetails(query.fromStmt.fromRootProto, queryGraph.proto);
-  const Descriptor* rootDescriptor =
-      queryGraph.proto.defaultInstance->GetDescriptor();
-  queryGraph.root.type = ROOT;
-  queryGraph.root.objName = rootDescriptor->name();
-  std::transform(queryGraph.root.objName.begin(), queryGraph.root.objName.end(),
-                 queryGraph.root.objName.begin(), ::tolower);
-  for (const SelectField& selectField : query.selectStmt.selectFields) {
-    const Descriptor* parentDescriptor = rootDescriptor;
-    Node* parent = &(queryGraph.root);
-    Field field;
-    vector<string> selectFieldParts = splitString(selectField.identifier, '.');
-    for (size_t j=0; j<selectFieldParts.size(); j++) {
-      const FieldDescriptor* fieldPart =
-          parentDescriptor->FindFieldByName(selectFieldParts[j]);
-      if (fieldPart == nullptr) {
-        throw runtime_error("No fieldPart by name " + selectFieldParts[j]);
-      }
-      field.fieldParts.push_back(fieldPart);
-      if (j != (selectFieldParts.size()-1)) {
-        if (fieldPart->type() != FieldDescriptor::Type::TYPE_MESSAGE) {
-          throw runtime_error(
-              "FieldPart " + selectFieldParts[j] +
-              " expected to be message but found" + fieldPart->type_name());
-        }
-        if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
-          Node& child = parent->children[field];
-          child.type = REPEATED_MESSAGE;
-          child.objName = constructObjNameForRepeated(fieldPart);
-          child.repeatedField = field;
-          parent = &child;
-          field.fieldParts.clear();
-        }
-        parentDescriptor = fieldPart->message_type();
-      } else {
-        if (fieldPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
-          throw runtime_error("FieldPart " + selectFieldParts[j] +
-                              " not expected to be message ");
-        }
-        if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
-          Node& child = parent->children[field];
-          child.type = REPEATED_PRIMITIVE;
-          child.objName = constructObjNameForRepeated(fieldPart);
-          child.repeatedField = field;
-          queryGraph.selectFields.push_back(field);
-        } else {
-          parent->selectFields.push_back(field);
-          queryGraph.selectFields.push_back(field);
-        }
-      }
-    }
+void QueryEngine::process() {
+  if (!query.parse()) {
+    throw runtime_error("Parsing select query failed");
   }
+  cout << "/*" << endl;
+  cout << query.str() << endl << endl;
+  calculateQueryGraph();
+  printPlan();
+  cout << "*/" << endl;
+  printCode();
 }
 
 int main(int argc, char** argv) {
@@ -418,18 +388,7 @@ int main(int argc, char** argv) {
     cerr << "Usage: ./QueryEngine <sql-query>" << endl;
     exit(1);
   }
-  SelectQuery query(argv[1]);
-  if (!query.parse()) {
-    cerr << "parsing select query failed" << endl;
-    exit(1);
-  }
-  cout << "/*" << endl;
-  cout << query.str() << endl << endl;
-
-  QueryGraph queryGraph;
-  calculateQueryGraph(query, queryGraph);
-  printPlan(queryGraph);
-  cout << "*/" << endl;
-  printCode(query, queryGraph);
+  QueryEngine engine(argv[1]);
+  engine.process();
 }
 
