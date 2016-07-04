@@ -1,4 +1,5 @@
 #include <fstream>
+#include <stdio.h>
 #include "query_engine.h"
 #include "example1.pb.h"
 
@@ -15,9 +16,44 @@ void Proto::initProto(const string& protoName, Proto& proto) {
   }
 }
 
+void runMake() {
+  FILE* fp = popen("make", "r");
+  if (fp == NULL) {
+    throw runtime_error("Unable to run make");
+  }
+  string output;
+  char buffer[1024];
+  while (fgets(buffer, 1024, fp) != NULL) {
+    output += buffer;
+  }
+  int status = pclose(fp);
+  if (status != 0) {
+    throw runtime_error("Make failed:\n" + output);
+  }
+}
+
+void runQuery(int argc, char** argv) {
+  string cmd;
+  for (int i=2; i<argc; i++) {
+    cmd += string(" ") + argv[i];
+  }
+  FILE* fp = popen(cmd.c_str(), "r");
+  if (fp == NULL) {
+    throw runtime_error("Unable to run " + cmd);
+  }
+  char buffer[1024];
+  while (fgets(buffer, 1024, fp) != NULL) {
+    cout << buffer;
+  }
+  int status = pclose(fp);
+  if (status != 0) {
+    throw runtime_error("Running query failed");
+  }
+}
+
 int main(int argc, char** argv) {
-  if (argc < 2) {
-    cerr << "Usage: ./QueryEngine <sql-query>" << endl;
+  if (argc < 3) {
+    cerr << "Usage: ./QueryEngine <sql-query> <./generated-query> ..." << endl;
     exit(1);
   }
   string thisFile = __FILE__;
@@ -26,4 +62,6 @@ int main(int argc, char** argv) {
   ofstream generated(generatedFile, ios::out | ios::trunc);
   QueryEngine engine(argv[1], generated);
   engine.process();
+  runMake();
+  runQuery(argc, argv);
 }
