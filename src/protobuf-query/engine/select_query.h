@@ -40,6 +40,7 @@ public:
 
   SelectStmt selectStmt;
   FromStmt fromStmt;
+  WhereStmt whereStmt;
 
   bool parse();
   string str() const;

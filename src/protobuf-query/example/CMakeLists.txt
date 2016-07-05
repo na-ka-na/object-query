@@ -1,5 +1,6 @@
 include_directories(
     SYSTEM ${CMAKE_BINARY_DIR}/protobuf-query/example_protos
+    ${CMAKE_SOURCE_DIR}/protobuf-query
     ${CMAKE_SOURCE_DIR}/protobuf-query/engine
 )
 

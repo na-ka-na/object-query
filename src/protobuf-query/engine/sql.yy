@@ -36,7 +36,8 @@
   MINUS      "-"
   MULT       "*"
   DIVIDE     "/"
-  EQUALS     "="
+  EQ         "="
+  NE         "!="
   LT         "<"
   GT         ">"
   LE         "<="
@@ -46,8 +47,6 @@
   OR         "OR"
   LPAREN     "("
   RPAREN     ")"
-  SUM        "SUM"
-  COUNT      "COUNT"
   DISTINCT   "DISTINCT"
 ;
 
@@ -55,12 +54,24 @@
 %token <std::string> STRING "string"
 %token <long> LONG "long"
 %token <double> DOUBLE "double"
+%token <Fn1> STR "STR"
+%token <Fn1> INT "INT"
+%token <Fn1> SUM "SUM"
+%token <Fn1> COUNT "COUNT"
+%token <Fn3> SUBSTR "SUBSTR"
+
+%type <Fn1> fn1
+%type <Fn3> fn3
 
 %type <SelectStmt> select_stmt
 %type <std::vector<SelectField>> select_fields
 %type <SelectField> select_field
 
 %type <FromStmt> from_stmt
+
+%type <WhereStmt> where_stmt
+%type <BooleanExpr> boolean_expr
+%type <Expr> expr
 
 %printer { yyoutput << $$; } <*>;
 %%
@@ -75,8 +86,8 @@ query: select_stmt
   query.fromStmt = $2;}
  ;
 
-fn: "SUM" | "COUNT";
-fn_identifier: "identifier" | fn "(" fn_identifier ")";
+fn1: "STR" | "INT" | "SUM" | "COUNT";
+fn3: "SUBSTR";
 
 select_stmt: "SELECT" select_fields  {$$=SelectStmt(); $$.selectFields=$2;}
  | "SELECT" "DISTINCT" select_fields {$$=SelectStmt(); $$.distinct=true; $$.selectFields=$3;}
@@ -90,36 +101,40 @@ from_stmt: "FROM" "(" "string" "," "string" ")"
  {$$=FromStmt(); $$.fromFile=$3; $$.fromRootProto=$5;}
  ;
 
-where_stmt: %empty | "WHERE" boolean_expr;
+where_stmt: %empty      {$$=WhereStmt();}
+ | "WHERE" boolean_expr {$$=WhereStmt(); *($$.booleanExpr)=$2;};
 
 %left "AND";
 %left "OR";
 boolean_expr:
-   "(" boolean_expr ")"
- | boolean_expr "AND" boolean_expr
- | boolean_expr "OR" boolean_expr
- | expr "=" expr
- | expr ">" expr
- | expr "<" expr
- | expr ">=" expr
- | expr "<=" expr
- | expr "LIKE" expr
+   "(" boolean_expr ")"            {$$=$2;}
+ | boolean_expr "AND" boolean_expr {$$=BooleanExpr::create(AND,$1,$3);}
+ | boolean_expr "OR" boolean_expr  {$$=BooleanExpr::create(OR,$1,$3);}
+ | expr "=" expr                   {$$=BooleanExpr::create(EQ,$1,$3);}
+ | expr "!=" expr                  {$$=BooleanExpr::create(NE,$1,$3);}
+ | expr ">" expr                   {$$=BooleanExpr::create(GT,$1,$3);}
+ | expr "<" expr                   {$$=BooleanExpr::create(LT,$1,$3);}
+ | expr ">=" expr                  {$$=BooleanExpr::create(GE,$1,$3);}
+ | expr "<=" expr                  {$$=BooleanExpr::create(LT,$1,$3);}
+ | expr "LIKE" expr                {$$=BooleanExpr::create(LIKE,$1,$3);}
  ;
 
 %left "+" "-";
 %left "*" "/";
 %precedence UMINUS;
 expr:
-   "(" expr ")"
- | expr "+" expr
- | expr "-" expr
- | expr "*" expr
- | expr "/" expr
- | "-" expr %prec UMINUS
- | fn_identifier
- | "long"
- | "double"
- | "string"
+   "(" expr ")"                       {$$=$2;}
+ | expr "+" expr                      {$$=Expr::create(PLUS,$1,$3);}
+ | expr "-" expr                      {$$=Expr::create(MINUS,$1,$3);}
+ | expr "*" expr                      {$$=Expr::create(MULT,$1,$3);}
+ | expr "/" expr                      {$$=Expr::create(DIVIDE,$1,$3);}
+ | "-" expr %prec UMINUS              {$$=Expr::create(UMINUS,$2);}
+ | fn1 "(" expr ")"                   {$$=Expr::create($1,$3);}
+ | fn3 "(" expr "," expr "," expr ")" {$$=Expr::create($1,$3,$5,$7);}
+ | "identifier"                       {$$=Expr::createIdentifier($1);}
+ | "string"                           {$$=Expr::createPrimitive($1);}
+ | "long"                             {$$=Expr::createPrimitive($1);}
+ | "double"                           {$$=Expr::createPrimitive($1);}
  ;
 
 group_by_stmt: %empty | "GROUP" "BY" group_by_fields;

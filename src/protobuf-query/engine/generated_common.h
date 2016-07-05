@@ -8,16 +8,13 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
-#include <experimental/optional>
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/gzip_stream.h>
+#include "global_include.h"
 
 using namespace std;
-
-template<typename T>
-using optional = std::experimental::optional<T>;
 
 using int32  = ::google::protobuf::int32;
 using int64  = ::google::protobuf::int64;
