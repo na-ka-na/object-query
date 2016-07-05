@@ -67,12 +67,9 @@ private:
   QueryGraph queryGraph;
   ostream& out;
 
-  // Function invoked when this node is selected (visited)
-  using SelectNodeFn = function<void(int indent, const Node& node)>;
-  // Function invoked before node is visited, with parent's indent.
-  // Will be invoked before SelectNodeFn and only for repeated fields.
-  using StartNodeFn = function<void(int indent, const Node& node, const Node& parent)>;
-  // Function invoked to mark node ending, with parent's indent.
+  // Function invoked when node is visited. Parent will be null and indent=0 for root.
+  using StartNodeFn = function<void(int indent, const Node& node, const Node* parent)>;
+  // Function invoked to mark node ending.
   using EndNodeFn = function<void(int indent, const Node& node)>;
 
   static string constructObjNameForRepeated(const FieldDescriptor* field);
@@ -80,13 +77,12 @@ private:
   // Node tree walk, modified DFS which vists each node twice,
   // one in depth first order, second in reverse order.
   void walkNode(const Node& root,
-                const SelectNodeFn& selectNodeFn,
                 const StartNodeFn& startNodeFn,
                 const EndNodeFn& endNodeFn,
                 const uint32_t indentInc = 2);
-  void walkNode(const Node& node,
+  void walkNode(const Node* parent,
+                const Node& node,
                 int& indent,
-                const SelectNodeFn& selectNodeFn,
                 const StartNodeFn& startNodeFn,
                 const uint32_t indentInc,
                 map<int, const Node*>& endNodesMap);

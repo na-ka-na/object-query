@@ -117,30 +117,28 @@ void QueryEngine::calculateQueryGraph() {
   }
 }
 
-void QueryEngine::walkNode(const Node& node,
+void QueryEngine::walkNode(const Node* parent,
+                           const Node& node,
                            int& indent,
-                           const SelectNodeFn& selectNodeFn,
                            const StartNodeFn& startNodeFn,
                            const uint32_t indentInc,
                            map<int, const Node*>& endNodesMap) {
-  selectNodeFn(indent, node);
+  startNodeFn(indent, node, parent);
+  endNodesMap.emplace(-indent, &node);
   for (const auto& e : node.children) {
     const Node& child = e.second;
-    startNodeFn(indent, child, node);
-    endNodesMap.emplace(-indent, &child);
     indent += indentInc;
-    walkNode(child, indent, selectNodeFn, startNodeFn, indentInc, endNodesMap);
+    walkNode(&node, child, indent, startNodeFn, indentInc, endNodesMap);
   }
 }
 
 void QueryEngine::walkNode(const Node& root,
-                           const SelectNodeFn& selectNodeFn,
                            const StartNodeFn& startNodeFn,
                            const EndNodeFn& endNodeFn,
                            const uint32_t indentInc) {
   int indent = 0;
   map<int, const Node*> endNodesMap;
-  walkNode(root, indent, selectNodeFn, startNodeFn, indentInc, endNodesMap);
+  walkNode(nullptr, root, indent, startNodeFn, indentInc, endNodesMap);
   for (const auto& e : endNodesMap) {
     int indent = -e.first;
     const Node* node = e.second;
@@ -149,7 +147,14 @@ void QueryEngine::walkNode(const Node& root,
 }
 
 void QueryEngine::printPlan() {
-  SelectNodeFn selectNodeFn = [this](int indent, const Node& node) {
+  StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node* parent) {
+    if (!parent) { //root
+      out << string(indent, ' ') << "for (1..1) {" << endl;
+    } else {
+      out << string(indent, ' ') << "for each " << node.objName << " in "
+          << node.repeatedField.accessor(parent->objName) << " {" << endl;
+    }
+    indent+=2;
     if (node.type == REPEATED_PRIMITIVE) {
       out << string(indent, ' ') << "print " << node.objName << endl;
     } else {
@@ -158,14 +163,10 @@ void QueryEngine::printPlan() {
       }
     }
   };
-  StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node& parent) {
-    out << string(indent, ' ') << "for each " << node.objName << " in "
-        << node.repeatedField.accessor(parent.objName) << " {" << endl;
-  };
   EndNodeFn endNodeFn = [this](int indent, const Node& node) {
     out << string(indent, ' ') << "} //" << node.objName << endl;
   };
-  walkNode(queryGraph.root, selectNodeFn, startNodeFn, endNodeFn);
+  walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
 }
 
 void QueryEngine::printCode() {
@@ -173,12 +174,11 @@ void QueryEngine::printCode() {
   out << "#include \"generated_common.h\"" << endl << endl;
   out << "using namespace std;" << endl;
   out << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl << endl;
-  SelectNodeFn selectNodeFn = [](int indent, const Node& node) {};
-  StartNodeFn startNodeFn = [](int indent, const Node& node, const Node& parent) {};
+  StartNodeFn startNodeFn = [](int indent, const Node& node, const Node* parent) {};
   EndNodeFn endNodeFn = [](int indent, const Node& node) {};
 
   vector<const Field*> allSelectFields;
-  selectNodeFn = [&](int indent, const Node& node) {
+  startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     if (node.type == REPEATED_PRIMITIVE) {
       allSelectFields.push_back(&node.repeatedField);
     } else {
@@ -187,7 +187,7 @@ void QueryEngine::printCode() {
       }
     }
   };
-  walkNode(queryGraph.root, selectNodeFn, startNodeFn, endNodeFn);
+  walkNode(queryGraph.root, startNodeFn, endNodeFn);
 
   // select fields header
   if (queryGraph.selectFields.size() != query.selectStmt.selectFields.size()) {
@@ -241,8 +241,20 @@ void QueryEngine::printCode() {
       << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
       << queryGraph.root.objName << ", vector<TupleType>& tuples) {" << endl;
   vector<const Field*> selectFieldsProcessed;
-  selectNodeFn = [&](int indent, const Node& node) {
+  startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     string ind = string(indent+2, ' ');
+    if (!parent) { //root
+      out << ind << "if (" << node.objName << ".ByteSize()) {" << endl;
+      out << ind << "  for (int _=0; _<1; _++) {" << endl;
+    } else {
+      out << ind << "if (" << node.repeatedField.sizeAccessor(parent->objName)
+          << " > 0) {" << endl;
+      out << ind << "  for (const " << node.repeatedField.type() << "& "
+          << node.objName << " : " << node.repeatedField.accessor(parent->objName)
+          << ") {" << endl;
+    }
+    indent+=4;
+    ind = string(indent+2, ' ');
     if (node.type == REPEATED_PRIMITIVE) {
       const Field* field = &node.repeatedField;
       out << ind << selectFieldTypeMap[field] << " "
@@ -271,14 +283,6 @@ void QueryEngine::printCode() {
       out << ind << "tuples.emplace_back(" + selectList + ");" << endl;
     }
   };
-  startNodeFn = [this](int indent, const Node& node, const Node& parent) {
-    string ind = string(indent+2, ' ');
-    out << ind << "if (" << node.repeatedField.sizeAccessor(parent.objName)
-        << " > 0) {" << endl;
-    out << ind << "  for (const " << node.repeatedField.type() << "& "
-        << node.objName << " : " << node.repeatedField.accessor(parent.objName)
-        << ") {" << endl;
-  };
   set<const Field*> endedFieldSet;
   endNodeFn = [&](int indent, const Node& node) {
     string ind = string(indent+2, ' ');
@@ -300,7 +304,7 @@ void QueryEngine::printCode() {
     out << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
     out << ind << "}" << endl;
   };
-  walkNode(queryGraph.root, selectNodeFn, startNodeFn, endNodeFn, 4);
+  walkNode(queryGraph.root, startNodeFn, endNodeFn, 4);
   out << "}" << endl;
 
   // print tuples
