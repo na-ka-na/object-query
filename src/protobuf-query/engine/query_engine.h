@@ -50,10 +50,6 @@ struct Node {
   vector<Field> selectFields;
 };
 
-using SelectFieldsFn = function<void(int indent, const Node& node)>;
-using StartForAllFn = function<void(int indent, const Node& node, const Node& parent)>;
-using EndForAllFn = function<void(int indent, const Node& node)>;
-
 struct QueryGraph {
   Proto proto;
   Node root;
@@ -71,19 +67,29 @@ private:
   QueryGraph queryGraph;
   ostream& out;
 
+  // Function invoked when this node is selected (visited)
+  using SelectNodeFn = function<void(int indent, const Node& node)>;
+  // Function invoked before node is visited, with parent's indent.
+  // Will be invoked before SelectNodeFn and only for repeated fields.
+  using StartNodeFn = function<void(int indent, const Node& node, const Node& parent)>;
+  // Function invoked to mark node ending, with parent's indent.
+  using EndNodeFn = function<void(int indent, const Node& node)>;
+
   static string constructObjNameForRepeated(const FieldDescriptor* field);
   void calculateQueryGraph();
+  // Node tree walk, modified DFS which vists each node twice,
+  // one in depth first order, second in reverse order.
+  void walkNode(const Node& root,
+                const SelectNodeFn& selectNodeFn,
+                const StartNodeFn& startNodeFn,
+                const EndNodeFn& endNodeFn,
+                const uint32_t indentInc = 2);
   void walkNode(const Node& node,
                 int& indent,
-                const SelectFieldsFn& selectFieldsFn,
-                const StartForAllFn& startForAllFn,
+                const SelectNodeFn& selectNodeFn,
+                const StartNodeFn& startNodeFn,
                 const uint32_t indentInc,
-                map<int, const Node*>& endFieldsMap);
-  void walkNode(const Node& root,
-                const SelectFieldsFn& selectFieldsFn,
-                const StartForAllFn& startForAllFn,
-                const EndForAllFn& endForAllFn,
-                const uint32_t indentInc = 2);
+                map<int, const Node*>& endNodesMap);
   void printPlan();
   void printCode();
 };

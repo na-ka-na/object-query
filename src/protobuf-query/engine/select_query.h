@@ -43,11 +43,10 @@ public:
   WhereStmt whereStmt;
 
   bool parse();
-  string str() const;
-
   void mark_lexer_invalid_char(char c);
   void mark_parse_error(
       const yy::SqlParser::location_type& loc,
       const string& msg);
+  string str() const;
 };
 
