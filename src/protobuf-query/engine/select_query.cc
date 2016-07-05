@@ -57,7 +57,7 @@ Expr Expr::create(BinaryExprOp op, const Expr& lhs, const Expr& rhs) {
 
 Expr Expr::create(UnaryExprOp op, const Expr& uexpr) {
   Expr expr;
-  expr.type = UNINARY_EXPR;
+  expr.type = UNARY_EXPR;
   expr.unaryExpr.op = op;
   expr.unaryExpr.expr.reset(new Expr());
   *(expr.unaryExpr.expr) = uexpr;
@@ -142,15 +142,111 @@ string SelectField::str() const {
 }
 
 string SelectStmt::str() const {
-  return (distinct ? "DISTINCT " : "") +
+  return "SELECT " + string(distinct ? "DISTINCT " : "") +
          joinVec(", ", selectFields, strfn<SelectField>());
 }
 
 string FromStmt::str() const {
-  return "('" + fromFile + "', '" + fromRootProto + "')";
+  return "FROM ('" + fromFile + "', '" + fromRootProto + "')";
+}
+
+string BinaryExpr::str() const {
+  string opStr;
+  switch (op) {
+  case PLUS:   opStr = "+"; break;
+  case MINUS:  opStr = "-"; break;
+  case MULT:   opStr = "*"; break;
+  case DIVIDE: opStr = "/"; break;
+  default:     opStr = "<BinaryExpOp>";
+  }
+  return "(" + lhs->str() + opStr + rhs->str() + ")";
+}
+
+string UnaryExpr::str() const {
+  string prefix;
+  switch (op) {
+  case UMINUS: prefix = "-"; break;
+  default:     prefix = "<UnaryExpOp>";
+  }
+  return prefix + expr->str();
+}
+
+string Fn1CallExpr::str() const {
+  string fnStr;
+  switch (fn1) {
+  case STR:   fnStr = "STR"; break;
+  case INT:   fnStr = "INT"; break;
+  case SUM:   fnStr = "SUM"; break;
+  case COUNT: fnStr = "COUNT"; break;
+  default:    fnStr = "<fn1>";
+  }
+  return fnStr + "(" + expr->str() + ")";
+}
+
+string Fn3CallExpr::str() const {
+  string fnStr;
+  switch (fn3) {
+  case SUBSTR: fnStr = "SUBSTR"; break;
+  default:     fnStr = "<fn3>";
+  }
+  return fnStr + "(" + expr1->str() + "," + expr2->str() + "," +
+         expr3->str() + ")";
+}
+
+string Expr::str() const {
+  switch (type) {
+  case BINARY_EXPR:   return binaryExpr.str();
+  case UNARY_EXPR:    return unaryExpr.str();
+  case FN1_CALL_EXPR: return fn1CallExpr.str();
+  case FN3_CALL_EXPR: return fn3CallExpr.str();
+  case IDENTIFIER:    return identifier;
+  case STRING:        return stringValue;
+  case LONG:          return to_string(longValue);
+  case DOUBLE:        return to_string(doubleValue);
+  default:            return "<Expr>";
+  }
+}
+
+string CompoundBooleanExpr::str() const {
+  string opStr;
+  switch (op) {
+  case AND: opStr = "AND"; break;
+  case OR:  opStr = "OR"; break;
+  default:  opStr = "<CompoundBooleanExprOp>";
+  }
+  return "(" + lhs->str() + " " + opStr + " " + rhs->str() + ")";
+}
+
+string SimpleBooleanExpr::str() const {
+  string opStr;
+  switch (op) {
+  case EQ:   opStr = "="; break;
+  case NE:   opStr = "!="; break;
+  case LT:   opStr = "<"; break;
+  case GT:   opStr = ">"; break;
+  case LE:   opStr = "<="; break;
+  case GE:   opStr = ">="; break;
+  case LIKE: opStr = "LIKE"; break;
+  default:   opStr = "<SimpleBooleanExprOp>";
+  }
+  return "(" + lhs.str() + " " + opStr + " " + rhs.str() + ")";
+}
+
+string BooleanExpr::str() const {
+  switch (type) {
+  case BOOLEAN: return compoundBooleanExpr.str();
+  case SIMPLE:  return simpleBooleanExpr.str();
+  default:      return "<BooleanExpr>";
+  }
+}
+
+string WhereStmt::str() const {
+  return booleanExpr ? ("WHERE " + booleanExpr->str()) : "";
 }
 
 string SelectQuery::str() const {
-  return "SELECT " + selectStmt.str() + " FROM " + fromStmt.str();
+  string whereStr = whereStmt.str();
+  return selectStmt.str() + " " + fromStmt.str() +
+         (whereStr.empty() ? "" : (" " + whereStr));
 }
 

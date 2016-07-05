@@ -26,9 +26,10 @@ struct FromStmt {
   string str() const;
 };
 
+// note: update Expr::str() on mod
 enum ExprType {
   BINARY_EXPR,
-  UNINARY_EXPR,
+  UNARY_EXPR,
   FN1_CALL_EXPR,
   FN3_CALL_EXPR,
   IDENTIFIER,
@@ -37,18 +38,22 @@ enum ExprType {
   DOUBLE,
 };
 
+// note: update BinaryExpr::str() on mod
 enum BinaryExprOp {
   PLUS, MINUS, MULT, DIVIDE
 };
 
+// note: update UnaryExpr::str() on mod
 enum UnaryExprOp {
   UMINUS
 };
 
+// note: update Fn1CallExpr::str() on mod
 enum Fn1 {
   STR, INT, SUM, COUNT
 };
 
+// note: update Fn3CallExpr::str() on mod
 enum Fn3 {
   SUBSTR
 };
@@ -59,21 +64,25 @@ struct BinaryExpr {
   BinaryExprOp op;
   shared_ptr<Expr> lhs;
   shared_ptr<Expr> rhs;
+  string str() const;
 };
 
 struct UnaryExpr {
   UnaryExprOp op;
   shared_ptr<Expr> expr;
+  string str() const;
 };
 
 struct Fn1CallExpr {
   Fn1 fn1;
   shared_ptr<Expr> expr;
+  string str() const;
 };
 
 struct Fn3CallExpr {
   Fn3 fn3;
   shared_ptr<Expr> expr1, expr2, expr3;
+  string str() const;
 };
 
 struct Expr {
@@ -97,16 +106,20 @@ struct Expr {
   static Expr createPrimitive(const string& value);
   static Expr createPrimitive(long value);
   static Expr createPrimitive(double value);
+  string str() const;
 };
 
+// note: update BooleanExpr::str() on mod
 enum BooleanExprType {
   BOOLEAN, SIMPLE
 };
 
+// note: update CompoundBooleanExpr::str() on mod
 enum CompoundBooleanOp {
   AND, OR
 };
 
+// note: update SimpleBooleanExpr::str() on mod
 enum SimpleBooleanOp {
   EQ, NE, LT, GT, LE, GE, LIKE
 };
@@ -117,14 +130,15 @@ struct CompoundBooleanExpr {
   CompoundBooleanOp op;
   shared_ptr<BooleanExpr> lhs;
   shared_ptr<BooleanExpr> rhs;
+  string str() const;
 };
 
 struct SimpleBooleanExpr {
   SimpleBooleanOp op;
   Expr lhs;
   Expr rhs;
+  string str() const;
 };
-
 
 struct BooleanExpr {
   BooleanExprType type;
@@ -135,10 +149,12 @@ struct BooleanExpr {
       CompoundBooleanOp op, const BooleanExpr& lhs, const BooleanExpr& rhs);
   static BooleanExpr create(
       SimpleBooleanOp op, const Expr& lhs, const Expr& rhs);
+  string str() const;
 };
 
 struct WhereStmt {
   optional<BooleanExpr> booleanExpr;
+  string str() const;
 };
 
 class SelectQuery;
