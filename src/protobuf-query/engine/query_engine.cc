@@ -53,69 +53,73 @@ string Field::sizeAccessor(const string& objName) const {
   return str;
 }
 
-QueryEngine::QueryEngine(const string& rawSql, ostream& out) :
-    query(SelectQuery(rawSql)), out(out) {}
-
-string QueryEngine::constructObjNameForRepeated(const FieldDescriptor* field) {
+string QueryGraph::constructObjNameForRepeated(const FieldDescriptor* field) {
   string fieldName = field->name();
   return (fieldName[fieldName.size()-1] == 's') ?
       fieldName.substr(0, fieldName.size()-1) : fieldName;
 }
 
-void QueryEngine::calculateQueryGraph() {
-  Proto::initProto(query.fromStmt.fromRootProto, queryGraph.proto);
-  const Descriptor* rootDescriptor =
-      queryGraph.proto.defaultInstance->GetDescriptor();
-  queryGraph.root.type = ROOT;
-  queryGraph.root.objName = rootDescriptor->name();
-  std::transform(queryGraph.root.objName.begin(), queryGraph.root.objName.end(),
-                 queryGraph.root.objName.begin(), ::tolower);
-  for (const SelectField& selectField : query.selectStmt.selectFields) {
-    const Descriptor* parentDescriptor = rootDescriptor;
-    Node* parent = &(queryGraph.root);
-    Field field;
-    vector<string> selectFieldParts = splitString(selectField.identifier, '.');
-    for (size_t j=0; j<selectFieldParts.size(); j++) {
-      const FieldDescriptor* fieldPart =
-          parentDescriptor->FindFieldByName(selectFieldParts[j]);
-      if (fieldPart == nullptr) {
-        throw runtime_error("No fieldPart by name " + selectFieldParts[j]);
+void QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect) {
+  const Descriptor* parentDescriptor = proto.defaultInstance->GetDescriptor();
+  Node* parent = &root;
+  Field field;
+  vector<string> selectFieldParts = splitString(identifier, '.');
+  for (size_t j=0; j<selectFieldParts.size(); j++) {
+    const FieldDescriptor* fieldPart =
+        parentDescriptor->FindFieldByName(selectFieldParts[j]);
+    if (fieldPart == nullptr) {
+      throw runtime_error("No fieldPart by name " + selectFieldParts[j]);
+    }
+    field.fieldParts.push_back(fieldPart);
+    if (j != (selectFieldParts.size()-1)) {
+      if (fieldPart->type() != FieldDescriptor::Type::TYPE_MESSAGE) {
+        throw runtime_error(
+            "FieldPart " + selectFieldParts[j] +
+            " expected to be message but found" + fieldPart->type_name());
       }
-      field.fieldParts.push_back(fieldPart);
-      if (j != (selectFieldParts.size()-1)) {
-        if (fieldPart->type() != FieldDescriptor::Type::TYPE_MESSAGE) {
-          throw runtime_error(
-              "FieldPart " + selectFieldParts[j] +
-              " expected to be message but found" + fieldPart->type_name());
-        }
-        if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
-          Node& child = parent->children[field];
-          child.type = REPEATED_MESSAGE;
-          child.objName = constructObjNameForRepeated(fieldPart);
-          child.repeatedField = field;
-          parent = &child;
-          field.fieldParts.clear();
-        }
-        parentDescriptor = fieldPart->message_type();
+      if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
+        Node& child = parent->children[field];
+        child.type = REPEATED_MESSAGE;
+        child.objName = constructObjNameForRepeated(fieldPart);
+        child.repeatedField = field;
+        parent = &child;
+        field.fieldParts.clear();
+      }
+      parentDescriptor = fieldPart->message_type();
+    } else {
+      if (fieldPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
+        throw runtime_error("FieldPart " + selectFieldParts[j] +
+                            " not expected to be message ");
+      }
+      if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
+        Node& child = parent->children[field];
+        child.type = REPEATED_PRIMITIVE;
+        child.objName = constructObjNameForRepeated(fieldPart);
+        child.repeatedField = field;
+        readFields.push_back(field);
       } else {
-        if (fieldPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
-          throw runtime_error("FieldPart " + selectFieldParts[j] +
-                              " not expected to be message ");
-        }
-        if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
-          Node& child = parent->children[field];
-          child.type = REPEATED_PRIMITIVE;
-          child.objName = constructObjNameForRepeated(fieldPart);
-          child.repeatedField = field;
-          queryGraph.selectFields.push_back(field);
-        } else {
-          parent->selectFields.push_back(field);
-          queryGraph.selectFields.push_back(field);
-        }
+        parent->readFields.push_back(field);
+        readFields.push_back(field);
       }
     }
   }
 }
+
+void QueryGraph::calculateGraph(const SelectQuery& query) {
+  Proto::initProto(query.fromStmt.fromRootProto, proto);
+  const Descriptor* rootDescriptor = proto.defaultInstance->GetDescriptor();
+  root.type = ROOT;
+  root.objName = rootDescriptor->name();
+  std::transform(root.objName.begin(), root.objName.end(),
+                 root.objName.begin(), ::tolower);
+  for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
+    addReadIdentifier(query.selectStmt.selectFields[i].identifier, true);
+    selectFieldIdxReadFieldIdxMap[i] = readFields.size()-1;
+  }
+}
+
+QueryEngine::QueryEngine(const string& rawSql, ostream& out) :
+    query(SelectQuery(rawSql)), out(out) {}
 
 void QueryEngine::walkNode(const Node* parent,
                            const Node& node,
@@ -158,7 +162,7 @@ void QueryEngine::printPlan() {
     if (node.type == REPEATED_PRIMITIVE) {
       out << string(indent, ' ') << "print " << node.objName << endl;
     } else {
-      for (const Field& field : node.selectFields) {
+      for (const Field& field : node.readFields) {
         out << string(indent, ' ') << "print " << field.accessor(node.objName) << endl;
       }
     }
@@ -182,7 +186,7 @@ void QueryEngine::printCode() {
     if (node.type == REPEATED_PRIMITIVE) {
       allSelectFields.push_back(&node.repeatedField);
     } else {
-      for (const Field& field : node.selectFields) {
+      for (const Field& field : node.readFields) {
         allSelectFields.push_back(&field);
       }
     }
@@ -190,28 +194,9 @@ void QueryEngine::printCode() {
   walkNode(queryGraph.root, startNodeFn, endNodeFn);
 
   // select fields header
-  if (queryGraph.selectFields.size() != query.selectStmt.selectFields.size()) {
-    throw runtime_error(
-        "queryGraph.querySelects.size()=" + to_string(queryGraph.selectFields.size()) +
-        "query.selects.size()=" + to_string(query.selectStmt.selectFields.size()));
-  }
   string header = "vector<string> header = {\n";
-  map<uint32_t, uint32_t> querySelectsIdxToTupleIdxMap;
-  for (size_t i=0; i<queryGraph.selectFields.size(); i++) {
-    int idx = -1;
-    for (size_t j=0; j<allSelectFields.size(); j++) {
-      if (*allSelectFields[j] == queryGraph.selectFields[i]) {
-        idx = j;
-        break;
-      }
-    }
-    if (idx == -1) {
-      throw runtime_error(
-          "Unable to find " + queryGraph.selectFields[i].accessor("") +
-          " in tuples list");
-    }
-    querySelectsIdxToTupleIdxMap[i] = idx;
-    header += "  \"" + query.selectStmt.selectFields[i].identifier + "\",\n";
+  for (const SelectField& selectField : query.selectStmt.selectFields) {
+    header += "  \"" + selectField.identifier + "\",\n";
   }
   header += "};";
   out << header << endl;
@@ -261,7 +246,7 @@ void QueryEngine::printCode() {
           << selectFieldVarMap[field] << " = " << node.objName << ";" << endl;
       selectFieldsProcessed.push_back(field);
     } else {
-      for (const Field& field : node.selectFields) {
+      for (const Field& field : node.readFields) {
         out << ind << selectFieldTypeMap[&field] << " "
             << selectFieldVarMap[&field] << " = "
             << selectFieldDefaultMap[&field] << ";" << endl;
@@ -291,7 +276,7 @@ void QueryEngine::printCode() {
     if (node.type == REPEATED_PRIMITIVE) {
       endedFieldSet.insert(&node.repeatedField);
     } else {
-      for (const Field& field : node.selectFields) {
+      for (const Field& field : node.readFields) {
         endedFieldSet.insert(&field);
       }
     }
@@ -308,6 +293,23 @@ void QueryEngine::printCode() {
   out << "}" << endl;
 
   // print tuples
+  map<uint32_t, uint32_t> querySelectsIdxToTupleIdxMap;
+  for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
+    const Field& readField =
+        queryGraph.readFields[queryGraph.selectFieldIdxReadFieldIdxMap[i]];
+    int idx = -1;
+    for (size_t j=0; j<allSelectFields.size(); j++) {
+      if (*allSelectFields[j] == readField) {
+        idx = j;
+        break;
+      }
+    }
+    if (idx == -1) {
+      throw runtime_error("Unable to find " + readField.accessor("") +
+                          " in tuples list");
+    }
+    querySelectsIdxToTupleIdxMap[i] = idx;
+  }
   out << R"fff(
 void printTuples(const vector<TupleType>& tuples) {
   vector<size_t> sizes;
@@ -363,7 +365,7 @@ void QueryEngine::process() {
   }
   out << "/*" << endl;
   out << query.str() << endl << endl;
-  calculateQueryGraph();
+  queryGraph.calculateGraph(query);
   printPlan();
   out << "*/" << endl;
   printCode();

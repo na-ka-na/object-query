@@ -47,14 +47,20 @@ struct Node {
   map<Field, Node> children;
   // list of non-repeating select fields for this node.
   // Only populated for ROOT, REPEATED_MESSAGE
-  vector<Field> selectFields;
+  vector<Field> readFields;
 };
 
 struct QueryGraph {
   Proto proto;
   Node root;
-  // 1:1 with query.selects, order is maintained
-  vector<Field> selectFields;
+  // all the select + where fields
+  vector<Field> readFields;
+  // map of idx in query.selectFields => idx in readFields
+  map<size_t, size_t> selectFieldIdxReadFieldIdxMap;
+
+  static string constructObjNameForRepeated(const FieldDescriptor* field);
+  void addReadIdentifier(const string& identifier, bool partOfSelect);
+  void calculateGraph(const SelectQuery& query);
 };
 
 class QueryEngine {
@@ -71,9 +77,6 @@ private:
   using StartNodeFn = function<void(int indent, const Node& node, const Node* parent)>;
   // Function invoked to mark node ending.
   using EndNodeFn = function<void(int indent, const Node& node)>;
-
-  static string constructObjNameForRepeated(const FieldDescriptor* field);
-  void calculateQueryGraph();
   // Node tree walk, modified DFS which vists each node twice,
   // one in depth first order, second in reverse order.
   void walkNode(const Node& root,
