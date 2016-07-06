@@ -4,6 +4,7 @@ SELECT all_employees.id FROM ('argv[1]', 'Example1.Company') WHERE (all_employee
 for (1..1) {
   for each all_employee in company.all_employees() {
     print all_employee.id()
+    print all_employee.name()
   } //all_employee
 } //company
 */
@@ -17,7 +18,8 @@ vector<string> header = {
   "all_employees.id",
 };
 using S0 = optional<int32>;  /*.id()*/
-using TupleType = tuple<S0>;
+using S1 = optional<string>; /*.name()*/
+using TupleType = tuple<S0, S1>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
@@ -28,14 +30,18 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
           if(all_employee.has_id()) {
             s0 = all_employee.id();
           }
-          tuples.emplace_back(s0);
+          S1 s1 = S1();
+          if(all_employee.has_name()) {
+            s1 = all_employee.name();
+          }
+          tuples.emplace_back(s0, s1);
         }
       } else { // no all_employee
-        tuples.emplace_back(S0());
+        tuples.emplace_back(S0(), S1());
       }
     }
   } else { // no company
-    tuples.emplace_back(S0());
+    tuples.emplace_back(S0(), S1());
   }
 }
 

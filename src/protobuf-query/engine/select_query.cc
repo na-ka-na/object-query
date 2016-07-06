@@ -137,6 +137,63 @@ BooleanExpr BooleanExpr::create(
   return bexpr;
 }
 
+void BinaryExpr::getAllIdentifiers(set<string>& identifiers) const {
+  lhs->getAllIdentifiers(identifiers);
+  rhs->getAllIdentifiers(identifiers);
+}
+
+void UnaryExpr::getAllIdentifiers(set<string>& identifiers) const {
+  expr->getAllIdentifiers(identifiers);
+}
+
+void Fn1CallExpr::getAllIdentifiers(set<string>& identifiers) const {
+  expr->getAllIdentifiers(identifiers);
+}
+
+void Fn3CallExpr::getAllIdentifiers(set<string>& identifiers) const {
+  expr1->getAllIdentifiers(identifiers);
+  expr2->getAllIdentifiers(identifiers);
+  expr3->getAllIdentifiers(identifiers);
+}
+
+void Expr::getAllIdentifiers(set<string>& identifiers) const {
+  switch (type) {
+  case BINARY_EXPR: binaryExpr.getAllIdentifiers(identifiers); break;
+  case UNARY_EXPR: unaryExpr.getAllIdentifiers(identifiers); break;
+  case FN1_CALL_EXPR: fn1CallExpr.getAllIdentifiers(identifiers); break;
+  case FN3_CALL_EXPR: fn3CallExpr.getAllIdentifiers(identifiers); break;
+  case IDENTIFIER: identifiers.insert(identifier); break;
+  case STRING: break;
+  case LONG: break;
+  case DOUBLE: break;
+  default: ASSERT(false);
+  }
+}
+
+void CompoundBooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
+  lhs->getAllIdentifiers(identifiers);
+  rhs->getAllIdentifiers(identifiers);
+}
+
+void SimpleBooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
+  lhs.getAllIdentifiers(identifiers);
+  rhs.getAllIdentifiers(identifiers);
+}
+
+void BooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
+  switch (type) {
+  case BOOLEAN: compoundBooleanExpr.getAllIdentifiers(identifiers); break;
+  case SIMPLE: simpleBooleanExpr.getAllIdentifiers(identifiers); break;
+  default: ASSERT(false);
+  }
+}
+
+void WhereStmt::getAllIdentifiers(set<string>& identifiers) const {
+  if (booleanExpr) {
+    booleanExpr->getAllIdentifiers(identifiers);
+  }
+}
+
 string SelectField::str() const {
   return identifier;
 }

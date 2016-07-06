@@ -105,6 +105,21 @@ void QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect) 
   }
 }
 
+void QueryGraph::readFieldsFromSelect(const SelectStmt& selectStmt) {
+  for (size_t i=0; i<selectStmt.selectFields.size(); i++) {
+    addReadIdentifier(selectStmt.selectFields[i].identifier, true);
+    selectFieldIdxReadFieldIdxMap[i] = readFields.size()-1;
+  }
+}
+
+void QueryGraph::readFieldsFromWhere(const WhereStmt& whereStmt) {
+  set<string> identifiers;
+  whereStmt.getAllIdentifiers(identifiers);
+  for (const string& identifier : identifiers) {
+    addReadIdentifier(identifier, false);
+  }
+}
+
 void QueryGraph::calculateGraph(const SelectQuery& query) {
   Proto::initProto(query.fromStmt.fromRootProto, proto);
   const Descriptor* rootDescriptor = proto.defaultInstance->GetDescriptor();
@@ -112,10 +127,8 @@ void QueryGraph::calculateGraph(const SelectQuery& query) {
   root.objName = rootDescriptor->name();
   std::transform(root.objName.begin(), root.objName.end(),
                  root.objName.begin(), ::tolower);
-  for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
-    addReadIdentifier(query.selectStmt.selectFields[i].identifier, true);
-    selectFieldIdxReadFieldIdxMap[i] = readFields.size()-1;
-  }
+  readFieldsFromSelect(query.selectStmt);
+  readFieldsFromWhere(query.whereStmt);
 }
 
 QueryEngine::QueryEngine(const string& rawSql, ostream& out) :

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <memory>
 #include "global_include.h"
 #include "utils.h"
@@ -64,24 +65,28 @@ struct BinaryExpr {
   BinaryExprOp op;
   shared_ptr<Expr> lhs;
   shared_ptr<Expr> rhs;
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 
 struct UnaryExpr {
   UnaryExprOp op;
   shared_ptr<Expr> expr;
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 
 struct Fn1CallExpr {
   Fn1 fn1;
   shared_ptr<Expr> expr;
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 
 struct Fn3CallExpr {
   Fn3 fn3;
   shared_ptr<Expr> expr1, expr2, expr3;
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 
@@ -106,6 +111,7 @@ struct Expr {
   static Expr createPrimitive(const string& value);
   static Expr createPrimitive(long value);
   static Expr createPrimitive(double value);
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 
@@ -130,6 +136,7 @@ struct CompoundBooleanExpr {
   CompoundBooleanOp op;
   shared_ptr<BooleanExpr> lhs;
   shared_ptr<BooleanExpr> rhs;
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 
@@ -137,6 +144,7 @@ struct SimpleBooleanExpr {
   SimpleBooleanOp op;
   Expr lhs;
   Expr rhs;
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 
@@ -149,11 +157,13 @@ struct BooleanExpr {
       CompoundBooleanOp op, const BooleanExpr& lhs, const BooleanExpr& rhs);
   static BooleanExpr create(
       SimpleBooleanOp op, const Expr& lhs, const Expr& rhs);
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 
 struct WhereStmt {
   optional<BooleanExpr> booleanExpr;
+  void getAllIdentifiers(set<string>& identifiers) const;
   string str() const;
 };
 

@@ -60,6 +60,8 @@ struct QueryGraph {
 
   static string constructObjNameForRepeated(const FieldDescriptor* field);
   void addReadIdentifier(const string& identifier, bool partOfSelect);
+  void readFieldsFromSelect(const SelectStmt& selectStmt);
+  void readFieldsFromWhere(const WhereStmt& whereStmt);
   void calculateGraph(const SelectQuery& query);
 };
 
