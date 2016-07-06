@@ -200,7 +200,7 @@ string Expr::str() const {
   case FN1_CALL_EXPR: return fn1CallExpr.str();
   case FN3_CALL_EXPR: return fn3CallExpr.str();
   case IDENTIFIER:    return identifier;
-  case STRING:        return stringValue;
+  case STRING:        return "\""+stringValue+"\"";
   case LONG:          return to_string(longValue);
   case DOUBLE:        return to_string(doubleValue);
   default:            return "<Expr>";

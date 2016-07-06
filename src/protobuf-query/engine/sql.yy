@@ -83,7 +83,8 @@ query: select_stmt
        having_stmt
        order_by_stmt
  {query.selectStmt = $1;
-  query.fromStmt = $2;}
+  query.fromStmt = $2;
+  query.whereStmt = $3;}
  ;
 
 fn1: "STR" | "INT" | "SUM" | "COUNT";
@@ -102,7 +103,7 @@ from_stmt: "FROM" "(" "string" "," "string" ")"
  ;
 
 where_stmt: %empty      {$$=WhereStmt();}
- | "WHERE" boolean_expr {$$=WhereStmt(); *($$.booleanExpr)=$2;};
+ | "WHERE" boolean_expr {$$=WhereStmt(); $$.booleanExpr=$2;};
 
 %left "AND";
 %left "OR";
