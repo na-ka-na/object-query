@@ -1,9 +1,11 @@
 /*
-SELECT all_employees.id FROM ('argv[1]', 'Example1.Company') WHERE (all_employees.name = "abc")
+SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.name = "abc") AND (all_employees.active = "true"))
 
 for (1..1) {
   for each all_employee in company.all_employees() {
     print all_employee.id()
+    print all_employee.name()
+    print all_employee.active()
     print all_employee.name()
   } //all_employee
 } //company
@@ -16,10 +18,13 @@ using namespace Example1;
 
 vector<string> header = {
   "all_employees.id",
+  "all_employees.name",
 };
 using S0 = optional<int32>;  /*.id()*/
 using S1 = optional<string>; /*.name()*/
-using TupleType = tuple<S0, S1>;
+using S2 = optional<bool>;   /*.active()*/
+using S3 = optional<string>; /*.name()*/
+using TupleType = tuple<S0, S1, S2, S3>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
@@ -34,14 +39,22 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
           if(all_employee.has_name()) {
             s1 = all_employee.name();
           }
-          tuples.emplace_back(s0, s1);
+          S2 s2 = S2();
+          if(all_employee.has_active()) {
+            s2 = all_employee.active();
+          }
+          S3 s3 = S3();
+          if(all_employee.has_name()) {
+            s3 = all_employee.name();
+          }
+          tuples.emplace_back(s0, s1, s2, s3);
         }
       } else { // no all_employee
-        tuples.emplace_back(S0(), S1());
+        tuples.emplace_back(S0(), S1(), S2(), S3());
       }
     }
   } else { // no company
-    tuples.emplace_back(S0(), S1());
+    tuples.emplace_back(S0(), S1(), S2(), S3());
   }
 }
 
@@ -52,6 +65,7 @@ void printTuples(const vector<TupleType>& tuples) {
   }
   for (const TupleType& t : tuples) {
     sizes[0] = max(sizes[0], stringify(get<0>(t)).size());
+    sizes[1] = max(sizes[1], stringify(get<1>(t)).size());
   }
   cout << left;
   for (size_t i=0; i<header.size(); i++) {
@@ -64,6 +78,7 @@ void printTuples(const vector<TupleType>& tuples) {
   cout << endl;
   for(const TupleType& t : tuples) {
     cout <<          setw(sizes[0]) << stringify(get<0>(t));
+    cout << " | " << setw(sizes[1]) << stringify(get<1>(t));
     cout << endl;
   }
 }

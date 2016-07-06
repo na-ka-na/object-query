@@ -1,7 +1,7 @@
 #!/bin/bash
 source common_test.sh
 
-sql="SELECT all_employees.id FROM ('argv[1]', 'Example1.Company') WHERE all_employees.name='abc'"
+sql="SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE all_employees.name='abc' AND all_employees.active='true'"
 generated_file="generated_query2"
 proto_file="../../../src/protobuf-query/example_protos/example1.proto.gz"
 golden_out="golden2.out"
