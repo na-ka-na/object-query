@@ -33,8 +33,8 @@ void runMake() {
 }
 
 void runQuery(int argc, char** argv) {
-  string cmd;
-  for (int i=2; i<argc; i++) {
+  string cmd = string("./") + argv[2];
+  for (int i=3; i<argc; i++) {
     cmd += string(" ") + argv[i];
   }
   FILE* fp = popen(cmd.c_str(), "r");
@@ -53,12 +53,13 @@ void runQuery(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   if (argc < 3) {
-    cerr << "Usage: ./QueryEngine <sql-query> <./generated-query> ..." << endl;
+    cerr << "Usage: ./QueryEngine <sql-query> <generated-query-file>"
+         << " [arguments for generated query ...]" << endl;
     exit(1);
   }
   string thisFile = __FILE__;
   auto idx = thisFile.rfind("/");
-  string generatedFile = thisFile.substr(0, idx) + "/generated_query.cc";
+  string generatedFile = thisFile.substr(0, idx) + "/" + argv[2] + ".cc";
   ofstream generated(generatedFile, ios::out | ios::trunc);
   QueryEngine engine(argv[1], generated);
   engine.process();
