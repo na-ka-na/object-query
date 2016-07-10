@@ -45,21 +45,21 @@ struct Node {
   Field repeatedField;
   // children of this node, repeated fields, repeated field => Node.
   map<Field, Node> children;
-  // list of non-repeating select fields for this node.
+  // list of non-repeating read fields for this node.
   // Only populated for ROOT, REPEATED_MESSAGE
-  vector<Field> readFields;
+  set<Field> readFields;
 };
 
 struct QueryGraph {
   Proto proto;
   Node root;
   // all the select + where fields
-  vector<Field> readFields;
-  // map of idx in query.selectFields => idx in readFields
-  map<size_t, size_t> selectFieldIdxReadFieldIdxMap;
+  set<Field> allReadFields;
+  // map of idx in query.selectFields => pointer in readFields
+  map<size_t, Field> selectFieldIdxReadFieldMap;
 
   static string constructObjNameForRepeated(const FieldDescriptor* field);
-  void addReadIdentifier(const string& identifier, bool partOfSelect);
+  Field addReadIdentifier(const string& identifier, bool partOfSelect);
   void readFieldsFromSelect(const SelectStmt& selectStmt);
   void readFieldsFromWhere(const WhereStmt& whereStmt);
   void calculateGraph(const SelectQuery& query);

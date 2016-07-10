@@ -59,7 +59,7 @@ string QueryGraph::constructObjNameForRepeated(const FieldDescriptor* field) {
       fieldName.substr(0, fieldName.size()-1) : fieldName;
 }
 
-void QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect) {
+Field QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect) {
   const Descriptor* parentDescriptor = proto.defaultInstance->GetDescriptor();
   Node* parent = &root;
   Field field;
@@ -96,19 +96,19 @@ void QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect) 
         child.type = REPEATED_PRIMITIVE;
         child.objName = constructObjNameForRepeated(fieldPart);
         child.repeatedField = field;
-        readFields.push_back(field);
       } else {
-        parent->readFields.push_back(field);
-        readFields.push_back(field);
+        parent->readFields.insert(field);
       }
+      allReadFields.insert(field);
     }
   }
+  return field;
 }
 
 void QueryGraph::readFieldsFromSelect(const SelectStmt& selectStmt) {
   for (size_t i=0; i<selectStmt.selectFields.size(); i++) {
-    addReadIdentifier(selectStmt.selectFields[i].identifier, true);
-    selectFieldIdxReadFieldIdxMap[i] = readFields.size()-1;
+    selectFieldIdxReadFieldMap[i] =
+        addReadIdentifier(selectStmt.selectFields[i].identifier, true);
   }
 }
 
@@ -308,8 +308,7 @@ void QueryEngine::printCode() {
   // print tuples
   map<uint32_t, uint32_t> querySelectsIdxToTupleIdxMap;
   for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
-    const Field& readField =
-        queryGraph.readFields[queryGraph.selectFieldIdxReadFieldIdxMap[i]];
+    const Field& readField = queryGraph.selectFieldIdxReadFieldMap[i];
     int idx = -1;
     for (size_t j=0; j<allSelectFields.size(); j++) {
       if (*allSelectFields[j] == readField) {
