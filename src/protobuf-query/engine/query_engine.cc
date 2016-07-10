@@ -96,11 +96,13 @@ Field QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect)
         child.type = REPEATED_PRIMITIVE;
         child.objName = constructObjNameForRepeated(fieldPart);
         child.repeatedField = field;
-        child.readFields.insert(field);
-      } else {
-        parent->readFields.insert(field);
+        parent = &child;
       }
-      allReadFields.insert(field);
+      if (partOfSelect) {
+        parent->selectFields.insert(field);
+      } else {
+        parent->nonSelectFields.insert(field);
+      }
     }
   }
   return field;
@@ -173,7 +175,7 @@ void QueryEngine::printPlan() {
           << node.repeatedField.accessor(parent->objName) << " {" << endl;
     }
     indent+=2;
-    for (const Field& field : node.readFields) {
+    for (const Field& field : node.selectFields) {
       out << string(indent, ' ') << "print "
           << ((node.type == REPEATED_PRIMITIVE) ? node.objName :
               field.accessor(node.objName)) << endl;
@@ -195,7 +197,7 @@ void QueryEngine::printCode() {
 
   vector<const Field*> allSelectFields;
   startNodeFn = [&](int indent, const Node& node, const Node* parent) {
-    for (const Field& field : node.readFields) {
+    for (const Field& field : node.selectFields) {
       allSelectFields.push_back(&field);
     }
   };
@@ -248,7 +250,7 @@ void QueryEngine::printCode() {
     }
     indent+=4;
     ind = string(indent+2, ' ');
-    for (const Field& field : node.readFields) {
+    for (const Field& field : node.selectFields) {
       selectFieldsProcessed.push_back(&field);
       out << ind << selectFieldTypeMap[&field] << " "
           << selectFieldVarMap[&field] << " = "
@@ -277,7 +279,7 @@ void QueryEngine::printCode() {
     string ind = string(indent+2, ' ');
     out << ind << "  }" << endl;
     out << ind << "} else { // no " << node.objName << endl;
-    for (const Field& field : node.readFields) {
+    for (const Field& field : node.selectFields) {
       endedFieldSet.insert(&field);
     }
     string selectList = joinVec<const Field*>(

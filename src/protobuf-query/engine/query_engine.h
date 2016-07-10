@@ -46,14 +46,13 @@ struct Node {
   // children of this node, repeated fields, repeated field => Node.
   map<Field, Node> children;
   // list of non-repeating read fields for this node.
-  set<Field> readFields;
+  set<Field> selectFields;
+  set<Field> nonSelectFields;
 };
 
 struct QueryGraph {
   Proto proto;
   Node root;
-  // all the select + where fields
-  set<Field> allReadFields;
   // map of idx in query.selectFields => pointer in readFields
   map<size_t, Field> selectFieldIdxReadFieldMap;
 

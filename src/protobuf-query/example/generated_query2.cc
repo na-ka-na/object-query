@@ -5,7 +5,6 @@ for (1..1) {
   for each all_employee in company.all_employees() {
     print all_employee.id()
     print all_employee.name()
-    print all_employee.active()
   } //all_employee
 } //company
 */
@@ -21,8 +20,7 @@ vector<string> header = {
 };
 using S0 = optional<int32>;  /*.id()*/
 using S1 = optional<string>; /*.name()*/
-using S2 = optional<bool>;   /*.active()*/
-using TupleType = tuple<S0, S1, S2>;
+using TupleType = tuple<S0, S1>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
@@ -37,18 +35,14 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
           if(all_employee.has_name()) {
             s1 = all_employee.name();
           }
-          S2 s2 = S2();
-          if(all_employee.has_active()) {
-            s2 = all_employee.active();
-          }
-          tuples.emplace_back(s0, s1, s2);
+          tuples.emplace_back(s0, s1);
         }
       } else { // no all_employee
-        tuples.emplace_back(S0(), S1(), S2());
+        tuples.emplace_back(S0(), S1());
       }
     }
   } else { // no company
-    tuples.emplace_back(S0(), S1(), S2());
+    tuples.emplace_back(S0(), S1());
   }
 }
 
