@@ -96,6 +96,7 @@ Field QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect)
         child.type = REPEATED_PRIMITIVE;
         child.objName = constructObjNameForRepeated(fieldPart);
         child.repeatedField = field;
+        child.readFields.insert(field);
       } else {
         parent->readFields.insert(field);
       }
@@ -172,12 +173,10 @@ void QueryEngine::printPlan() {
           << node.repeatedField.accessor(parent->objName) << " {" << endl;
     }
     indent+=2;
-    if (node.type == REPEATED_PRIMITIVE) {
-      out << string(indent, ' ') << "print " << node.objName << endl;
-    } else {
-      for (const Field& field : node.readFields) {
-        out << string(indent, ' ') << "print " << field.accessor(node.objName) << endl;
-      }
+    for (const Field& field : node.readFields) {
+      out << string(indent, ' ') << "print "
+          << ((node.type == REPEATED_PRIMITIVE) ? node.objName :
+              field.accessor(node.objName)) << endl;
     }
   };
   EndNodeFn endNodeFn = [this](int indent, const Node& node) {
@@ -196,12 +195,8 @@ void QueryEngine::printCode() {
 
   vector<const Field*> allSelectFields;
   startNodeFn = [&](int indent, const Node& node, const Node* parent) {
-    if (node.type == REPEATED_PRIMITIVE) {
-      allSelectFields.push_back(&node.repeatedField);
-    } else {
-      for (const Field& field : node.readFields) {
-        allSelectFields.push_back(&field);
-      }
+    for (const Field& field : node.readFields) {
+      allSelectFields.push_back(&field);
     }
   };
   walkNode(queryGraph.root, startNodeFn, endNodeFn);
@@ -253,16 +248,13 @@ void QueryEngine::printCode() {
     }
     indent+=4;
     ind = string(indent+2, ' ');
-    if (node.type == REPEATED_PRIMITIVE) {
-      const Field* field = &node.repeatedField;
-      out << ind << selectFieldTypeMap[field] << " "
-          << selectFieldVarMap[field] << " = " << node.objName << ";" << endl;
-      selectFieldsProcessed.push_back(field);
-    } else {
-      for (const Field& field : node.readFields) {
-        out << ind << selectFieldTypeMap[&field] << " "
-            << selectFieldVarMap[&field] << " = "
-            << selectFieldDefaultMap[&field] << ";" << endl;
+    for (const Field& field : node.readFields) {
+      selectFieldsProcessed.push_back(&field);
+      out << ind << selectFieldTypeMap[&field] << " "
+          << selectFieldVarMap[&field] << " = "
+          << ((node.type == REPEATED_PRIMITIVE) ? node.objName :
+              selectFieldDefaultMap[&field]) << ";" << endl;
+      if (node.type != REPEATED_PRIMITIVE) {
         vector<string> checks;
         for (uint32_t i=0; i<field.fieldParts.size(); i++) {
           checks.push_back(field.hasAccessor(node.objName, i+1));
@@ -272,7 +264,6 @@ void QueryEngine::printCode() {
         out << ind << "  " << selectFieldVarMap[&field] << " = "
             << field.accessor(node.objName) << ";" << endl;
         out << ind << "}" << endl;
-        selectFieldsProcessed.push_back(&field);
       }
     }
     if (selectFieldsProcessed.size() == allSelectFields.size()) {
@@ -286,12 +277,8 @@ void QueryEngine::printCode() {
     string ind = string(indent+2, ' ');
     out << ind << "  }" << endl;
     out << ind << "} else { // no " << node.objName << endl;
-    if (node.type == REPEATED_PRIMITIVE) {
-      endedFieldSet.insert(&node.repeatedField);
-    } else {
-      for (const Field& field : node.readFields) {
-        endedFieldSet.insert(&field);
-      }
+    for (const Field& field : node.readFields) {
+      endedFieldSet.insert(&field);
     }
     string selectList = joinVec<const Field*>(
         ", ", selectFieldsProcessed,

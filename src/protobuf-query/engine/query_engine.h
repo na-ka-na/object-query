@@ -46,7 +46,6 @@ struct Node {
   // children of this node, repeated fields, repeated field => Node.
   map<Field, Node> children;
   // list of non-repeating read fields for this node.
-  // Only populated for ROOT, REPEATED_MESSAGE
   set<Field> readFields;
 };
 
