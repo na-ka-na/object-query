@@ -23,9 +23,7 @@ using uint64 = ::google::protobuf::uint64;
 
 void parsePbFromFile(const string& file, google::protobuf::Message& proto) {
   int fd = open(file.c_str(), O_RDONLY);
-  if (fd < 0) {
-    throw runtime_error("Unable to open file " + file);
-  }
+  ASSERT(fd >= 0, "Unable to open file", file);
   bool ret = false;
   if (file.rfind(".gz") != string::npos) {
     google::protobuf::io::FileInputStream fis(fd);
@@ -35,14 +33,11 @@ void parsePbFromFile(const string& file, google::protobuf::Message& proto) {
     ret = proto.ParseFromFileDescriptor(fd);
   }
   close(fd);
-  if (!ret) {
-    throw runtime_error("Unable to parse " + file);
-  }
+  ASSERT(ret, "Unable to parse", file);
 }
 
 template<typename T> inline string stringify(T t) {
-  throw runtime_error(string("stringify not implemented ") +
-                      typeid(t).name());
+  ASSERT(false, "stringify not implemented", typeid(t).name());
 }
 template<> inline string stringify(int32 t) { return to_string(t); }
 template<> inline string stringify(int64 t) { return to_string(t); }

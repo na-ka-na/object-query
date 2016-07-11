@@ -15,9 +15,7 @@ bool Field::operator==(const Field& other) const {
 }
 
 string Field::type() const {
-  if (fieldParts.empty()) {
-    throw runtime_error("Can't determine type of empty field");
-  }
+  ASSERT(!fieldParts.empty(), "Can't determine type of empty field");
   const FieldDescriptor* lastPart = fieldParts.back();
   if (lastPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
     const Descriptor* msgType = lastPart->message_type();
@@ -67,16 +65,12 @@ Field QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect)
   for (size_t j=0; j<selectFieldParts.size(); j++) {
     const FieldDescriptor* fieldPart =
         parentDescriptor->FindFieldByName(selectFieldParts[j]);
-    if (fieldPart == nullptr) {
-      throw runtime_error("No fieldPart by name " + selectFieldParts[j]);
-    }
+    ASSERT(fieldPart != nullptr, "No fieldPart by name", selectFieldParts[j]);
     field.fieldParts.push_back(fieldPart);
     if (j != (selectFieldParts.size()-1)) {
-      if (fieldPart->type() != FieldDescriptor::Type::TYPE_MESSAGE) {
-        throw runtime_error(
-            "FieldPart " + selectFieldParts[j] +
-            " expected to be message but found" + fieldPart->type_name());
-      }
+      ASSERT(fieldPart->type() == FieldDescriptor::Type::TYPE_MESSAGE,
+             "FieldPart", selectFieldParts[j], "expected to be message but is",
+             fieldPart->type_name());
       if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
         Node& child = parent->children[field];
         child.type = REPEATED_MESSAGE;
@@ -87,10 +81,8 @@ Field QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect)
       }
       parentDescriptor = fieldPart->message_type();
     } else {
-      if (fieldPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
-        throw runtime_error("FieldPart " + selectFieldParts[j] +
-                            " not expected to be message ");
-      }
+      ASSERT(fieldPart->type() != FieldDescriptor::Type::TYPE_MESSAGE,
+             "FieldPart", selectFieldParts[j], "expected not to be message");
       if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
         Node& child = parent->children[field];
         child.type = REPEATED_PRIMITIVE;
@@ -305,10 +297,7 @@ void QueryEngine::printCode() {
         break;
       }
     }
-    if (idx == -1) {
-      throw runtime_error("Unable to find " + readField.accessor("") +
-                          " in tuples list");
-    }
+    ASSERT(idx >= 0, "Unable to find", readField.accessor(""), "in tuples");
     querySelectsIdxToTupleIdxMap[i] = idx;
   }
   out << R"fff(
@@ -361,9 +350,7 @@ void printTuples(const vector<TupleType>& tuples) {
 }
 
 void QueryEngine::process() {
-  if (!query.parse()) {
-    throw runtime_error("Parsing select query failed");
-  }
+  ASSERT(query.parse(), "Parsing select query failed");
   out << "/*" << endl;
   out << query.str() << endl << endl;
   queryGraph.calculateGraph(query);

@@ -12,24 +12,19 @@ void Proto::initProto(const string& protoName, Proto& proto) {
     proto.protoNamespace = "Example1";
     proto.protoHeaderInclude = "example1.pb.h";
   } else {
-    throw runtime_error("No mapping defined for protoName: " + protoName);
+    ASSERT(false, "No mapping defined for protoName:", protoName);
   }
 }
 
 void runMake() {
   FILE* fp = popen("make", "r");
-  if (fp == NULL) {
-    throw runtime_error("Unable to run make");
-  }
+  ASSERT(fp != NULL, "Unable to popen make");
   string output;
   char buffer[1024];
   while (fgets(buffer, 1024, fp) != NULL) {
     output += buffer;
   }
-  int status = pclose(fp);
-  if (status != 0) {
-    throw runtime_error("Make failed:\n" + output);
-  }
+  ASSERT(pclose(fp)==0, "Make failed:\n", output);
 }
 
 void runQuery(int argc, char** argv) {
@@ -38,17 +33,12 @@ void runQuery(int argc, char** argv) {
     cmd += string(" ") + argv[i];
   }
   FILE* fp = popen(cmd.c_str(), "r");
-  if (fp == NULL) {
-    throw runtime_error("Unable to run " + cmd);
-  }
+  ASSERT(fp != NULL, "Unable to popen", cmd);
   char buffer[1024];
   while (fgets(buffer, 1024, fp) != NULL) {
     cout << buffer;
   }
-  int status = pclose(fp);
-  if (status != 0) {
-    throw runtime_error("Running query failed");
-  }
+  ASSERT(pclose(fp)==0, "Running query failed");
 }
 
 int main(int argc, char** argv) {
