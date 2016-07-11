@@ -1,11 +1,13 @@
 /*
-SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.name = "abc") AND (all_employees.active = "true"))
+SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE (((all_employees.name = "abc") AND (all_employees.active = "true")) AND (financial.quarterly_profits > 0))
 
 for (1..1) {
-  for each all_employee in company.all_employees() {
-    print all_employee.id()
-    print all_employee.name()
-  } //all_employee
+  for each quarterly_profit in company.financial().quarterly_profits() {
+    for each all_employee in company.all_employees() {
+      print all_employee.id()
+      print all_employee.name()
+    } //all_employee
+  } //quarterly_profit
 } //company
 */
 #include "example1.pb.h"
@@ -25,19 +27,25 @@ using TupleType = tuple<S0, S1>;
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
     for (int _=0; _<1; _++) {
-      if (company.all_employees_size() > 0) {
-        for (const Employee& all_employee : company.all_employees()) {
-          S0 s0 = S0();
-          if(all_employee.has_id()) {
-            s0 = all_employee.id();
+      if (company.financial().quarterly_profits_size() > 0) {
+        for (const float& quarterly_profit : company.financial().quarterly_profits()) {
+          if (company.all_employees_size() > 0) {
+            for (const Employee& all_employee : company.all_employees()) {
+              S0 s0 = S0();
+              if(all_employee.has_id()) {
+                s0 = all_employee.id();
+              }
+              S1 s1 = S1();
+              if(all_employee.has_name()) {
+                s1 = all_employee.name();
+              }
+              tuples.emplace_back(s0, s1);
+            }
+          } else { // no all_employee
+            tuples.emplace_back(S0(), S1());
           }
-          S1 s1 = S1();
-          if(all_employee.has_name()) {
-            s1 = all_employee.name();
-          }
-          tuples.emplace_back(s0, s1);
         }
-      } else { // no all_employee
+      } else { // no quarterly_profit
         tuples.emplace_back(S0(), S1());
       }
     }
