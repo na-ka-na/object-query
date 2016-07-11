@@ -35,6 +35,13 @@ enum NodeType {
   ROOT, REPEATED_MESSAGE, REPEATED_PRIMITIVE
 };
 
+struct Node;
+
+// Function invoked when node is visited. Parent will be null and indent=0 for root.
+using StartNodeFn = function<void(int indent, const Node& node, const Node* parent)>;
+// Function invoked to mark node ending.
+using EndNodeFn = function<void(int indent, const Node& node)>;
+
 // Root will be a node and all repeated fields will be nodes
 struct Node {
   // only the ROOT node will be marked ROOT
@@ -48,6 +55,19 @@ struct Node {
   // list of non-repeating read fields for this node.
   set<Field> selectFields;
   set<Field> nonSelectFields;
+
+  // Node tree walk, modified DFS which vists each node twice,
+  // one in depth first order, second in reverse order.
+  static void walkNode(const Node& root,
+                       const StartNodeFn& startNodeFn,
+                       const EndNodeFn& endNodeFn,
+                       const uint32_t indentInc = 2);
+  static void walkNode(const Node* parent,
+                       const Node& node,
+                       int& indent,
+                       const StartNodeFn& startNodeFn,
+                       const uint32_t indentInc,
+                       map<int, const Node*>& endNodesMap);
 };
 
 struct QueryGraph {
@@ -72,23 +92,6 @@ private:
   SelectQuery query;
   QueryGraph queryGraph;
   ostream& out;
-
-  // Function invoked when node is visited. Parent will be null and indent=0 for root.
-  using StartNodeFn = function<void(int indent, const Node& node, const Node* parent)>;
-  // Function invoked to mark node ending.
-  using EndNodeFn = function<void(int indent, const Node& node)>;
-  // Node tree walk, modified DFS which vists each node twice,
-  // one in depth first order, second in reverse order.
-  void walkNode(const Node& root,
-                const StartNodeFn& startNodeFn,
-                const EndNodeFn& endNodeFn,
-                const uint32_t indentInc = 2);
-  void walkNode(const Node* parent,
-                const Node& node,
-                int& indent,
-                const StartNodeFn& startNodeFn,
-                const uint32_t indentInc,
-                map<int, const Node*>& endNodesMap);
   void printPlan();
   void printCode();
 };

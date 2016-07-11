@@ -51,6 +51,35 @@ string Field::sizeAccessor(const string& objName) const {
   return str;
 }
 
+void Node::walkNode(const Node* parent,
+                    const Node& node,
+                    int& indent,
+                    const StartNodeFn& startNodeFn,
+                    const uint32_t indentInc,
+                    map<int, const Node*>& endNodesMap) {
+  startNodeFn(indent, node, parent);
+  endNodesMap.emplace(-indent, &node);
+  for (const auto& e : node.children) {
+    const Node& child = e.second;
+    indent += indentInc;
+    walkNode(&node, child, indent, startNodeFn, indentInc, endNodesMap);
+  }
+}
+
+void Node::walkNode(const Node& root,
+                    const StartNodeFn& startNodeFn,
+                    const EndNodeFn& endNodeFn,
+                    const uint32_t indentInc) {
+  int indent = 0;
+  map<int, const Node*> endNodesMap;
+  walkNode(nullptr, root, indent, startNodeFn, indentInc, endNodesMap);
+  for (const auto& e : endNodesMap) {
+    int indent = -e.first;
+    const Node* node = e.second;
+    endNodeFn(indent, *node);
+  }
+}
+
 string QueryGraph::constructObjNameForRepeated(const FieldDescriptor* field) {
   string fieldName = field->name();
   return (fieldName[fieldName.size()-1] == 's') ?
@@ -129,35 +158,6 @@ void QueryGraph::calculateGraph(const SelectQuery& query) {
 QueryEngine::QueryEngine(const string& rawSql, ostream& out) :
     query(SelectQuery(rawSql)), out(out) {}
 
-void QueryEngine::walkNode(const Node* parent,
-                           const Node& node,
-                           int& indent,
-                           const StartNodeFn& startNodeFn,
-                           const uint32_t indentInc,
-                           map<int, const Node*>& endNodesMap) {
-  startNodeFn(indent, node, parent);
-  endNodesMap.emplace(-indent, &node);
-  for (const auto& e : node.children) {
-    const Node& child = e.second;
-    indent += indentInc;
-    walkNode(&node, child, indent, startNodeFn, indentInc, endNodesMap);
-  }
-}
-
-void QueryEngine::walkNode(const Node& root,
-                           const StartNodeFn& startNodeFn,
-                           const EndNodeFn& endNodeFn,
-                           const uint32_t indentInc) {
-  int indent = 0;
-  map<int, const Node*> endNodesMap;
-  walkNode(nullptr, root, indent, startNodeFn, indentInc, endNodesMap);
-  for (const auto& e : endNodesMap) {
-    int indent = -e.first;
-    const Node* node = e.second;
-    endNodeFn(indent, *node);
-  }
-}
-
 void QueryEngine::printPlan() {
   StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node* parent) {
     if (!parent) { //root
@@ -176,7 +176,7 @@ void QueryEngine::printPlan() {
   EndNodeFn endNodeFn = [this](int indent, const Node& node) {
     out << string(indent, ' ') << "} //" << node.objName << endl;
   };
-  walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
+  Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
 }
 
 void QueryEngine::printCode() {
@@ -193,7 +193,7 @@ void QueryEngine::printCode() {
       allSelectFields.push_back(&field);
     }
   };
-  walkNode(queryGraph.root, startNodeFn, endNodeFn);
+  Node::walkNode(queryGraph.root, startNodeFn, endNodeFn);
 
   // select fields header
   string header = "vector<string> header = {\n";
@@ -283,7 +283,7 @@ void QueryEngine::printCode() {
     out << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
     out << ind << "}" << endl;
   };
-  walkNode(queryGraph.root, startNodeFn, endNodeFn, 4);
+  Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 4);
   out << "}" << endl;
 
   // print tuples
