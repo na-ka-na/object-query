@@ -51,31 +51,31 @@ string Field::sizeAccessor(const string& objName) const {
   return str;
 }
 
-void Node::walkNode(const Node* parent,
-                    const Node& node,
+void Node::walkNode(Node* parent,
+                    Node& node,
                     int& indent,
-                    const StartNodeFn& startNodeFn,
-                    const uint32_t indentInc,
-                    map<int, const Node*>& endNodesMap) {
+                    StartNodeFn& startNodeFn,
+                    uint32_t indentInc,
+                    map<int, Node*>& endNodesMap) {
   startNodeFn(indent, node, parent);
   endNodesMap.emplace(-indent, &node);
-  for (const auto& e : node.children) {
-    const Node& child = e.second;
+  for (auto& e : node.children) {
+    Node& child = e.second;
     indent += indentInc;
     walkNode(&node, child, indent, startNodeFn, indentInc, endNodesMap);
   }
 }
 
-void Node::walkNode(const Node& root,
-                    const StartNodeFn& startNodeFn,
-                    const EndNodeFn& endNodeFn,
-                    const uint32_t indentInc) {
+void Node::walkNode(Node& root,
+                    StartNodeFn& startNodeFn,
+                    EndNodeFn& endNodeFn,
+                    uint32_t indentInc) {
   int indent = 0;
-  map<int, const Node*> endNodesMap;
+  map<int, Node*> endNodesMap;
   walkNode(nullptr, root, indent, startNodeFn, indentInc, endNodesMap);
-  for (const auto& e : endNodesMap) {
+  for (auto& e : endNodesMap) {
     int indent = -e.first;
-    const Node* node = e.second;
+    Node* node = e.second;
     endNodeFn(indent, *node);
   }
 }
@@ -136,11 +136,34 @@ void QueryGraph::readFieldsFromSelect(const SelectStmt& selectStmt) {
   }
 }
 
-void QueryGraph::readFieldsFromWhere(const WhereStmt& whereStmt) {
-  set<string> identifiers;
-  whereStmt.getAllIdentifiers(identifiers);
-  for (const string& identifier : identifiers) {
-    addReadIdentifier(identifier, false);
+void QueryGraph::processWhere(const WhereStmt& whereStmt) {
+  vector<const BooleanExpr*> andClauses;
+  whereStmt.canoncialize(andClauses);
+  for (const BooleanExpr* clause : andClauses) {
+    set<string> identifiers;
+    clause->getAllIdentifiers(identifiers);
+    set<Field> fields;
+    for (const string& identifier : identifiers) {
+      Field f = addReadIdentifier(identifier, false);
+      fields.insert(f);
+    }
+    StartNodeFn startNodeFn = [&](int indent, Node& node, Node* parent){
+      if (fields.empty()) {
+        return;
+      }
+      for(auto it = fields.begin(); it != fields.end();) {
+        if (node.nonSelectFields.find(*it) != node.nonSelectFields.end()) {
+          it = fields.erase(it);
+        } else {
+          ++it;
+        }
+      }
+      if (fields.empty()) {
+        node.whereClauses.push_back(clause);
+      }
+    };
+    EndNodeFn endNodeFn = [](int indent, Node& node) {};
+    Node::walkNode(root, startNodeFn, endNodeFn);
   }
 }
 
@@ -152,7 +175,7 @@ void QueryGraph::calculateGraph(const SelectQuery& query) {
   std::transform(root.objName.begin(), root.objName.end(),
                  root.objName.begin(), ::tolower);
   readFieldsFromSelect(query.selectStmt);
-  readFieldsFromWhere(query.whereStmt);
+  processWhere(query.whereStmt);
 }
 
 QueryEngine::QueryEngine(const string& rawSql, ostream& out) :

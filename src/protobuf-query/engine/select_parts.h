@@ -158,12 +158,14 @@ struct BooleanExpr {
   static BooleanExpr create(
       SimpleBooleanOp op, const Expr& lhs, const Expr& rhs);
   void getAllIdentifiers(set<string>& identifiers) const;
+  void canoncialize(vector<const BooleanExpr*>& andClauses) const;
   string str() const;
 };
 
 struct WhereStmt {
   optional<BooleanExpr> booleanExpr;
   void getAllIdentifiers(set<string>& identifiers) const;
+  void canoncialize(vector<const BooleanExpr*>& andClauses) const;
   string str() const;
 };
 

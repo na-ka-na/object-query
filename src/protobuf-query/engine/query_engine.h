@@ -38,9 +38,9 @@ enum NodeType {
 struct Node;
 
 // Function invoked when node is visited. Parent will be null and indent=0 for root.
-using StartNodeFn = function<void(int indent, const Node& node, const Node* parent)>;
+using StartNodeFn = function<void(int indent, Node& node, Node* parent)>;
 // Function invoked to mark node ending.
-using EndNodeFn = function<void(int indent, const Node& node)>;
+using EndNodeFn = function<void(int indent, Node& node)>;
 
 // Root will be a node and all repeated fields will be nodes
 struct Node {
@@ -55,19 +55,21 @@ struct Node {
   // list of non-repeating read fields for this node.
   set<Field> selectFields;
   set<Field> nonSelectFields;
+  // list of all canonical where clauses
+  vector<const BooleanExpr*> whereClauses;
 
   // Node tree walk, modified DFS which vists each node twice,
   // one in depth first order, second in reverse order.
-  static void walkNode(const Node& root,
-                       const StartNodeFn& startNodeFn,
-                       const EndNodeFn& endNodeFn,
-                       const uint32_t indentInc = 2);
-  static void walkNode(const Node* parent,
-                       const Node& node,
+  static void walkNode(Node& root,
+                       StartNodeFn& startNodeFn,
+                       EndNodeFn& endNodeFn,
+                       uint32_t indentInc = 2);
+  static void walkNode(Node* parent,
+                       Node& node,
                        int& indent,
-                       const StartNodeFn& startNodeFn,
-                       const uint32_t indentInc,
-                       map<int, const Node*>& endNodesMap);
+                       StartNodeFn& startNodeFn,
+                       uint32_t indentInc,
+                       map<int, Node*>& endNodesMap);
 };
 
 struct QueryGraph {
@@ -79,7 +81,7 @@ struct QueryGraph {
   static string constructObjNameForRepeated(const FieldDescriptor* field);
   Field addReadIdentifier(const string& identifier, bool partOfSelect);
   void readFieldsFromSelect(const SelectStmt& selectStmt);
-  void readFieldsFromWhere(const WhereStmt& whereStmt);
+  void processWhere(const WhereStmt& whereStmt);
   void calculateGraph(const SelectQuery& query);
 };
 

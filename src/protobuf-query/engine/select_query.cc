@@ -194,6 +194,21 @@ void WhereStmt::getAllIdentifiers(set<string>& identifiers) const {
   }
 }
 
+void BooleanExpr::canoncialize(vector<const BooleanExpr*>& andClauses) const {
+  if ((type == BOOLEAN) && (compoundBooleanExpr.op == AND)) {
+    compoundBooleanExpr.lhs->canoncialize(andClauses);
+    compoundBooleanExpr.rhs->canoncialize(andClauses);
+  } else {
+    andClauses.push_back(this);
+  }
+}
+
+void WhereStmt::canoncialize(vector<const BooleanExpr*>& andClauses) const {
+  if (booleanExpr) {
+    booleanExpr->canoncialize(andClauses);
+  }
+}
+
 string SelectField::str() const {
   return identifier;
 }
