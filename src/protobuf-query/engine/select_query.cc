@@ -222,7 +222,7 @@ string FromStmt::str() const {
   return "FROM ('" + fromFile + "', '" + fromRootProto + "')";
 }
 
-string BinaryExpr::str() const {
+string BinaryExpr::str(const map<string, string>& idMap) const {
   string opStr;
   switch (op) {
   case PLUS:   opStr = "+"; break;
@@ -231,19 +231,19 @@ string BinaryExpr::str() const {
   case DIVIDE: opStr = "/"; break;
   default:     opStr = "<BinaryExpOp>";
   }
-  return "(" + lhs->str() + opStr + rhs->str() + ")";
+  return "(" + lhs->str(idMap) + opStr + rhs->str(idMap) + ")";
 }
 
-string UnaryExpr::str() const {
+string UnaryExpr::str(const map<string, string>& idMap) const {
   string prefix;
   switch (op) {
   case UMINUS: prefix = "-"; break;
   default:     prefix = "<UnaryExpOp>";
   }
-  return prefix + expr->str();
+  return prefix + expr->str(idMap);
 }
 
-string Fn1CallExpr::str() const {
+string Fn1CallExpr::str(const map<string, string>& idMap) const {
   string fnStr;
   switch (fn1) {
   case STR:   fnStr = "STR"; break;
@@ -252,26 +252,27 @@ string Fn1CallExpr::str() const {
   case COUNT: fnStr = "COUNT"; break;
   default:    fnStr = "<fn1>";
   }
-  return fnStr + "(" + expr->str() + ")";
+  return fnStr + "(" + expr->str(idMap) + ")";
 }
 
-string Fn3CallExpr::str() const {
+string Fn3CallExpr::str(const map<string, string>& idMap) const {
   string fnStr;
   switch (fn3) {
   case SUBSTR: fnStr = "SUBSTR"; break;
   default:     fnStr = "<fn3>";
   }
-  return fnStr + "(" + expr1->str() + "," + expr2->str() + "," +
-         expr3->str() + ")";
+  return fnStr + "(" + expr1->str(idMap) + "," + expr2->str(idMap) + "," +
+         expr3->str(idMap) + ")";
 }
 
-string Expr::str() const {
+string Expr::str(const map<string, string>& idMap) const {
   switch (type) {
-  case BINARY_EXPR:   return binaryExpr.str();
-  case UNARY_EXPR:    return unaryExpr.str();
-  case FN1_CALL_EXPR: return fn1CallExpr.str();
-  case FN3_CALL_EXPR: return fn3CallExpr.str();
-  case IDENTIFIER:    return identifier;
+  case BINARY_EXPR:   return binaryExpr.str(idMap);
+  case UNARY_EXPR:    return unaryExpr.str(idMap);
+  case FN1_CALL_EXPR: return fn1CallExpr.str(idMap);
+  case FN3_CALL_EXPR: return fn3CallExpr.str(idMap);
+  case IDENTIFIER:    {auto f = idMap.find(identifier);
+                       return f==idMap.end() ? identifier : f->second;}
   case STRING:        return "\""+stringValue+"\"";
   case LONG:          return to_string(longValue);
   case DOUBLE:        return to_string(doubleValue);
@@ -279,17 +280,17 @@ string Expr::str() const {
   }
 }
 
-string CompoundBooleanExpr::str() const {
+string CompoundBooleanExpr::str(const map<string, string>& idMap) const {
   string opStr;
   switch (op) {
   case AND: opStr = "AND"; break;
   case OR:  opStr = "OR"; break;
   default:  opStr = "<CompoundBooleanExprOp>";
   }
-  return "(" + lhs->str() + " " + opStr + " " + rhs->str() + ")";
+  return "(" + lhs->str(idMap) + " " + opStr + " " + rhs->str(idMap) + ")";
 }
 
-string SimpleBooleanExpr::str() const {
+string SimpleBooleanExpr::str(const map<string, string>& idMap) const {
   string opStr;
   switch (op) {
   case EQ:   opStr = "="; break;
@@ -301,23 +302,23 @@ string SimpleBooleanExpr::str() const {
   case LIKE: opStr = "LIKE"; break;
   default:   opStr = "<SimpleBooleanExprOp>";
   }
-  return "(" + lhs.str() + " " + opStr + " " + rhs.str() + ")";
+  return "(" + lhs.str(idMap) + " " + opStr + " " + rhs.str(idMap) + ")";
 }
 
-string BooleanExpr::str() const {
+string BooleanExpr::str(const map<string, string>& idMap) const {
   switch (type) {
-  case BOOLEAN: return compoundBooleanExpr.str();
-  case SIMPLE:  return simpleBooleanExpr.str();
+  case BOOLEAN: return compoundBooleanExpr.str(idMap);
+  case SIMPLE:  return simpleBooleanExpr.str(idMap);
   default:      return "<BooleanExpr>";
   }
 }
 
-string WhereStmt::str() const {
-  return booleanExpr ? ("WHERE " + booleanExpr->str()) : "";
+string WhereStmt::str(const map<string, string>& idMap) const {
+  return booleanExpr ? ("WHERE " + booleanExpr->str(idMap)) : "";
 }
 
 string SelectQuery::str() const {
-  string whereStr = whereStmt.str();
+  string whereStr = whereStmt.str({});
   return selectStmt.str() + " " + fromStmt.str() +
          (whereStr.empty() ? "" : (" " + whereStr));
 }

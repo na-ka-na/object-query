@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <map>
 #include <memory>
 #include "global_include.h"
 #include "utils.h"
@@ -66,28 +67,28 @@ struct BinaryExpr {
   shared_ptr<Expr> lhs;
   shared_ptr<Expr> rhs;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 struct UnaryExpr {
   UnaryExprOp op;
   shared_ptr<Expr> expr;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 struct Fn1CallExpr {
   Fn1 fn1;
   shared_ptr<Expr> expr;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 struct Fn3CallExpr {
   Fn3 fn3;
   shared_ptr<Expr> expr1, expr2, expr3;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 struct Expr {
@@ -112,7 +113,7 @@ struct Expr {
   static Expr createPrimitive(long value);
   static Expr createPrimitive(double value);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 // note: update BooleanExpr::str() on mod
@@ -137,7 +138,7 @@ struct CompoundBooleanExpr {
   shared_ptr<BooleanExpr> lhs;
   shared_ptr<BooleanExpr> rhs;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 struct SimpleBooleanExpr {
@@ -145,7 +146,7 @@ struct SimpleBooleanExpr {
   Expr lhs;
   Expr rhs;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 struct BooleanExpr {
@@ -159,14 +160,14 @@ struct BooleanExpr {
       SimpleBooleanOp op, const Expr& lhs, const Expr& rhs);
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 struct WhereStmt {
   optional<BooleanExpr> booleanExpr;
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
-  string str() const;
+  string str(const map<string, string>& idMap) const;
 };
 
 class SelectQuery;

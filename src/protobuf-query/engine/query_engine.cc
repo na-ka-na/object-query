@@ -190,6 +190,10 @@ void QueryEngine::printPlan() {
           << node.repeatedField.accessor(parent->objName) << " {" << endl;
     }
     indent+=2;
+    for (const BooleanExpr* expr : node.whereClauses) {
+      out << string(indent, ' ') << "if (!" << expr->str({})
+          << ") { continue; }" << endl;
+    }
     for (const Field& field : node.selectFields) {
       out << string(indent, ' ') << "print "
           << ((node.type == REPEATED_PRIMITIVE) ? node.objName :

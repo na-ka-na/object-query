@@ -3,7 +3,10 @@ SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company')
 
 for (1..1) {
   for each quarterly_profit in company.financial().quarterly_profits() {
+    if (!(financial.quarterly_profits > 0)) { continue; }
     for each all_employee in company.all_employees() {
+      if (!(all_employees.name = "abc")) { continue; }
+      if (!(all_employees.active = "true")) { continue; }
       print all_employee.id()
       print all_employee.name()
     } //all_employee
