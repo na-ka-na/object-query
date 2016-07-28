@@ -121,9 +121,8 @@ Field QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect)
       }
       if (partOfSelect) {
         parent->selectFields.insert(field);
-      } else {
-        parent->nonSelectFields.insert(field);
       }
+      parent->allFields.insert(field);
     }
   }
   return field;
@@ -143,16 +142,18 @@ void QueryGraph::processWhere(const WhereStmt& whereStmt) {
     set<string> identifiers;
     clause->getAllIdentifiers(identifiers);
     set<Field> fields;
+    map<string, Field> whereClauseIdMap;
     for (const string& identifier : identifiers) {
       Field f = addReadIdentifier(identifier, false);
       fields.insert(f);
+      whereClauseIdMap.emplace(identifier, f);
     }
     StartNodeFn startNodeFn = [&](int indent, Node& node, Node* parent){
       if (fields.empty()) {
         return;
       }
       for(auto it = fields.begin(); it != fields.end();) {
-        if (node.nonSelectFields.find(*it) != node.nonSelectFields.end()) {
+        if (node.allFields.find(*it) != node.allFields.end()) {
           it = fields.erase(it);
         } else {
           ++it;
@@ -160,6 +161,7 @@ void QueryGraph::processWhere(const WhereStmt& whereStmt) {
       }
       if (fields.empty()) {
         node.whereClauses.push_back(clause);
+        node.whereClauseIdMaps.push_back(whereClauseIdMap);
       }
     };
     EndNodeFn endNodeFn = [](int indent, Node& node) {};
@@ -214,10 +216,13 @@ void QueryEngine::printCode() {
   StartNodeFn startNodeFn = [](int indent, const Node& node, const Node* parent) {};
   EndNodeFn endNodeFn = [](int indent, const Node& node) {};
 
-  vector<const Field*> allSelectFields;
+  vector<Field> allSelectFields, allFields;
   startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     for (const Field& field : node.selectFields) {
-      allSelectFields.push_back(&field);
+      allSelectFields.push_back(field);
+    }
+    for (const Field& field : node.allFields) {
+      allFields.push_back(field);
     }
   };
   Node::walkNode(queryGraph.root, startNodeFn, endNodeFn);
@@ -230,23 +235,23 @@ void QueryEngine::printCode() {
   header += "};";
   out << header << endl;
 
-  map<const Field*, string> selectFieldVarMap;
-  map<const Field*, string> selectFieldTypeMap;
-  map<const Field*, string> selectFieldDefaultMap;
-  for (uint32_t i=0; i<allSelectFields.size(); i++) {
-    const Field* field = allSelectFields[i];
-    selectFieldVarMap[field] = "s" + to_string(i);
-    selectFieldTypeMap[field] = "S" + to_string(i);
-    selectFieldDefaultMap[field] = selectFieldTypeMap[field] + "()";
-    string type = "optional<" + field->type() + ">";
+  map<Field, string> fieldVarMap;
+  map<Field, string> fieldTypeMap;
+  map<Field, string> fieldDefaultMap;
+  for (uint32_t i=0; i<allFields.size(); i++) {
+    const Field& field = allFields[i];
+    fieldVarMap[field] = "s" + to_string(i);
+    fieldTypeMap[field] = "S" + to_string(i);
+    fieldDefaultMap[field] = fieldTypeMap[field] + "()";
+    string type = "optional<" + field.type() + ">";
     string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
-    out << "using " << selectFieldTypeMap[field] << " = " << type << ";"
-        << spaces << " /*" << field->accessor("") << "*/" << endl;
+    out << "using " << fieldTypeMap[field] << " = " << type << ";"
+        << spaces << " /*" << field.accessor("") << "*/" << endl;
   }
   string tupleType = "using TupleType = tuple<";
-  tupleType += joinVec<const Field*>(
+  tupleType += joinVec<Field>(
       ", ", allSelectFields,
-      [&](const Field* field) {return selectFieldTypeMap[field];});
+      [&](const Field& field) {return fieldTypeMap[field];});
   tupleType += ">;";
   out << tupleType << endl;
   out << endl;
@@ -254,7 +259,7 @@ void QueryEngine::printCode() {
   out << "void runSelect(const "
       << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
       << queryGraph.root.objName << ", vector<TupleType>& tuples) {" << endl;
-  vector<const Field*> selectFieldsProcessed;
+  vector<Field> selectFieldsProcessed;
   startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     string ind = string(indent+2, ' ');
     if (!parent) { //root
@@ -269,12 +274,15 @@ void QueryEngine::printCode() {
     }
     indent+=4;
     ind = string(indent+2, ' ');
-    for (const Field& field : node.selectFields) {
-      selectFieldsProcessed.push_back(&field);
-      out << ind << selectFieldTypeMap[&field] << " "
-          << selectFieldVarMap[&field] << " = "
+    for (const Field& field : node.allFields) {
+      bool isSelect = node.selectFields.find(field) != node.selectFields.end();
+      if (isSelect) {
+        selectFieldsProcessed.push_back(field);
+      }
+      out << ind << fieldTypeMap[field] << " "
+          << fieldVarMap[field] << " = "
           << ((node.type == REPEATED_PRIMITIVE) ? node.objName :
-              selectFieldDefaultMap[&field]) << ";" << endl;
+              fieldDefaultMap[field]) << ";" << endl;
       if (node.type != REPEATED_PRIMITIVE) {
         vector<string> checks;
         for (uint32_t i=0; i<field.fieldParts.size(); i++) {
@@ -282,30 +290,30 @@ void QueryEngine::printCode() {
         }
         out << ind << "if(" << joinVec<string>(" && ", checks, string2str)
             << ") {" << endl;
-        out << ind << "  " << selectFieldVarMap[&field] << " = "
+        out << ind << "  " << fieldVarMap[field] << " = "
             << field.accessor(node.objName) << ";" << endl;
         out << ind << "}" << endl;
       }
     }
     if (selectFieldsProcessed.size() == allSelectFields.size()) {
-      string selectList = joinVec<const Field*>(", ", allSelectFields,
-          [&](const Field* field) {return selectFieldVarMap[field];});
+      string selectList = joinVec<Field>(", ", allSelectFields,
+          [&](const Field& field) {return fieldVarMap[field];});
       out << ind << "tuples.emplace_back(" + selectList + ");" << endl;
     }
   };
-  set<const Field*> endedFieldSet;
+  set<Field> endedFieldSet;
   endNodeFn = [&](int indent, const Node& node) {
     string ind = string(indent+2, ' ');
     out << ind << "  }" << endl;
     out << ind << "} else { // no " << node.objName << endl;
     for (const Field& field : node.selectFields) {
-      endedFieldSet.insert(&field);
+      endedFieldSet.insert(field);
     }
-    string selectList = joinVec<const Field*>(
+    string selectList = joinVec<Field>(
         ", ", selectFieldsProcessed,
-        [&](const Field* field) {
+        [&](const Field& field) {
             return endedFieldSet.find(field) == endedFieldSet.end() ?
-                selectFieldVarMap[field] : selectFieldDefaultMap[field];
+                fieldVarMap[field] : fieldDefaultMap[field];
         });
     out << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
     out << ind << "}" << endl;
@@ -319,7 +327,7 @@ void QueryEngine::printCode() {
     const Field& readField = queryGraph.selectFieldIdxReadFieldMap[i];
     int idx = -1;
     for (size_t j=0; j<allSelectFields.size(); j++) {
-      if (*allSelectFields[j] == readField) {
+      if (allSelectFields[j] == readField) {
         idx = j;
         break;
       }

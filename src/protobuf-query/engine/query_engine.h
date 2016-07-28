@@ -54,9 +54,10 @@ struct Node {
   map<Field, Node> children;
   // list of non-repeating read fields for this node.
   set<Field> selectFields;
-  set<Field> nonSelectFields;
+  set<Field> allFields;
   // list of all canonical where clauses
   vector<const BooleanExpr*> whereClauses;
+  vector<map<string, Field>> whereClauseIdMaps;
 
   // Node tree walk, modified DFS which vists each node twice,
   // one in depth first order, second in reverse order.
