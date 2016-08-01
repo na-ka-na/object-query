@@ -34,38 +34,40 @@ Grammar
    22             | expr ">=" expr
    23             | expr "<=" expr
    24             | expr "LIKE" expr
+   25             | "identifier" "IS" "NULL"
+   26             | "identifier" "IS" "NOT" "NULL"
 
-   25 expr: "(" expr ")"
-   26     | expr "+" expr
-   27     | expr "-" expr
-   28     | expr "*" expr
-   29     | expr "/" expr
-   30     | "-" expr
-   31     | fn1 "(" expr ")"
-   32     | fn3 "(" expr "," expr "," expr ")"
-   33     | "identifier"
-   34     | "string"
-   35     | "long"
-   36     | "double"
+   27 expr: "(" expr ")"
+   28     | expr "+" expr
+   29     | expr "-" expr
+   30     | expr "*" expr
+   31     | expr "/" expr
+   32     | "-" expr
+   33     | fn1 "(" expr ")"
+   34     | fn3 "(" expr "," expr "," expr ")"
+   35     | "identifier"
+   36     | "string"
+   37     | "long"
+   38     | "double"
 
-   37 group_by_stmt: %empty
-   38              | "GROUP" "BY" group_by_fields
+   39 group_by_stmt: %empty
+   40              | "GROUP" "BY" group_by_fields
 
-   39 group_by_fields: group_by_field
-   40                | group_by_fields "," group_by_field
+   41 group_by_fields: group_by_field
+   42                | group_by_fields "," group_by_field
 
-   41 group_by_field: "identifier"
+   43 group_by_field: "identifier"
 
-   42 having_stmt: %empty
-   43            | "HAVING" boolean_expr
+   44 having_stmt: %empty
+   45            | "HAVING" boolean_expr
 
-   44 order_by_stmt: %empty
-   45              | "ORDER" "BY" order_by_fields
+   46 order_by_stmt: %empty
+   47              | "ORDER" "BY" order_by_fields
 
-   46 order_by_fields: order_by_field
-   47                | order_by_fields "," order_by_field
+   48 order_by_fields: order_by_field
+   49                | order_by_fields "," order_by_field
 
-   48 order_by_field: "identifier"
+   50 order_by_field: "identifier"
 
 
 Terminals, with rules where they appear
@@ -75,15 +77,15 @@ error (256)
 "SELECT" (258) 7 8
 "FROM" (259) 12
 "WHERE" (260) 14
-"GROUP" (261) 38
-"HAVING" (262) 43
-"ORDER" (263) 45
-"BY" (264) 38 45
-"," (265) 10 12 32 40 47
-"+" (266) 26
-"-" (267) 27 30
-"*" (268) 28
-"/" (269) 29
+"GROUP" (261) 40
+"HAVING" (262) 45
+"ORDER" (263) 47
+"BY" (264) 40 47
+"," (265) 10 12 34 42 49
+"+" (266) 28
+"-" (267) 29 32
+"*" (268) 30
+"/" (269) 31
 "=" (270) 18
 "!=" (271) 19
 "<" (272) 21
@@ -91,62 +93,66 @@ error (256)
 "<=" (274) 23
 ">=" (275) 22
 "LIKE" (276) 24
-"AND" (277) 16
-"OR" (278) 17
-"(" (279) 12 15 25 31 32
-")" (280) 12 15 25 31 32
-"DISTINCT" (281) 8
-"identifier" (282) 11 33 41 48
-"string" (283) 12 34
-"long" (284) 35
-"double" (285) 36
-"STR" (286) 2
-"INT" (287) 3
-"SUM" (288) 4
-"COUNT" (289) 5
-"SUBSTR" (290) 6
-UMINUS (291)
+"IS" (277) 25 26
+"NOT" (278) 26
+"NULL" (279) 25 26
+"AND" (280) 16
+"OR" (281) 17
+"(" (282) 12 15 27 33 34
+")" (283) 12 15 27 33 34
+"DISTINCT" (284) 8
+"identifier" (285) 11 25 26 35 43 50
+"string" (286) 12 36
+"long" (287) 37
+"double" (288) 38
+"STR" (289) 2
+"INT" (290) 3
+"SUM" (291) 4
+"COUNT" (292) 5
+"SUBSTR" (293) 6
+UMINUS (294)
 
 
 Nonterminals, with rules where they appear
 
-$accept (37)
+$accept (40)
     on left: 0
-query (38)
+query (41)
     on left: 1, on right: 0
-fn1 (39)
-    on left: 2 3 4 5, on right: 31
-fn3 (40)
-    on left: 6, on right: 32
-select_stmt (41)
+fn1 (42)
+    on left: 2 3 4 5, on right: 33
+fn3 (43)
+    on left: 6, on right: 34
+select_stmt (44)
     on left: 7 8, on right: 1
-select_fields (42)
+select_fields (45)
     on left: 9 10, on right: 7 8 10
-select_field (43)
+select_field (46)
     on left: 11, on right: 9 10
-from_stmt (44)
+from_stmt (47)
     on left: 12, on right: 1
-where_stmt (45)
+where_stmt (48)
     on left: 13 14, on right: 1
-boolean_expr (46)
-    on left: 15 16 17 18 19 20 21 22 23 24, on right: 14 15 16 17 43
-expr (47)
-    on left: 25 26 27 28 29 30 31 32 33 34 35 36, on right: 18 19 20
-    21 22 23 24 25 26 27 28 29 30 31 32
-group_by_stmt (48)
-    on left: 37 38, on right: 1
-group_by_fields (49)
-    on left: 39 40, on right: 38 40
-group_by_field (50)
-    on left: 41, on right: 39 40
-having_stmt (51)
-    on left: 42 43, on right: 1
-order_by_stmt (52)
+boolean_expr (49)
+    on left: 15 16 17 18 19 20 21 22 23 24 25 26, on right: 14 15 16
+    17 45
+expr (50)
+    on left: 27 28 29 30 31 32 33 34 35 36 37 38, on right: 18 19 20
+    21 22 23 24 27 28 29 30 31 32 33 34
+group_by_stmt (51)
+    on left: 39 40, on right: 1
+group_by_fields (52)
+    on left: 41 42, on right: 40 42
+group_by_field (53)
+    on left: 43, on right: 41 42
+having_stmt (54)
     on left: 44 45, on right: 1
-order_by_fields (53)
-    on left: 46 47, on right: 45 47
-order_by_field (54)
-    on left: 48, on right: 46 47
+order_by_stmt (55)
+    on left: 46 47, on right: 1
+order_by_fields (56)
+    on left: 48 49, on right: 47 49
+order_by_field (57)
+    on left: 50, on right: 48 49
 
 
 State 0
@@ -303,18 +309,20 @@ State 14
    22             | . expr ">=" expr
    23             | . expr "<=" expr
    24             | . expr "LIKE" expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   25             | . "identifier" "IS" "NULL"
+   26             | . "identifier" "IS" "NOT" "NULL"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 19
@@ -337,12 +345,12 @@ State 14
 State 15
 
     1 query: select_stmt from_stmt where_stmt . group_by_stmt having_stmt order_by_stmt
-   37 group_by_stmt: . %empty  ["end of file", "HAVING", "ORDER"]
-   38              | . "GROUP" "BY" group_by_fields
+   39 group_by_stmt: . %empty  ["end of file", "HAVING", "ORDER"]
+   40              | . "GROUP" "BY" group_by_fields
 
     "GROUP"  shift, and go to state 33
 
-    $default  reduce using rule 37 (group_by_stmt)
+    $default  reduce using rule 39 (group_by_stmt)
 
     group_by_stmt  go to state 34
 
@@ -368,23 +376,23 @@ State 18
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   30     | "-" . expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   32     | "-" . expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -396,7 +404,7 @@ State 18
 
     fn1   go to state 29
     fn3   go to state 30
-    expr  go to state 37
+    expr  go to state 38
 
 
 State 19
@@ -417,19 +425,21 @@ State 19
    22             | . expr ">=" expr
    23             | . expr "<=" expr
    24             | . expr "LIKE" expr
-   25 expr: . "(" expr ")"
-   25     | "(" . expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   25             | . "identifier" "IS" "NULL"
+   26             | . "identifier" "IS" "NOT" "NULL"
+   27 expr: . "(" expr ")"
+   27     | "(" . expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 19
@@ -445,36 +455,40 @@ State 19
 
     fn1           go to state 29
     fn3           go to state 30
-    boolean_expr  go to state 38
-    expr          go to state 39
+    boolean_expr  go to state 39
+    expr          go to state 40
 
 
 State 20
 
-   33 expr: "identifier" .
+   25 boolean_expr: "identifier" . "IS" "NULL"
+   26             | "identifier" . "IS" "NOT" "NULL"
+   35 expr: "identifier" .  ["+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "LIKE", ")"]
 
-    $default  reduce using rule 33 (expr)
-
-
-State 21
-
-   34 expr: "string" .
-
-    $default  reduce using rule 34 (expr)
-
-
-State 22
-
-   35 expr: "long" .
+    "IS"  shift, and go to state 41
 
     $default  reduce using rule 35 (expr)
 
 
-State 23
+State 21
 
-   36 expr: "double" .
+   36 expr: "string" .
 
     $default  reduce using rule 36 (expr)
+
+
+State 22
+
+   37 expr: "long" .
+
+    $default  reduce using rule 37 (expr)
+
+
+State 23
+
+   38 expr: "double" .
+
+    $default  reduce using rule 38 (expr)
 
 
 State 24
@@ -514,16 +528,16 @@ State 28
 
 State 29
 
-   31 expr: fn1 . "(" expr ")"
+   33 expr: fn1 . "(" expr ")"
 
-    "("  shift, and go to state 40
+    "("  shift, and go to state 42
 
 
 State 30
 
-   32 expr: fn3 . "(" expr "," expr "," expr ")"
+   34 expr: fn3 . "(" expr "," expr "," expr ")"
 
-    "("  shift, and go to state 41
+    "("  shift, and go to state 43
 
 
 State 31
@@ -532,8 +546,8 @@ State 31
    16 boolean_expr: boolean_expr . "AND" boolean_expr
    17             | boolean_expr . "OR" boolean_expr
 
-    "AND"  shift, and go to state 42
-    "OR"   shift, and go to state 43
+    "AND"  shift, and go to state 44
+    "OR"   shift, and go to state 45
 
     $default  reduce using rule 14 (where_stmt)
 
@@ -547,49 +561,49 @@ State 32
    22             | expr . ">=" expr
    23             | expr . "<=" expr
    24             | expr . "LIKE" expr
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    "+"     shift, and go to state 44
-    "-"     shift, and go to state 45
-    "*"     shift, and go to state 46
-    "/"     shift, and go to state 47
-    "="     shift, and go to state 48
-    "!="    shift, and go to state 49
-    "<"     shift, and go to state 50
-    ">"     shift, and go to state 51
-    "<="    shift, and go to state 52
-    ">="    shift, and go to state 53
-    "LIKE"  shift, and go to state 54
+    "+"     shift, and go to state 46
+    "-"     shift, and go to state 47
+    "*"     shift, and go to state 48
+    "/"     shift, and go to state 49
+    "="     shift, and go to state 50
+    "!="    shift, and go to state 51
+    "<"     shift, and go to state 52
+    ">"     shift, and go to state 53
+    "<="    shift, and go to state 54
+    ">="    shift, and go to state 55
+    "LIKE"  shift, and go to state 56
 
 
 State 33
 
-   38 group_by_stmt: "GROUP" . "BY" group_by_fields
+   40 group_by_stmt: "GROUP" . "BY" group_by_fields
 
-    "BY"  shift, and go to state 55
+    "BY"  shift, and go to state 57
 
 
 State 34
 
     1 query: select_stmt from_stmt where_stmt group_by_stmt . having_stmt order_by_stmt
-   42 having_stmt: . %empty  ["end of file", "ORDER"]
-   43            | . "HAVING" boolean_expr
+   44 having_stmt: . %empty  ["end of file", "ORDER"]
+   45            | . "HAVING" boolean_expr
 
-    "HAVING"  shift, and go to state 56
+    "HAVING"  shift, and go to state 58
 
-    $default  reduce using rule 42 (having_stmt)
+    $default  reduce using rule 44 (having_stmt)
 
-    having_stmt  go to state 57
+    having_stmt  go to state 59
 
 
 State 35
 
    12 from_stmt: "FROM" "(" "string" "," . "string" ")"
 
-    "string"  shift, and go to state 58
+    "string"  shift, and go to state 60
 
 
 State 36
@@ -599,23 +613,23 @@ State 36
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   25     | "(" . expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   27 expr: . "(" expr ")"
+   27     | "(" . expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -627,37 +641,44 @@ State 36
 
     fn1   go to state 29
     fn3   go to state 30
-    expr  go to state 59
+    expr  go to state 61
 
 
 State 37
 
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
-   30     | "-" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   35 expr: "identifier" .
 
-    $default  reduce using rule 30 (expr)
-
-    Conflict between rule 30 and token "+" resolved as reduce ("+" < UMINUS).
-    Conflict between rule 30 and token "-" resolved as reduce ("-" < UMINUS).
-    Conflict between rule 30 and token "*" resolved as reduce ("*" < UMINUS).
-    Conflict between rule 30 and token "/" resolved as reduce ("/" < UMINUS).
+    $default  reduce using rule 35 (expr)
 
 
 State 38
+
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
+   32     | "-" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+
+    $default  reduce using rule 32 (expr)
+
+    Conflict between rule 32 and token "+" resolved as reduce ("+" < UMINUS).
+    Conflict between rule 32 and token "-" resolved as reduce ("-" < UMINUS).
+    Conflict between rule 32 and token "*" resolved as reduce ("*" < UMINUS).
+    Conflict between rule 32 and token "/" resolved as reduce ("/" < UMINUS).
+
+
+State 39
 
    15 boolean_expr: "(" boolean_expr . ")"
    16             | boolean_expr . "AND" boolean_expr
    17             | boolean_expr . "OR" boolean_expr
 
-    "AND"  shift, and go to state 42
-    "OR"   shift, and go to state 43
-    ")"    shift, and go to state 60
+    "AND"  shift, and go to state 44
+    "OR"   shift, and go to state 45
+    ")"    shift, and go to state 62
 
 
-State 39
+State 40
 
    18 boolean_expr: expr . "=" expr
    19             | expr . "!=" expr
@@ -666,88 +687,59 @@ State 39
    22             | expr . ">=" expr
    23             | expr . "<=" expr
    24             | expr . "LIKE" expr
-   25 expr: "(" expr . ")"
-   26     | expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   27 expr: "(" expr . ")"
+   28     | expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    "+"     shift, and go to state 44
-    "-"     shift, and go to state 45
-    "*"     shift, and go to state 46
-    "/"     shift, and go to state 47
-    "="     shift, and go to state 48
-    "!="    shift, and go to state 49
-    "<"     shift, and go to state 50
-    ">"     shift, and go to state 51
-    "<="    shift, and go to state 52
-    ">="    shift, and go to state 53
-    "LIKE"  shift, and go to state 54
-    ")"     shift, and go to state 61
-
-
-State 40
-
-    2 fn1: . "STR"
-    3    | . "INT"
-    4    | . "SUM"
-    5    | . "COUNT"
-    6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   31     | fn1 "(" . expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
-
-    "-"           shift, and go to state 18
-    "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
-    "string"      shift, and go to state 21
-    "long"        shift, and go to state 22
-    "double"      shift, and go to state 23
-    "STR"         shift, and go to state 24
-    "INT"         shift, and go to state 25
-    "SUM"         shift, and go to state 26
-    "COUNT"       shift, and go to state 27
-    "SUBSTR"      shift, and go to state 28
-
-    fn1   go to state 29
-    fn3   go to state 30
-    expr  go to state 62
+    "+"     shift, and go to state 46
+    "-"     shift, and go to state 47
+    "*"     shift, and go to state 48
+    "/"     shift, and go to state 49
+    "="     shift, and go to state 50
+    "!="    shift, and go to state 51
+    "<"     shift, and go to state 52
+    ">"     shift, and go to state 53
+    "<="    shift, and go to state 54
+    ">="    shift, and go to state 55
+    "LIKE"  shift, and go to state 56
+    ")"     shift, and go to state 63
 
 
 State 41
 
+   25 boolean_expr: "identifier" "IS" . "NULL"
+   26             | "identifier" "IS" . "NOT" "NULL"
+
+    "NOT"   shift, and go to state 64
+    "NULL"  shift, and go to state 65
+
+
+State 42
+
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   32     | fn3 "(" . expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   33     | fn1 "(" . expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -759,10 +751,48 @@ State 41
 
     fn1   go to state 29
     fn3   go to state 30
-    expr  go to state 63
+    expr  go to state 66
 
 
-State 42
+State 43
+
+    2 fn1: . "STR"
+    3    | . "INT"
+    4    | . "SUM"
+    5    | . "COUNT"
+    6 fn3: . "SUBSTR"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   34     | fn3 "(" . expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
+
+    "-"           shift, and go to state 18
+    "("           shift, and go to state 36
+    "identifier"  shift, and go to state 37
+    "string"      shift, and go to state 21
+    "long"        shift, and go to state 22
+    "double"      shift, and go to state 23
+    "STR"         shift, and go to state 24
+    "INT"         shift, and go to state 25
+    "SUM"         shift, and go to state 26
+    "COUNT"       shift, and go to state 27
+    "SUBSTR"      shift, and go to state 28
+
+    fn1   go to state 29
+    fn3   go to state 30
+    expr  go to state 67
+
+
+State 44
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -780,18 +810,20 @@ State 42
    22             | . expr ">=" expr
    23             | . expr "<=" expr
    24             | . expr "LIKE" expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   25             | . "identifier" "IS" "NULL"
+   26             | . "identifier" "IS" "NOT" "NULL"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 19
@@ -807,11 +839,11 @@ State 42
 
     fn1           go to state 29
     fn3           go to state 30
-    boolean_expr  go to state 64
+    boolean_expr  go to state 68
     expr          go to state 32
 
 
-State 43
+State 45
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -829,18 +861,20 @@ State 43
    22             | . expr ">=" expr
    23             | . expr "<=" expr
    24             | . expr "LIKE" expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   25             | . "identifier" "IS" "NULL"
+   26             | . "identifier" "IS" "NOT" "NULL"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 19
@@ -856,84 +890,8 @@ State 43
 
     fn1           go to state 29
     fn3           go to state 30
-    boolean_expr  go to state 65
+    boolean_expr  go to state 69
     expr          go to state 32
-
-
-State 44
-
-    2 fn1: . "STR"
-    3    | . "INT"
-    4    | . "SUM"
-    5    | . "COUNT"
-    6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   26     | expr "+" . expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
-
-    "-"           shift, and go to state 18
-    "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
-    "string"      shift, and go to state 21
-    "long"        shift, and go to state 22
-    "double"      shift, and go to state 23
-    "STR"         shift, and go to state 24
-    "INT"         shift, and go to state 25
-    "SUM"         shift, and go to state 26
-    "COUNT"       shift, and go to state 27
-    "SUBSTR"      shift, and go to state 28
-
-    fn1   go to state 29
-    fn3   go to state 30
-    expr  go to state 66
-
-
-State 45
-
-    2 fn1: . "STR"
-    3    | . "INT"
-    4    | . "SUM"
-    5    | . "COUNT"
-    6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   27     | expr "-" . expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
-
-    "-"           shift, and go to state 18
-    "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
-    "string"      shift, and go to state 21
-    "long"        shift, and go to state 22
-    "double"      shift, and go to state 23
-    "STR"         shift, and go to state 24
-    "INT"         shift, and go to state 25
-    "SUM"         shift, and go to state 26
-    "COUNT"       shift, and go to state 27
-    "SUBSTR"      shift, and go to state 28
-
-    fn1   go to state 29
-    fn3   go to state 30
-    expr  go to state 67
 
 
 State 46
@@ -943,99 +901,23 @@ State 46
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   28     | expr "*" . expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   28     | expr "+" . expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
-    "string"      shift, and go to state 21
-    "long"        shift, and go to state 22
-    "double"      shift, and go to state 23
-    "STR"         shift, and go to state 24
-    "INT"         shift, and go to state 25
-    "SUM"         shift, and go to state 26
-    "COUNT"       shift, and go to state 27
-    "SUBSTR"      shift, and go to state 28
-
-    fn1   go to state 29
-    fn3   go to state 30
-    expr  go to state 68
-
-
-State 47
-
-    2 fn1: . "STR"
-    3    | . "INT"
-    4    | . "SUM"
-    5    | . "COUNT"
-    6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   29     | expr "/" . expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
-
-    "-"           shift, and go to state 18
-    "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
-    "string"      shift, and go to state 21
-    "long"        shift, and go to state 22
-    "double"      shift, and go to state 23
-    "STR"         shift, and go to state 24
-    "INT"         shift, and go to state 25
-    "SUM"         shift, and go to state 26
-    "COUNT"       shift, and go to state 27
-    "SUBSTR"      shift, and go to state 28
-
-    fn1   go to state 29
-    fn3   go to state 30
-    expr  go to state 69
-
-
-State 48
-
-    2 fn1: . "STR"
-    3    | . "INT"
-    4    | . "SUM"
-    5    | . "COUNT"
-    6 fn3: . "SUBSTR"
-   18 boolean_expr: expr "=" . expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
-
-    "-"           shift, and go to state 18
-    "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -1050,30 +932,30 @@ State 48
     expr  go to state 70
 
 
-State 49
+State 47
 
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   19 boolean_expr: expr "!=" . expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   29     | expr "-" . expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -1088,30 +970,30 @@ State 49
     expr  go to state 71
 
 
-State 50
+State 48
 
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   21 boolean_expr: expr "<" . expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   30     | expr "*" . expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -1126,30 +1008,30 @@ State 50
     expr  go to state 72
 
 
-State 51
+State 49
 
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   20 boolean_expr: expr ">" . expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   31     | expr "/" . expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -1164,30 +1046,30 @@ State 51
     expr  go to state 73
 
 
-State 52
+State 50
 
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   23 boolean_expr: expr "<=" . expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   18 boolean_expr: expr "=" . expr
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -1202,30 +1084,30 @@ State 52
     expr  go to state 74
 
 
-State 53
+State 51
 
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   22 boolean_expr: expr ">=" . expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   19 boolean_expr: expr "!=" . expr
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -1240,30 +1122,30 @@ State 53
     expr  go to state 75
 
 
-State 54
+State 52
 
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   24 boolean_expr: expr "LIKE" . expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   21 boolean_expr: expr "<" . expr
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -1278,20 +1160,172 @@ State 54
     expr  go to state 76
 
 
+State 53
+
+    2 fn1: . "STR"
+    3    | . "INT"
+    4    | . "SUM"
+    5    | . "COUNT"
+    6 fn3: . "SUBSTR"
+   20 boolean_expr: expr ">" . expr
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
+
+    "-"           shift, and go to state 18
+    "("           shift, and go to state 36
+    "identifier"  shift, and go to state 37
+    "string"      shift, and go to state 21
+    "long"        shift, and go to state 22
+    "double"      shift, and go to state 23
+    "STR"         shift, and go to state 24
+    "INT"         shift, and go to state 25
+    "SUM"         shift, and go to state 26
+    "COUNT"       shift, and go to state 27
+    "SUBSTR"      shift, and go to state 28
+
+    fn1   go to state 29
+    fn3   go to state 30
+    expr  go to state 77
+
+
+State 54
+
+    2 fn1: . "STR"
+    3    | . "INT"
+    4    | . "SUM"
+    5    | . "COUNT"
+    6 fn3: . "SUBSTR"
+   23 boolean_expr: expr "<=" . expr
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
+
+    "-"           shift, and go to state 18
+    "("           shift, and go to state 36
+    "identifier"  shift, and go to state 37
+    "string"      shift, and go to state 21
+    "long"        shift, and go to state 22
+    "double"      shift, and go to state 23
+    "STR"         shift, and go to state 24
+    "INT"         shift, and go to state 25
+    "SUM"         shift, and go to state 26
+    "COUNT"       shift, and go to state 27
+    "SUBSTR"      shift, and go to state 28
+
+    fn1   go to state 29
+    fn3   go to state 30
+    expr  go to state 78
+
+
 State 55
 
-   38 group_by_stmt: "GROUP" "BY" . group_by_fields
-   39 group_by_fields: . group_by_field
-   40                | . group_by_fields "," group_by_field
-   41 group_by_field: . "identifier"
+    2 fn1: . "STR"
+    3    | . "INT"
+    4    | . "SUM"
+    5    | . "COUNT"
+    6 fn3: . "SUBSTR"
+   22 boolean_expr: expr ">=" . expr
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
-    "identifier"  shift, and go to state 77
+    "-"           shift, and go to state 18
+    "("           shift, and go to state 36
+    "identifier"  shift, and go to state 37
+    "string"      shift, and go to state 21
+    "long"        shift, and go to state 22
+    "double"      shift, and go to state 23
+    "STR"         shift, and go to state 24
+    "INT"         shift, and go to state 25
+    "SUM"         shift, and go to state 26
+    "COUNT"       shift, and go to state 27
+    "SUBSTR"      shift, and go to state 28
 
-    group_by_fields  go to state 78
-    group_by_field   go to state 79
+    fn1   go to state 29
+    fn3   go to state 30
+    expr  go to state 79
 
 
 State 56
+
+    2 fn1: . "STR"
+    3    | . "INT"
+    4    | . "SUM"
+    5    | . "COUNT"
+    6 fn3: . "SUBSTR"
+   24 boolean_expr: expr "LIKE" . expr
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
+
+    "-"           shift, and go to state 18
+    "("           shift, and go to state 36
+    "identifier"  shift, and go to state 37
+    "string"      shift, and go to state 21
+    "long"        shift, and go to state 22
+    "double"      shift, and go to state 23
+    "STR"         shift, and go to state 24
+    "INT"         shift, and go to state 25
+    "SUM"         shift, and go to state 26
+    "COUNT"       shift, and go to state 27
+    "SUBSTR"      shift, and go to state 28
+
+    fn1   go to state 29
+    fn3   go to state 30
+    expr  go to state 80
+
+
+State 57
+
+   40 group_by_stmt: "GROUP" "BY" . group_by_fields
+   41 group_by_fields: . group_by_field
+   42                | . group_by_fields "," group_by_field
+   43 group_by_field: . "identifier"
+
+    "identifier"  shift, and go to state 81
+
+    group_by_fields  go to state 82
+    group_by_field   go to state 83
+
+
+State 58
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1308,19 +1342,21 @@ State 56
    22             | . expr ">=" expr
    23             | . expr "<=" expr
    24             | . expr "LIKE" expr
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
-   43 having_stmt: "HAVING" . boolean_expr
+   25             | . "identifier" "IS" "NULL"
+   26             | . "identifier" "IS" "NOT" "NULL"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
+   45 having_stmt: "HAVING" . boolean_expr
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 19
@@ -1336,96 +1372,110 @@ State 56
 
     fn1           go to state 29
     fn3           go to state 30
-    boolean_expr  go to state 80
+    boolean_expr  go to state 84
     expr          go to state 32
-
-
-State 57
-
-    1 query: select_stmt from_stmt where_stmt group_by_stmt having_stmt . order_by_stmt
-   44 order_by_stmt: . %empty  ["end of file"]
-   45              | . "ORDER" "BY" order_by_fields
-
-    "ORDER"  shift, and go to state 81
-
-    $default  reduce using rule 44 (order_by_stmt)
-
-    order_by_stmt  go to state 82
-
-
-State 58
-
-   12 from_stmt: "FROM" "(" "string" "," "string" . ")"
-
-    ")"  shift, and go to state 83
 
 
 State 59
 
-   25 expr: "(" expr . ")"
-   26     | expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+    1 query: select_stmt from_stmt where_stmt group_by_stmt having_stmt . order_by_stmt
+   46 order_by_stmt: . %empty  ["end of file"]
+   47              | . "ORDER" "BY" order_by_fields
 
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
-    ")"  shift, and go to state 61
+    "ORDER"  shift, and go to state 85
+
+    $default  reduce using rule 46 (order_by_stmt)
+
+    order_by_stmt  go to state 86
 
 
 State 60
+
+   12 from_stmt: "FROM" "(" "string" "," "string" . ")"
+
+    ")"  shift, and go to state 87
+
+
+State 61
+
+   27 expr: "(" expr . ")"
+   28     | expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
+
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
+    ")"  shift, and go to state 63
+
+
+State 62
 
    15 boolean_expr: "(" boolean_expr ")" .
 
     $default  reduce using rule 15 (boolean_expr)
 
 
-State 61
-
-   25 expr: "(" expr ")" .
-
-    $default  reduce using rule 25 (expr)
-
-
-State 62
-
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
-   31     | fn1 "(" expr . ")"
-
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
-    ")"  shift, and go to state 84
-
-
 State 63
 
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
-   32     | fn3 "(" expr . "," expr "," expr ")"
+   27 expr: "(" expr ")" .
 
-    ","  shift, and go to state 85
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
+    $default  reduce using rule 27 (expr)
 
 
 State 64
+
+   26 boolean_expr: "identifier" "IS" "NOT" . "NULL"
+
+    "NULL"  shift, and go to state 88
+
+
+State 65
+
+   25 boolean_expr: "identifier" "IS" "NULL" .
+
+    $default  reduce using rule 25 (boolean_expr)
+
+
+State 66
+
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
+   33     | fn1 "(" expr . ")"
+
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
+    ")"  shift, and go to state 89
+
+
+State 67
+
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
+   34     | fn3 "(" expr . "," expr "," expr ")"
+
+    ","  shift, and go to state 90
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
+
+
+State 68
 
    16 boolean_expr: boolean_expr . "AND" boolean_expr
    16             | boolean_expr "AND" boolean_expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", ")"]
    17             | boolean_expr . "OR" boolean_expr
 
-    "OR"  shift, and go to state 43
+    "OR"  shift, and go to state 45
 
     $default  reduce using rule 16 (boolean_expr)
 
@@ -1433,7 +1483,7 @@ State 64
     Conflict between rule 16 and token "OR" resolved as shift ("AND" < "OR").
 
 
-State 65
+State 69
 
    16 boolean_expr: boolean_expr . "AND" boolean_expr
    17             | boolean_expr . "OR" boolean_expr
@@ -1445,383 +1495,283 @@ State 65
     Conflict between rule 17 and token "OR" resolved as reduce (%left "OR").
 
 
-State 66
+State 70
 
-   26 expr: expr . "+" expr
-   26     | expr "+" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   28 expr: expr . "+" expr
+   28     | expr "+" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
-
-    $default  reduce using rule 26 (expr)
-
-    Conflict between rule 26 and token "+" resolved as reduce (%left "+").
-    Conflict between rule 26 and token "-" resolved as reduce (%left "-").
-    Conflict between rule 26 and token "*" resolved as shift ("+" < "*").
-    Conflict between rule 26 and token "/" resolved as shift ("+" < "/").
-
-
-State 67
-
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   27     | expr "-" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
-   28     | expr . "*" expr
-   29     | expr . "/" expr
-
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
-
-    $default  reduce using rule 27 (expr)
-
-    Conflict between rule 27 and token "+" resolved as reduce (%left "+").
-    Conflict between rule 27 and token "-" resolved as reduce (%left "-").
-    Conflict between rule 27 and token "*" resolved as shift ("-" < "*").
-    Conflict between rule 27 and token "/" resolved as shift ("-" < "/").
-
-
-State 68
-
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   28     | expr "*" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
-   29     | expr . "/" expr
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
 
     $default  reduce using rule 28 (expr)
 
-    Conflict between rule 28 and token "+" resolved as reduce ("+" < "*").
-    Conflict between rule 28 and token "-" resolved as reduce ("-" < "*").
-    Conflict between rule 28 and token "*" resolved as reduce (%left "*").
-    Conflict between rule 28 and token "/" resolved as reduce (%left "/").
-
-
-State 69
-
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
-   29     | expr "/" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
-
-    $default  reduce using rule 29 (expr)
-
-    Conflict between rule 29 and token "+" resolved as reduce ("+" < "/").
-    Conflict between rule 29 and token "-" resolved as reduce ("-" < "/").
-    Conflict between rule 29 and token "*" resolved as reduce (%left "*").
-    Conflict between rule 29 and token "/" resolved as reduce (%left "/").
-
-
-State 70
-
-   18 boolean_expr: expr "=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
-
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
-
-    $default  reduce using rule 18 (boolean_expr)
+    Conflict between rule 28 and token "+" resolved as reduce (%left "+").
+    Conflict between rule 28 and token "-" resolved as reduce (%left "-").
+    Conflict between rule 28 and token "*" resolved as shift ("+" < "*").
+    Conflict between rule 28 and token "/" resolved as shift ("+" < "/").
 
 
 State 71
 
-   19 boolean_expr: expr "!=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   29     | expr "-" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
 
-    $default  reduce using rule 19 (boolean_expr)
+    $default  reduce using rule 29 (expr)
+
+    Conflict between rule 29 and token "+" resolved as reduce (%left "+").
+    Conflict between rule 29 and token "-" resolved as reduce (%left "-").
+    Conflict between rule 29 and token "*" resolved as shift ("-" < "*").
+    Conflict between rule 29 and token "/" resolved as shift ("-" < "/").
 
 
 State 72
 
-   21 boolean_expr: expr "<" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   30     | expr "*" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
+   31     | expr . "/" expr
 
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
+    $default  reduce using rule 30 (expr)
 
-    $default  reduce using rule 21 (boolean_expr)
+    Conflict between rule 30 and token "+" resolved as reduce ("+" < "*").
+    Conflict between rule 30 and token "-" resolved as reduce ("-" < "*").
+    Conflict between rule 30 and token "*" resolved as reduce (%left "*").
+    Conflict between rule 30 and token "/" resolved as reduce (%left "/").
 
 
 State 73
 
-   20 boolean_expr: expr ">" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
+   31     | expr "/" expr .  ["end of file", "GROUP", "HAVING", "ORDER", ",", "+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "LIKE", "AND", "OR", ")"]
 
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
+    $default  reduce using rule 31 (expr)
 
-    $default  reduce using rule 20 (boolean_expr)
+    Conflict between rule 31 and token "+" resolved as reduce ("+" < "/").
+    Conflict between rule 31 and token "-" resolved as reduce ("-" < "/").
+    Conflict between rule 31 and token "*" resolved as reduce (%left "*").
+    Conflict between rule 31 and token "/" resolved as reduce (%left "/").
 
 
 State 74
 
-   23 boolean_expr: expr "<=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   18 boolean_expr: expr "=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
 
-    $default  reduce using rule 23 (boolean_expr)
+    $default  reduce using rule 18 (boolean_expr)
 
 
 State 75
 
-   22 boolean_expr: expr ">=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   19 boolean_expr: expr "!=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
 
-    $default  reduce using rule 22 (boolean_expr)
+    $default  reduce using rule 19 (boolean_expr)
 
 
 State 76
 
-   24 boolean_expr: expr "LIKE" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
+   21 boolean_expr: expr "<" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
 
-    $default  reduce using rule 24 (boolean_expr)
+    $default  reduce using rule 21 (boolean_expr)
 
 
 State 77
 
-   41 group_by_field: "identifier" .
+   20 boolean_expr: expr ">" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    $default  reduce using rule 41 (group_by_field)
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
+
+    $default  reduce using rule 20 (boolean_expr)
 
 
 State 78
 
-   38 group_by_stmt: "GROUP" "BY" group_by_fields .  ["end of file", "HAVING", "ORDER"]
-   40 group_by_fields: group_by_fields . "," group_by_field
+   23 boolean_expr: expr "<=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    ","  shift, and go to state 86
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
 
-    $default  reduce using rule 38 (group_by_stmt)
+    $default  reduce using rule 23 (boolean_expr)
 
 
 State 79
 
-   39 group_by_fields: group_by_field .
+   22 boolean_expr: expr ">=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    $default  reduce using rule 39 (group_by_fields)
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
+
+    $default  reduce using rule 22 (boolean_expr)
 
 
 State 80
 
-   16 boolean_expr: boolean_expr . "AND" boolean_expr
-   17             | boolean_expr . "OR" boolean_expr
-   43 having_stmt: "HAVING" boolean_expr .  ["end of file", "ORDER"]
+   24 boolean_expr: expr "LIKE" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
 
-    "AND"  shift, and go to state 42
-    "OR"   shift, and go to state 43
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
 
-    $default  reduce using rule 43 (having_stmt)
+    $default  reduce using rule 24 (boolean_expr)
 
 
 State 81
 
-   45 order_by_stmt: "ORDER" . "BY" order_by_fields
+   43 group_by_field: "identifier" .
 
-    "BY"  shift, and go to state 87
+    $default  reduce using rule 43 (group_by_field)
 
 
 State 82
+
+   40 group_by_stmt: "GROUP" "BY" group_by_fields .  ["end of file", "HAVING", "ORDER"]
+   42 group_by_fields: group_by_fields . "," group_by_field
+
+    ","  shift, and go to state 91
+
+    $default  reduce using rule 40 (group_by_stmt)
+
+
+State 83
+
+   41 group_by_fields: group_by_field .
+
+    $default  reduce using rule 41 (group_by_fields)
+
+
+State 84
+
+   16 boolean_expr: boolean_expr . "AND" boolean_expr
+   17             | boolean_expr . "OR" boolean_expr
+   45 having_stmt: "HAVING" boolean_expr .  ["end of file", "ORDER"]
+
+    "AND"  shift, and go to state 44
+    "OR"   shift, and go to state 45
+
+    $default  reduce using rule 45 (having_stmt)
+
+
+State 85
+
+   47 order_by_stmt: "ORDER" . "BY" order_by_fields
+
+    "BY"  shift, and go to state 92
+
+
+State 86
 
     1 query: select_stmt from_stmt where_stmt group_by_stmt having_stmt order_by_stmt .
 
     $default  reduce using rule 1 (query)
 
 
-State 83
+State 87
 
    12 from_stmt: "FROM" "(" "string" "," "string" ")" .
 
     $default  reduce using rule 12 (from_stmt)
 
 
-State 84
-
-   31 expr: fn1 "(" expr ")" .
-
-    $default  reduce using rule 31 (expr)
-
-
-State 85
-
-    2 fn1: . "STR"
-    3    | . "INT"
-    4    | . "SUM"
-    5    | . "COUNT"
-    6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   32     | fn3 "(" expr "," . expr "," expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
-
-    "-"           shift, and go to state 18
-    "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
-    "string"      shift, and go to state 21
-    "long"        shift, and go to state 22
-    "double"      shift, and go to state 23
-    "STR"         shift, and go to state 24
-    "INT"         shift, and go to state 25
-    "SUM"         shift, and go to state 26
-    "COUNT"       shift, and go to state 27
-    "SUBSTR"      shift, and go to state 28
-
-    fn1   go to state 29
-    fn3   go to state 30
-    expr  go to state 88
-
-
-State 86
-
-   40 group_by_fields: group_by_fields "," . group_by_field
-   41 group_by_field: . "identifier"
-
-    "identifier"  shift, and go to state 77
-
-    group_by_field  go to state 89
-
-
-State 87
-
-   45 order_by_stmt: "ORDER" "BY" . order_by_fields
-   46 order_by_fields: . order_by_field
-   47                | . order_by_fields "," order_by_field
-   48 order_by_field: . "identifier"
-
-    "identifier"  shift, and go to state 90
-
-    order_by_fields  go to state 91
-    order_by_field   go to state 92
-
-
 State 88
 
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
-   32     | fn3 "(" expr "," expr . "," expr ")"
+   26 boolean_expr: "identifier" "IS" "NOT" "NULL" .
 
-    ","  shift, and go to state 93
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
+    $default  reduce using rule 26 (boolean_expr)
 
 
 State 89
 
-   40 group_by_fields: group_by_fields "," group_by_field .
+   33 expr: fn1 "(" expr ")" .
 
-    $default  reduce using rule 40 (group_by_fields)
+    $default  reduce using rule 33 (expr)
 
 
 State 90
-
-   48 order_by_field: "identifier" .
-
-    $default  reduce using rule 48 (order_by_field)
-
-
-State 91
-
-   45 order_by_stmt: "ORDER" "BY" order_by_fields .  ["end of file"]
-   47 order_by_fields: order_by_fields . "," order_by_field
-
-    ","  shift, and go to state 94
-
-    $default  reduce using rule 45 (order_by_stmt)
-
-
-State 92
-
-   46 order_by_fields: order_by_field .
-
-    $default  reduce using rule 46 (order_by_fields)
-
-
-State 93
 
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
     5    | . "COUNT"
     6 fn3: . "SUBSTR"
-   25 expr: . "(" expr ")"
-   26     | . expr "+" expr
-   27     | . expr "-" expr
-   28     | . expr "*" expr
-   29     | . expr "/" expr
-   30     | . "-" expr
-   31     | . fn1 "(" expr ")"
-   32     | . fn3 "(" expr "," expr "," expr ")"
-   32     | fn3 "(" expr "," expr "," . expr ")"
-   33     | . "identifier"
-   34     | . "string"
-   35     | . "long"
-   36     | . "double"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   34     | fn3 "(" expr "," . expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
 
     "-"           shift, and go to state 18
     "("           shift, and go to state 36
-    "identifier"  shift, and go to state 20
+    "identifier"  shift, and go to state 37
     "string"      shift, and go to state 21
     "long"        shift, and go to state 22
     "double"      shift, and go to state 23
@@ -1833,43 +1783,150 @@ State 93
 
     fn1   go to state 29
     fn3   go to state 30
-    expr  go to state 95
+    expr  go to state 93
+
+
+State 91
+
+   42 group_by_fields: group_by_fields "," . group_by_field
+   43 group_by_field: . "identifier"
+
+    "identifier"  shift, and go to state 81
+
+    group_by_field  go to state 94
+
+
+State 92
+
+   47 order_by_stmt: "ORDER" "BY" . order_by_fields
+   48 order_by_fields: . order_by_field
+   49                | . order_by_fields "," order_by_field
+   50 order_by_field: . "identifier"
+
+    "identifier"  shift, and go to state 95
+
+    order_by_fields  go to state 96
+    order_by_field   go to state 97
+
+
+State 93
+
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
+   34     | fn3 "(" expr "," expr . "," expr ")"
+
+    ","  shift, and go to state 98
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
 
 
 State 94
 
-   47 order_by_fields: order_by_fields "," . order_by_field
-   48 order_by_field: . "identifier"
+   42 group_by_fields: group_by_fields "," group_by_field .
 
-    "identifier"  shift, and go to state 90
-
-    order_by_field  go to state 96
+    $default  reduce using rule 42 (group_by_fields)
 
 
 State 95
 
-   26 expr: expr . "+" expr
-   27     | expr . "-" expr
-   28     | expr . "*" expr
-   29     | expr . "/" expr
-   32     | fn3 "(" expr "," expr "," expr . ")"
+   50 order_by_field: "identifier" .
 
-    "+"  shift, and go to state 44
-    "-"  shift, and go to state 45
-    "*"  shift, and go to state 46
-    "/"  shift, and go to state 47
-    ")"  shift, and go to state 97
+    $default  reduce using rule 50 (order_by_field)
 
 
 State 96
 
-   47 order_by_fields: order_by_fields "," order_by_field .
+   47 order_by_stmt: "ORDER" "BY" order_by_fields .  ["end of file"]
+   49 order_by_fields: order_by_fields . "," order_by_field
 
-    $default  reduce using rule 47 (order_by_fields)
+    ","  shift, and go to state 99
+
+    $default  reduce using rule 47 (order_by_stmt)
 
 
 State 97
 
-   32 expr: fn3 "(" expr "," expr "," expr ")" .
+   48 order_by_fields: order_by_field .
 
-    $default  reduce using rule 32 (expr)
+    $default  reduce using rule 48 (order_by_fields)
+
+
+State 98
+
+    2 fn1: . "STR"
+    3    | . "INT"
+    4    | . "SUM"
+    5    | . "COUNT"
+    6 fn3: . "SUBSTR"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   34     | fn3 "(" expr "," expr "," . expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
+
+    "-"           shift, and go to state 18
+    "("           shift, and go to state 36
+    "identifier"  shift, and go to state 37
+    "string"      shift, and go to state 21
+    "long"        shift, and go to state 22
+    "double"      shift, and go to state 23
+    "STR"         shift, and go to state 24
+    "INT"         shift, and go to state 25
+    "SUM"         shift, and go to state 26
+    "COUNT"       shift, and go to state 27
+    "SUBSTR"      shift, and go to state 28
+
+    fn1   go to state 29
+    fn3   go to state 30
+    expr  go to state 100
+
+
+State 99
+
+   49 order_by_fields: order_by_fields "," . order_by_field
+   50 order_by_field: . "identifier"
+
+    "identifier"  shift, and go to state 95
+
+    order_by_field  go to state 101
+
+
+State 100
+
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
+   34     | fn3 "(" expr "," expr "," expr . ")"
+
+    "+"  shift, and go to state 46
+    "-"  shift, and go to state 47
+    "*"  shift, and go to state 48
+    "/"  shift, and go to state 49
+    ")"  shift, and go to state 102
+
+
+State 101
+
+   49 order_by_fields: order_by_fields "," order_by_field .
+
+    $default  reduce using rule 49 (order_by_fields)
+
+
+State 102
+
+   34 expr: fn3 "(" expr "," expr "," expr ")" .
+
+    $default  reduce using rule 34 (expr)

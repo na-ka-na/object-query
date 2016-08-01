@@ -137,6 +137,14 @@ BooleanExpr BooleanExpr::create(
   return bexpr;
 }
 
+BooleanExpr BooleanExpr::createNullary(bool isNull, const string& identifier) {
+  BooleanExpr bexpr;
+  bexpr.type = NULLARY;
+  bexpr.nullaryBooleanExpr.isNull = isNull;
+  bexpr.nullaryBooleanExpr.identifier = identifier;
+  return bexpr;
+}
+
 void BinaryExpr::getAllIdentifiers(set<string>& identifiers) const {
   lhs->getAllIdentifiers(identifiers);
   rhs->getAllIdentifiers(identifiers);
@@ -184,8 +192,13 @@ void BooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
   switch (type) {
   case BOOLEAN: compoundBooleanExpr.getAllIdentifiers(identifiers); break;
   case SIMPLE: simpleBooleanExpr.getAllIdentifiers(identifiers); break;
+  case NULLARY: nullaryBooleanExpr.getAllIdentifiers(identifiers); break;
   default: ASSERT(false);
   }
+}
+
+void NullaryBooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
+  identifiers.insert(identifier);
 }
 
 void WhereStmt::getAllIdentifiers(set<string>& identifiers) const {
@@ -309,8 +322,16 @@ string BooleanExpr::str(const map<string, string>& idMap) const {
   switch (type) {
   case BOOLEAN: return compoundBooleanExpr.str(idMap);
   case SIMPLE:  return simpleBooleanExpr.str(idMap);
+  case NULLARY: return nullaryBooleanExpr.str(idMap);
   default:      return "<BooleanExpr>";
   }
+}
+
+string NullaryBooleanExpr::str(const map<string, string>& idMap) const {
+  Expr expr;
+  expr.type = IDENTIFIER;
+  expr.identifier = identifier;
+  return expr.str(idMap) + " IS" + (isNull ? "" : " NOT") + " NULL";
 }
 
 string WhereStmt::str(const map<string, string>& idMap) const {

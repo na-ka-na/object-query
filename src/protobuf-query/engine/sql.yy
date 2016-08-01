@@ -43,6 +43,9 @@
   LE         "<="
   GE         ">="
   LIKE       "LIKE"
+  IS         "IS"
+  NOT        "NOT"
+  NULL       "NULL"
   AND        "AND"
   OR         "OR"
   LPAREN     "("
@@ -118,6 +121,8 @@ boolean_expr:
  | expr ">=" expr                  {$$=BooleanExpr::create(GE,$1,$3);}
  | expr "<=" expr                  {$$=BooleanExpr::create(LT,$1,$3);}
  | expr "LIKE" expr                {$$=BooleanExpr::create(LIKE,$1,$3);}
+ | "identifier" "IS" "NULL"        {$$=BooleanExpr::createNullary(true, $1);}
+ | "identifier" "IS" "NOT" "NULL"  {$$=BooleanExpr::createNullary(false, $1);}
  ;
 
 %left "+" "-";

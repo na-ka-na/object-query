@@ -1,10 +1,11 @@
 /*
-SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE (((all_employees.name = "abc") AND (all_employees.active = "true")) AND (financial.quarterly_profits > 0))
+SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE (((all_employees.id IS NOT NULL AND (all_employees.name = "abc")) AND (all_employees.active = "true")) AND (financial.quarterly_profits > 0))
 
 for (1..1) {
   for each quarterly_profit in company.financial().quarterly_profits() {
     if (!(financial.quarterly_profits > 0)) { continue; }
     for each all_employee in company.all_employees() {
+      if (!all_employees.id IS NOT NULL) { continue; }
       if (!(all_employees.name = "abc")) { continue; }
       if (!(all_employees.active = "true")) { continue; }
       print all_employee.id()

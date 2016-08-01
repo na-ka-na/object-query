@@ -118,7 +118,7 @@ struct Expr {
 
 // note: update BooleanExpr::str() on mod
 enum BooleanExprType {
-  BOOLEAN, SIMPLE
+  BOOLEAN, SIMPLE, NULLARY
 };
 
 // note: update CompoundBooleanExpr::str() on mod
@@ -149,15 +149,24 @@ struct SimpleBooleanExpr {
   string str(const map<string, string>& idMap) const;
 };
 
+struct NullaryBooleanExpr {
+  bool isNull;
+  string identifier;
+  void getAllIdentifiers(set<string>& identifiers) const;
+  string str(const map<string, string>& idMap) const;
+};
+
 struct BooleanExpr {
   BooleanExprType type;
   // TODO(sanchay): figure out how to use variant.
   CompoundBooleanExpr compoundBooleanExpr;
   SimpleBooleanExpr simpleBooleanExpr;
+  NullaryBooleanExpr nullaryBooleanExpr;
   static BooleanExpr create(
       CompoundBooleanOp op, const BooleanExpr& lhs, const BooleanExpr& rhs);
   static BooleanExpr create(
       SimpleBooleanOp op, const Expr& lhs, const Expr& rhs);
+  static BooleanExpr createNullary(bool isNull, const string& identifier);
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
   string str(const map<string, string>& idMap) const;
