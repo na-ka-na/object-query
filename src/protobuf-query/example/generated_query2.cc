@@ -1,13 +1,12 @@
 /*
-SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE (((all_employees.id IS NOT NULL AND (all_employees.name = "abc")) AND (all_employees.active = "true")) AND (financial.quarterly_profits > 0))
+SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.id IS NOT NULL AND (((all_employees.name = "def") AND (all_employees.active = TRUE)) OR (all_employees.name = "abc"))) AND (financial.quarterly_profits > 0))
 
 for (1..1) {
   for each quarterly_profit in company.financial().quarterly_profits() {
     if (!(financial.quarterly_profits > 0)) { continue; }
     for each all_employee in company.all_employees() {
       if (!all_employees.id IS NOT NULL) { continue; }
-      if (!(all_employees.name = "abc")) { continue; }
-      if (!(all_employees.active = "true")) { continue; }
+      if (!(((all_employees.name = "def") AND (all_employees.active = TRUE)) OR (all_employees.name = "abc"))) { continue; }
       print all_employee.id()
       print all_employee.name()
     } //all_employee
@@ -36,6 +35,7 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
       if (company.financial().quarterly_profits_size() > 0) {
         for (const float& quarterly_profit : company.financial().quarterly_profits()) {
           S0 s0 = quarterly_profit;
+          if (!gt(s0, optional<int64_t>(0))) { continue; }
           if (company.all_employees_size() > 0) {
             for (const Employee& all_employee : company.all_employees()) {
               S1 s1 = S1();
@@ -50,6 +50,8 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
               if(all_employee.has_active()) {
                 s3 = all_employee.active();
               }
+              if (!isNotNull(s1)) { continue; }
+              if (!((eq(s2, optional<string>("def")) && eq(s3, optional<bool>(true))) || eq(s2, optional<string>("abc")))) { continue; }
               tuples.emplace_back(s1, s2);
             }
           } else { // no all_employee

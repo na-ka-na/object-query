@@ -193,7 +193,7 @@ void QueryEngine::printPlan() {
     }
     indent+=2;
     for (const BooleanExpr* expr : node.whereClauses) {
-      out << string(indent, ' ') << "if (!" << expr->str({})
+      out << string(indent, ' ') << "if (!" << expr->str()
           << ") { continue; }" << endl;
     }
     for (const Field& field : node.selectFields) {
@@ -294,6 +294,17 @@ void QueryEngine::printCode() {
             << field.accessor(node.objName) << ";" << endl;
         out << ind << "}" << endl;
       }
+    }
+    // TODO(sanchay): print variable assignment and where clauses in optimal order
+    for (size_t i=0; i<node.whereClauses.size(); i++) {
+      const BooleanExpr* whereClause = node.whereClauses[i];
+      const map<string, Field>& whereClauseIdMap = node.whereClauseIdMaps[i];
+      map<string, string> idVarMap;
+      for (const auto& e : whereClauseIdMap) {
+        idVarMap.emplace(e.first, fieldVarMap[e.second]);
+      }
+      out << ind << "if (!" << whereClause->code(idVarMap)
+          << ") { continue; }" << endl;
     }
     if (selectFieldsProcessed.size() == allSelectFields.size()) {
       string selectList = joinVec<Field>(", ", allSelectFields,

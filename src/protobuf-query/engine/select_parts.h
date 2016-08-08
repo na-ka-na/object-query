@@ -68,28 +68,32 @@ struct BinaryExpr {
   shared_ptr<Expr> lhs;
   shared_ptr<Expr> rhs;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 struct UnaryExpr {
   UnaryExprOp op;
   shared_ptr<Expr> expr;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 struct Fn1CallExpr {
   Fn1 fn1;
   shared_ptr<Expr> expr;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 struct Fn3CallExpr {
   Fn3 fn3;
   shared_ptr<Expr> expr1, expr2, expr3;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 struct Expr {
@@ -116,7 +120,8 @@ struct Expr {
   static Expr createPrimitive(double value);
   static Expr createPrimitive(bool value);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 // note: update BooleanExpr::str() on mod
@@ -141,7 +146,8 @@ struct CompoundBooleanExpr {
   shared_ptr<BooleanExpr> lhs;
   shared_ptr<BooleanExpr> rhs;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 struct SimpleBooleanExpr {
@@ -149,14 +155,16 @@ struct SimpleBooleanExpr {
   Expr lhs;
   Expr rhs;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 struct NullaryBooleanExpr {
   bool isNull;
   string identifier;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 struct BooleanExpr {
@@ -172,14 +180,15 @@ struct BooleanExpr {
   static BooleanExpr createNullary(bool isNull, const string& identifier);
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
-  string str(const map<string, string>& idMap) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 struct WhereStmt {
   optional<BooleanExpr> booleanExpr;
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
-  string str(const map<string, string>& idMap) const;
+  string str() const;
 };
 
 class SelectQuery;
