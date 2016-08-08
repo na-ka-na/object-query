@@ -38,6 +38,7 @@ enum ExprType {
   STRING,
   LONG,
   DOUBLE,
+  BOOL,
 };
 
 // note: update BinaryExpr::str() on mod
@@ -103,6 +104,7 @@ struct Expr {
   string stringValue;
   long longValue;
   double doubleValue;
+  bool boolValue;
   static Expr create(BinaryExprOp op, const Expr& lhs, const Expr& rhs);
   static Expr create(UnaryExprOp op, const Expr& expr);
   static Expr create(Fn1 fn1, const Expr& expr);
@@ -112,6 +114,7 @@ struct Expr {
   static Expr createPrimitive(const string& value);
   static Expr createPrimitive(long value);
   static Expr createPrimitive(double value);
+  static Expr createPrimitive(bool value);
   void getAllIdentifiers(set<string>& identifiers) const;
   string str(const map<string, string>& idMap) const;
 };

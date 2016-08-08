@@ -57,6 +57,7 @@
 %token <std::string> STRING "string"
 %token <long> LONG "long"
 %token <double> DOUBLE "double"
+%token <bool> BOOL "bool"
 %token <Fn1> STR "STR"
 %token <Fn1> INT "INT"
 %token <Fn1> SUM "SUM"
@@ -141,6 +142,7 @@ expr:
  | "string"                           {$$=Expr::createPrimitive($1);}
  | "long"                             {$$=Expr::createPrimitive($1);}
  | "double"                           {$$=Expr::createPrimitive($1);}
+ | "bool"                             {$$=Expr::createPrimitive($1);}
  ;
 
 group_by_stmt: %empty | "GROUP" "BY" group_by_fields;

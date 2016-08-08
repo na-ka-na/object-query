@@ -115,6 +115,13 @@ Expr Expr::createPrimitive(double value) {
   return expr;
 }
 
+Expr Expr::createPrimitive(bool value) {
+  Expr expr;
+  expr.type = BOOL;
+  expr.boolValue = value;
+  return expr;
+}
+
 BooleanExpr BooleanExpr::create(
     CompoundBooleanOp op, const BooleanExpr& lhs, const BooleanExpr& rhs) {
   BooleanExpr bexpr;
@@ -174,6 +181,7 @@ void Expr::getAllIdentifiers(set<string>& identifiers) const {
   case STRING: break;
   case LONG: break;
   case DOUBLE: break;
+  case BOOL: break;
   default: ASSERT(false);
   }
 }
@@ -289,6 +297,7 @@ string Expr::str(const map<string, string>& idMap) const {
   case STRING:        return "\""+stringValue+"\"";
   case LONG:          return to_string(longValue);
   case DOUBLE:        return to_string(doubleValue);
+  case BOOL:          return boolValue ? "TRUE" : "FALSE";
   default:            return "<Expr>";
   }
 }

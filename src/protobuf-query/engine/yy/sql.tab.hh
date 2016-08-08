@@ -40,7 +40,7 @@
 #ifndef YY_YY_SQL_TAB_HH_INCLUDED
 # define YY_YY_SQL_TAB_HH_INCLUDED
 // //                    "%code requires" blocks.
-#line 11 "../sql.yy" // lalr1.cc:392
+#line 10 "../sql.yy" // lalr1.cc:392
 
 #include "../select_parts.h"
 
@@ -317,18 +317,21 @@ namespace yy {
       // where_stmt
       char dummy8[sizeof(WhereStmt)];
 
+      // "bool"
+      char dummy9[sizeof(bool)];
+
       // "double"
-      char dummy9[sizeof(double)];
+      char dummy10[sizeof(double)];
 
       // "long"
-      char dummy10[sizeof(long)];
+      char dummy11[sizeof(long)];
 
       // "identifier"
       // "string"
-      char dummy11[sizeof(std::string)];
+      char dummy12[sizeof(std::string)];
 
       // select_fields
-      char dummy12[sizeof(std::vector<SelectField>)];
+      char dummy13[sizeof(std::vector<SelectField>)];
 };
 
     /// Symbol semantic values.
@@ -383,12 +386,13 @@ namespace yy {
         TOK_STRING = 286,
         TOK_LONG = 287,
         TOK_DOUBLE = 288,
-        TOK_STR = 289,
-        TOK_INT = 290,
-        TOK_SUM = 291,
-        TOK_COUNT = 292,
-        TOK_SUBSTR = 293,
-        TOK_UMINUS = 294
+        TOK_BOOL = 289,
+        TOK_STR = 290,
+        TOK_INT = 291,
+        TOK_SUM = 292,
+        TOK_COUNT = 293,
+        TOK_SUBSTR = 294,
+        TOK_UMINUS = 295
       };
     };
 
@@ -441,6 +445,8 @@ namespace yy {
   basic_symbol (typename Base::kind_type t, const SelectStmt v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const WhereStmt v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const bool v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const double v, const location_type& l);
 
@@ -647,6 +653,10 @@ namespace yy {
 
     static inline
     symbol_type
+    make_BOOL (const bool& v, const location_type& l);
+
+    static inline
+    symbol_type
     make_STR (const Fn1& v, const location_type& l);
 
     static inline
@@ -744,7 +754,7 @@ namespace yy {
   static const unsigned char yydefact_[];
 
   // YYPGOTO[NTERM-NUM].
-  static const signed char yypgoto_[];
+  static const short int yypgoto_[];
 
   // YYDEFGOTO[NTERM-NUM].
   static const signed char yydefgoto_[];
@@ -874,12 +884,12 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 135,     ///< Last index in yytable_.
+      yylast_ = 137,     ///< Last index in yytable_.
       yynnts_ = 18,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 40  ///< Number of tokens.
+      yyntokens_ = 41  ///< Number of tokens.
     };
 
 
@@ -925,9 +935,9 @@ namespace yy {
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39
+      35,    36,    37,    38,    39,    40
     };
-    const unsigned int user_token_number_max_ = 294;
+    const unsigned int user_token_number_max_ = 295;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -960,41 +970,45 @@ namespace yy {
   {
       switch (other.type_get ())
     {
-      case 49: // boolean_expr
+      case 50: // boolean_expr
         value.copy< BooleanExpr > (other.value);
         break;
 
-      case 50: // expr
+      case 51: // expr
         value.copy< Expr > (other.value);
         break;
 
-      case 34: // "STR"
-      case 35: // "INT"
-      case 36: // "SUM"
-      case 37: // "COUNT"
-      case 42: // fn1
+      case 35: // "STR"
+      case 36: // "INT"
+      case 37: // "SUM"
+      case 38: // "COUNT"
+      case 43: // fn1
         value.copy< Fn1 > (other.value);
         break;
 
-      case 38: // "SUBSTR"
-      case 43: // fn3
+      case 39: // "SUBSTR"
+      case 44: // fn3
         value.copy< Fn3 > (other.value);
         break;
 
-      case 47: // from_stmt
+      case 48: // from_stmt
         value.copy< FromStmt > (other.value);
         break;
 
-      case 46: // select_field
+      case 47: // select_field
         value.copy< SelectField > (other.value);
         break;
 
-      case 44: // select_stmt
+      case 45: // select_stmt
         value.copy< SelectStmt > (other.value);
         break;
 
-      case 48: // where_stmt
+      case 49: // where_stmt
         value.copy< WhereStmt > (other.value);
+        break;
+
+      case 34: // "bool"
+        value.copy< bool > (other.value);
         break;
 
       case 33: // "double"
@@ -1010,7 +1024,7 @@ namespace yy {
         value.copy< std::string > (other.value);
         break;
 
-      case 45: // select_fields
+      case 46: // select_fields
         value.copy< std::vector<SelectField> > (other.value);
         break;
 
@@ -1031,41 +1045,45 @@ namespace yy {
     (void) v;
       switch (this->type_get ())
     {
-      case 49: // boolean_expr
+      case 50: // boolean_expr
         value.copy< BooleanExpr > (v);
         break;
 
-      case 50: // expr
+      case 51: // expr
         value.copy< Expr > (v);
         break;
 
-      case 34: // "STR"
-      case 35: // "INT"
-      case 36: // "SUM"
-      case 37: // "COUNT"
-      case 42: // fn1
+      case 35: // "STR"
+      case 36: // "INT"
+      case 37: // "SUM"
+      case 38: // "COUNT"
+      case 43: // fn1
         value.copy< Fn1 > (v);
         break;
 
-      case 38: // "SUBSTR"
-      case 43: // fn3
+      case 39: // "SUBSTR"
+      case 44: // fn3
         value.copy< Fn3 > (v);
         break;
 
-      case 47: // from_stmt
+      case 48: // from_stmt
         value.copy< FromStmt > (v);
         break;
 
-      case 46: // select_field
+      case 47: // select_field
         value.copy< SelectField > (v);
         break;
 
-      case 44: // select_stmt
+      case 45: // select_stmt
         value.copy< SelectStmt > (v);
         break;
 
-      case 48: // where_stmt
+      case 49: // where_stmt
         value.copy< WhereStmt > (v);
+        break;
+
+      case 34: // "bool"
+        value.copy< bool > (v);
         break;
 
       case 33: // "double"
@@ -1081,7 +1099,7 @@ namespace yy {
         value.copy< std::string > (v);
         break;
 
-      case 45: // select_fields
+      case 46: // select_fields
         value.copy< std::vector<SelectField> > (v);
         break;
 
@@ -1157,6 +1175,13 @@ namespace yy {
   {}
 
   template <typename Base>
+  SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
   SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double v, const location_type& l)
     : Base (t)
     , value (v)
@@ -1210,41 +1235,45 @@ namespace yy {
     // Type destructor.
     switch (yytype)
     {
-      case 49: // boolean_expr
+      case 50: // boolean_expr
         value.template destroy< BooleanExpr > ();
         break;
 
-      case 50: // expr
+      case 51: // expr
         value.template destroy< Expr > ();
         break;
 
-      case 34: // "STR"
-      case 35: // "INT"
-      case 36: // "SUM"
-      case 37: // "COUNT"
-      case 42: // fn1
+      case 35: // "STR"
+      case 36: // "INT"
+      case 37: // "SUM"
+      case 38: // "COUNT"
+      case 43: // fn1
         value.template destroy< Fn1 > ();
         break;
 
-      case 38: // "SUBSTR"
-      case 43: // fn3
+      case 39: // "SUBSTR"
+      case 44: // fn3
         value.template destroy< Fn3 > ();
         break;
 
-      case 47: // from_stmt
+      case 48: // from_stmt
         value.template destroy< FromStmt > ();
         break;
 
-      case 46: // select_field
+      case 47: // select_field
         value.template destroy< SelectField > ();
         break;
 
-      case 44: // select_stmt
+      case 45: // select_stmt
         value.template destroy< SelectStmt > ();
         break;
 
-      case 48: // where_stmt
+      case 49: // where_stmt
         value.template destroy< WhereStmt > ();
+        break;
+
+      case 34: // "bool"
+        value.template destroy< bool > ();
         break;
 
       case 33: // "double"
@@ -1260,7 +1289,7 @@ namespace yy {
         value.template destroy< std::string > ();
         break;
 
-      case 45: // select_fields
+      case 46: // select_fields
         value.template destroy< std::vector<SelectField> > ();
         break;
 
@@ -1287,41 +1316,45 @@ namespace yy {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 49: // boolean_expr
+      case 50: // boolean_expr
         value.move< BooleanExpr > (s.value);
         break;
 
-      case 50: // expr
+      case 51: // expr
         value.move< Expr > (s.value);
         break;
 
-      case 34: // "STR"
-      case 35: // "INT"
-      case 36: // "SUM"
-      case 37: // "COUNT"
-      case 42: // fn1
+      case 35: // "STR"
+      case 36: // "INT"
+      case 37: // "SUM"
+      case 38: // "COUNT"
+      case 43: // fn1
         value.move< Fn1 > (s.value);
         break;
 
-      case 38: // "SUBSTR"
-      case 43: // fn3
+      case 39: // "SUBSTR"
+      case 44: // fn3
         value.move< Fn3 > (s.value);
         break;
 
-      case 47: // from_stmt
+      case 48: // from_stmt
         value.move< FromStmt > (s.value);
         break;
 
-      case 46: // select_field
+      case 47: // select_field
         value.move< SelectField > (s.value);
         break;
 
-      case 44: // select_stmt
+      case 45: // select_stmt
         value.move< SelectStmt > (s.value);
         break;
 
-      case 48: // where_stmt
+      case 49: // where_stmt
         value.move< WhereStmt > (s.value);
+        break;
+
+      case 34: // "bool"
+        value.move< bool > (s.value);
         break;
 
       case 33: // "double"
@@ -1337,7 +1370,7 @@ namespace yy {
         value.move< std::string > (s.value);
         break;
 
-      case 45: // select_fields
+      case 46: // select_fields
         value.move< std::vector<SelectField> > (s.value);
         break;
 
@@ -1399,7 +1432,8 @@ namespace yy {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291,   292,   293,   294
+     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
+     295
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1597,6 +1631,12 @@ namespace yy {
   }
 
   SqlParser::symbol_type
+  SqlParser::make_BOOL (const bool& v, const location_type& l)
+  {
+    return symbol_type (token::TOK_BOOL, v, l);
+  }
+
+  SqlParser::symbol_type
   SqlParser::make_STR (const Fn1& v, const location_type& l)
   {
     return symbol_type (token::TOK_STR, v, l);
@@ -1635,7 +1675,7 @@ namespace yy {
 
 
 } // yy
-#line 1639 "sql.tab.hh" // lalr1.cc:392
+#line 1679 "sql.tab.hh" // lalr1.cc:392
 
 
 

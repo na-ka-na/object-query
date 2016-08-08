@@ -49,7 +49,7 @@
 
 #line 51 "sql.tab.cc" // lalr1.cc:412
 // Unqualified %code blocks.
-#line 20 "../sql.yy" // lalr1.cc:413
+#line 19 "../sql.yy" // lalr1.cc:413
 
 #include "../select_query.h"
 
@@ -251,41 +251,45 @@ namespace yy {
   {
       switch (that.type_get ())
     {
-      case 49: // boolean_expr
+      case 50: // boolean_expr
         value.move< BooleanExpr > (that.value);
         break;
 
-      case 50: // expr
+      case 51: // expr
         value.move< Expr > (that.value);
         break;
 
-      case 34: // "STR"
-      case 35: // "INT"
-      case 36: // "SUM"
-      case 37: // "COUNT"
-      case 42: // fn1
+      case 35: // "STR"
+      case 36: // "INT"
+      case 37: // "SUM"
+      case 38: // "COUNT"
+      case 43: // fn1
         value.move< Fn1 > (that.value);
         break;
 
-      case 38: // "SUBSTR"
-      case 43: // fn3
+      case 39: // "SUBSTR"
+      case 44: // fn3
         value.move< Fn3 > (that.value);
         break;
 
-      case 47: // from_stmt
+      case 48: // from_stmt
         value.move< FromStmt > (that.value);
         break;
 
-      case 46: // select_field
+      case 47: // select_field
         value.move< SelectField > (that.value);
         break;
 
-      case 44: // select_stmt
+      case 45: // select_stmt
         value.move< SelectStmt > (that.value);
         break;
 
-      case 48: // where_stmt
+      case 49: // where_stmt
         value.move< WhereStmt > (that.value);
+        break;
+
+      case 34: // "bool"
+        value.move< bool > (that.value);
         break;
 
       case 33: // "double"
@@ -301,7 +305,7 @@ namespace yy {
         value.move< std::string > (that.value);
         break;
 
-      case 45: // select_fields
+      case 46: // select_fields
         value.move< std::vector<SelectField> > (that.value);
         break;
 
@@ -320,41 +324,45 @@ namespace yy {
     state = that.state;
       switch (that.type_get ())
     {
-      case 49: // boolean_expr
+      case 50: // boolean_expr
         value.copy< BooleanExpr > (that.value);
         break;
 
-      case 50: // expr
+      case 51: // expr
         value.copy< Expr > (that.value);
         break;
 
-      case 34: // "STR"
-      case 35: // "INT"
-      case 36: // "SUM"
-      case 37: // "COUNT"
-      case 42: // fn1
+      case 35: // "STR"
+      case 36: // "INT"
+      case 37: // "SUM"
+      case 38: // "COUNT"
+      case 43: // fn1
         value.copy< Fn1 > (that.value);
         break;
 
-      case 38: // "SUBSTR"
-      case 43: // fn3
+      case 39: // "SUBSTR"
+      case 44: // fn3
         value.copy< Fn3 > (that.value);
         break;
 
-      case 47: // from_stmt
+      case 48: // from_stmt
         value.copy< FromStmt > (that.value);
         break;
 
-      case 46: // select_field
+      case 47: // select_field
         value.copy< SelectField > (that.value);
         break;
 
-      case 44: // select_stmt
+      case 45: // select_stmt
         value.copy< SelectStmt > (that.value);
         break;
 
-      case 48: // where_stmt
+      case 49: // where_stmt
         value.copy< WhereStmt > (that.value);
+        break;
+
+      case 34: // "bool"
+        value.copy< bool > (that.value);
         break;
 
       case 33: // "double"
@@ -370,7 +378,7 @@ namespace yy {
         value.copy< std::string > (that.value);
         break;
 
-      case 45: // select_fields
+      case 46: // select_fields
         value.copy< std::vector<SelectField> > (that.value);
         break;
 
@@ -414,126 +422,133 @@ namespace yy {
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 418 "sql.tab.cc" // lalr1.cc:636
+#line 426 "sql.tab.cc" // lalr1.cc:636
         break;
 
       case 31: // "string"
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 425 "sql.tab.cc" // lalr1.cc:636
+#line 433 "sql.tab.cc" // lalr1.cc:636
         break;
 
       case 32: // "long"
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< long > (); }
-#line 432 "sql.tab.cc" // lalr1.cc:636
+#line 440 "sql.tab.cc" // lalr1.cc:636
         break;
 
       case 33: // "double"
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< double > (); }
-#line 439 "sql.tab.cc" // lalr1.cc:636
+#line 447 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 34: // "STR"
+      case 34: // "bool"
+
+#line 80 "../sql.yy" // lalr1.cc:636
+        { yyoutput << yysym.value.template as< bool > (); }
+#line 454 "sql.tab.cc" // lalr1.cc:636
+        break;
+
+      case 35: // "STR"
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< Fn1 > (); }
-#line 446 "sql.tab.cc" // lalr1.cc:636
+#line 461 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 35: // "INT"
+      case 36: // "INT"
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< Fn1 > (); }
-#line 453 "sql.tab.cc" // lalr1.cc:636
+#line 468 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 36: // "SUM"
+      case 37: // "SUM"
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< Fn1 > (); }
-#line 460 "sql.tab.cc" // lalr1.cc:636
+#line 475 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 37: // "COUNT"
+      case 38: // "COUNT"
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< Fn1 > (); }
-#line 467 "sql.tab.cc" // lalr1.cc:636
+#line 482 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 38: // "SUBSTR"
+      case 39: // "SUBSTR"
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< Fn3 > (); }
-#line 474 "sql.tab.cc" // lalr1.cc:636
+#line 489 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 42: // fn1
+      case 43: // fn1
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< Fn1 > (); }
-#line 481 "sql.tab.cc" // lalr1.cc:636
+#line 496 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 43: // fn3
+      case 44: // fn3
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< Fn3 > (); }
-#line 488 "sql.tab.cc" // lalr1.cc:636
+#line 503 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 44: // select_stmt
+      case 45: // select_stmt
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< SelectStmt > (); }
-#line 495 "sql.tab.cc" // lalr1.cc:636
+#line 510 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 45: // select_fields
+      case 46: // select_fields
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< std::vector<SelectField> > (); }
-#line 502 "sql.tab.cc" // lalr1.cc:636
+#line 517 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 46: // select_field
+      case 47: // select_field
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< SelectField > (); }
-#line 509 "sql.tab.cc" // lalr1.cc:636
+#line 524 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 47: // from_stmt
+      case 48: // from_stmt
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< FromStmt > (); }
-#line 516 "sql.tab.cc" // lalr1.cc:636
+#line 531 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 48: // where_stmt
+      case 49: // where_stmt
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< WhereStmt > (); }
-#line 523 "sql.tab.cc" // lalr1.cc:636
+#line 538 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 49: // boolean_expr
+      case 50: // boolean_expr
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< BooleanExpr > (); }
-#line 530 "sql.tab.cc" // lalr1.cc:636
+#line 545 "sql.tab.cc" // lalr1.cc:636
         break;
 
-      case 50: // expr
+      case 51: // expr
 
 #line 80 "../sql.yy" // lalr1.cc:636
         { yyoutput << yysym.value.template as< Expr > (); }
-#line 537 "sql.tab.cc" // lalr1.cc:636
+#line 552 "sql.tab.cc" // lalr1.cc:636
         break;
 
 
@@ -733,41 +748,45 @@ namespace yy {
          when using variants.  */
         switch (yyr1_[yyn])
     {
-      case 49: // boolean_expr
+      case 50: // boolean_expr
         yylhs.value.build< BooleanExpr > ();
         break;
 
-      case 50: // expr
+      case 51: // expr
         yylhs.value.build< Expr > ();
         break;
 
-      case 34: // "STR"
-      case 35: // "INT"
-      case 36: // "SUM"
-      case 37: // "COUNT"
-      case 42: // fn1
+      case 35: // "STR"
+      case 36: // "INT"
+      case 37: // "SUM"
+      case 38: // "COUNT"
+      case 43: // fn1
         yylhs.value.build< Fn1 > ();
         break;
 
-      case 38: // "SUBSTR"
-      case 43: // fn3
+      case 39: // "SUBSTR"
+      case 44: // fn3
         yylhs.value.build< Fn3 > ();
         break;
 
-      case 47: // from_stmt
+      case 48: // from_stmt
         yylhs.value.build< FromStmt > ();
         break;
 
-      case 46: // select_field
+      case 47: // select_field
         yylhs.value.build< SelectField > ();
         break;
 
-      case 44: // select_stmt
+      case 45: // select_stmt
         yylhs.value.build< SelectStmt > ();
         break;
 
-      case 48: // where_stmt
+      case 49: // where_stmt
         yylhs.value.build< WhereStmt > ();
+        break;
+
+      case 34: // "bool"
+        yylhs.value.build< bool > ();
         break;
 
       case 33: // "double"
@@ -783,7 +802,7 @@ namespace yy {
         yylhs.value.build< std::string > ();
         break;
 
-      case 45: // select_fields
+      case 46: // select_fields
         yylhs.value.build< std::vector<SelectField> > ();
         break;
 
@@ -809,203 +828,209 @@ namespace yy {
     {query.selectStmt = yystack_[5].value.as< SelectStmt > ();
   query.fromStmt = yystack_[4].value.as< FromStmt > ();
   query.whereStmt = yystack_[3].value.as< WhereStmt > ();}
-#line 813 "sql.tab.cc" // lalr1.cc:859
+#line 832 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 8:
 #line 97 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< SelectStmt > ()=SelectStmt(); yylhs.value.as< SelectStmt > ().selectFields=yystack_[0].value.as< std::vector<SelectField> > ();}
-#line 819 "sql.tab.cc" // lalr1.cc:859
+#line 838 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 9:
 #line 98 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< SelectStmt > ()=SelectStmt(); yylhs.value.as< SelectStmt > ().distinct=true; yylhs.value.as< SelectStmt > ().selectFields=yystack_[0].value.as< std::vector<SelectField> > ();}
-#line 825 "sql.tab.cc" // lalr1.cc:859
+#line 844 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 10:
 #line 100 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< std::vector<SelectField> > ()=vector<SelectField>{yystack_[0].value.as< SelectField > ()};}
-#line 831 "sql.tab.cc" // lalr1.cc:859
+#line 850 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 11:
 #line 101 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< std::vector<SelectField> > ()=yystack_[2].value.as< std::vector<SelectField> > (); yylhs.value.as< std::vector<SelectField> > ().push_back(yystack_[0].value.as< SelectField > ());}
-#line 837 "sql.tab.cc" // lalr1.cc:859
+#line 856 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 12:
 #line 103 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< SelectField > ()=SelectField(); yylhs.value.as< SelectField > ().identifier=yystack_[0].value.as< std::string > ();}
-#line 843 "sql.tab.cc" // lalr1.cc:859
+#line 862 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 13:
 #line 106 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< FromStmt > ()=FromStmt(); yylhs.value.as< FromStmt > ().fromFile=yystack_[3].value.as< std::string > (); yylhs.value.as< FromStmt > ().fromRootProto=yystack_[1].value.as< std::string > ();}
-#line 849 "sql.tab.cc" // lalr1.cc:859
+#line 868 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 14:
 #line 109 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< WhereStmt > ()=WhereStmt();}
-#line 855 "sql.tab.cc" // lalr1.cc:859
+#line 874 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 15:
 #line 110 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< WhereStmt > ()=WhereStmt(); yylhs.value.as< WhereStmt > ().booleanExpr=yystack_[0].value.as< BooleanExpr > ();}
-#line 861 "sql.tab.cc" // lalr1.cc:859
+#line 880 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 16:
 #line 115 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=yystack_[1].value.as< BooleanExpr > ();}
-#line 867 "sql.tab.cc" // lalr1.cc:859
+#line 886 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 17:
 #line 116 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(AND,yystack_[2].value.as< BooleanExpr > (),yystack_[0].value.as< BooleanExpr > ());}
-#line 873 "sql.tab.cc" // lalr1.cc:859
+#line 892 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 18:
 #line 117 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(OR,yystack_[2].value.as< BooleanExpr > (),yystack_[0].value.as< BooleanExpr > ());}
-#line 879 "sql.tab.cc" // lalr1.cc:859
+#line 898 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 19:
 #line 118 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(EQ,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 885 "sql.tab.cc" // lalr1.cc:859
+#line 904 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 20:
 #line 119 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(NE,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 891 "sql.tab.cc" // lalr1.cc:859
+#line 910 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 21:
 #line 120 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(GT,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 897 "sql.tab.cc" // lalr1.cc:859
+#line 916 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 22:
 #line 121 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(LT,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 903 "sql.tab.cc" // lalr1.cc:859
+#line 922 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 23:
 #line 122 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(GE,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 909 "sql.tab.cc" // lalr1.cc:859
+#line 928 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 24:
 #line 123 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(LT,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 915 "sql.tab.cc" // lalr1.cc:859
+#line 934 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 25:
 #line 124 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::create(LIKE,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 921 "sql.tab.cc" // lalr1.cc:859
+#line 940 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 26:
 #line 125 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::createNullary(true, yystack_[2].value.as< std::string > ());}
-#line 927 "sql.tab.cc" // lalr1.cc:859
+#line 946 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 27:
 #line 126 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< BooleanExpr > ()=BooleanExpr::createNullary(false, yystack_[3].value.as< std::string > ());}
-#line 933 "sql.tab.cc" // lalr1.cc:859
+#line 952 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 28:
 #line 133 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=yystack_[1].value.as< Expr > ();}
-#line 939 "sql.tab.cc" // lalr1.cc:859
+#line 958 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 29:
 #line 134 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::create(PLUS,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 945 "sql.tab.cc" // lalr1.cc:859
+#line 964 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 30:
 #line 135 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::create(MINUS,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 951 "sql.tab.cc" // lalr1.cc:859
+#line 970 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 31:
 #line 136 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::create(MULT,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 957 "sql.tab.cc" // lalr1.cc:859
+#line 976 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 32:
 #line 137 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::create(DIVIDE,yystack_[2].value.as< Expr > (),yystack_[0].value.as< Expr > ());}
-#line 963 "sql.tab.cc" // lalr1.cc:859
+#line 982 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 33:
 #line 138 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::create(UMINUS,yystack_[0].value.as< Expr > ());}
-#line 969 "sql.tab.cc" // lalr1.cc:859
+#line 988 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 34:
 #line 139 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::create(yystack_[3].value.as< Fn1 > (),yystack_[1].value.as< Expr > ());}
-#line 975 "sql.tab.cc" // lalr1.cc:859
+#line 994 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 35:
 #line 140 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::create(yystack_[7].value.as< Fn3 > (),yystack_[5].value.as< Expr > (),yystack_[3].value.as< Expr > (),yystack_[1].value.as< Expr > ());}
-#line 981 "sql.tab.cc" // lalr1.cc:859
+#line 1000 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 36:
 #line 141 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::createIdentifier(yystack_[0].value.as< std::string > ());}
-#line 987 "sql.tab.cc" // lalr1.cc:859
+#line 1006 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 37:
 #line 142 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::createPrimitive(yystack_[0].value.as< std::string > ());}
-#line 993 "sql.tab.cc" // lalr1.cc:859
+#line 1012 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 38:
 #line 143 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::createPrimitive(yystack_[0].value.as< long > ());}
-#line 999 "sql.tab.cc" // lalr1.cc:859
+#line 1018 "sql.tab.cc" // lalr1.cc:859
     break;
 
   case 39:
 #line 144 "../sql.yy" // lalr1.cc:859
     {yylhs.value.as< Expr > ()=Expr::createPrimitive(yystack_[0].value.as< double > ());}
-#line 1005 "sql.tab.cc" // lalr1.cc:859
+#line 1024 "sql.tab.cc" // lalr1.cc:859
+    break;
+
+  case 40:
+#line 145 "../sql.yy" // lalr1.cc:859
+    {yylhs.value.as< Expr > ()=Expr::createPrimitive(yystack_[0].value.as< bool > ());}
+#line 1030 "sql.tab.cc" // lalr1.cc:859
     break;
 
 
-#line 1009 "sql.tab.cc" // lalr1.cc:859
+#line 1034 "sql.tab.cc" // lalr1.cc:859
             default:
               break;
             }
@@ -1267,112 +1292,112 @@ namespace yy {
   const signed char
   SqlParser::yypact_[] =
   {
-      10,   -14,    17,    23,    13,   -19,    46,   -19,   -19,    44,
-      72,    46,    13,    47,    14,    73,   -19,    79,    30,    14,
-      78,   -19,   -19,   -19,   -19,   -19,   -19,   -19,   -19,    93,
-      94,    29,    92,   110,   115,    95,    30,   -19,   -19,    71,
-      -9,    35,    30,    30,    14,    14,    30,    30,    30,    30,
-      30,    30,    30,    30,    30,    30,    30,    97,    14,   116,
-     100,    62,   -19,   -19,    77,   -19,    70,    81,    99,   -19,
-      56,    56,   -19,   -19,     9,     9,     9,     9,     9,     9,
-       9,   -19,   113,   -19,    29,   120,   -19,   -19,   -19,   -19,
-      30,    97,   101,   104,   -19,   -19,   122,   -19,    30,   101,
-      74,   -19,   -19
+      -1,    -2,    23,    75,    50,   -19,    72,   -19,   -19,    56,
+      79,    72,    50,    55,    30,    81,   -19,   106,    58,    30,
+      96,   -19,   -19,   -19,   -19,   -19,   -19,   -19,   -19,   -19,
+      90,    93,    33,    32,   112,   115,    94,    58,   -19,   -19,
+      -4,    -8,    48,    58,    58,    30,    30,    58,    58,    58,
+      58,    58,    58,    58,    58,    58,    58,    58,    97,    30,
+     116,    98,    87,   -19,   -19,   104,   -19,    91,    64,   103,
+     -19,    42,    42,   -19,   -19,     4,     4,     4,     4,     4,
+       4,     4,   -19,   120,   -19,    33,   122,   -19,   -19,   -19,
+     -19,    58,    97,   102,   100,   -19,   -19,   123,   -19,    58,
+     102,    95,   -19,   -19
   };
 
   const unsigned char
   SqlParser::yydefact_[] =
   {
        0,     0,     0,     0,     0,    12,     8,    10,     1,     0,
-      14,     9,     0,     0,     0,    40,    11,     0,     0,     0,
-      36,    37,    38,    39,     3,     4,     5,     6,     7,     0,
-       0,    15,     0,     0,    45,     0,     0,    36,    33,     0,
+      14,     9,     0,     0,     0,    41,    11,     0,     0,     0,
+      36,    37,    38,    39,    40,     3,     4,     5,     6,     7,
+       0,     0,    15,     0,     0,    46,     0,     0,    36,    33,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    47,
-       0,     0,    16,    28,     0,    26,     0,     0,    17,    18,
-      29,    30,    31,    32,    19,    20,    22,    21,    24,    23,
-      25,    44,    41,    42,    46,     0,     2,    13,    27,    34,
-       0,     0,     0,     0,    43,    51,    48,    49,     0,     0,
-       0,    50,    35
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+      48,     0,     0,    16,    28,     0,    26,     0,     0,    17,
+      18,    29,    30,    31,    32,    19,    20,    22,    21,    24,
+      23,    25,    45,    42,    43,    47,     0,     2,    13,    27,
+      34,     0,     0,     0,     0,    44,    52,    49,    50,     0,
+       0,     0,    51,    35
   };
 
-  const signed char
+  const short int
   SqlParser::yypgoto_[] =
   {
-     -19,   -19,   -19,   -19,   -19,   126,   121,   -19,   -19,    -5,
-     -18,   -19,   -19,    43,   -19,   -19,   -19,    36
+     -19,   -19,   -19,   -19,   -19,   130,   124,   -19,   -19,    -5,
+     -18,   -19,   -19,    43,   -19,   -19,   -19,    37
   };
 
   const signed char
   SqlParser::yydefgoto_[] =
   {
-      -1,     2,    29,    30,     3,     6,     7,    10,    15,    31,
-      32,    34,    82,    83,    59,    86,    96,    97
+      -1,     2,    30,    31,     3,     6,     7,    10,    15,    32,
+      33,    35,    83,    84,    60,    87,    97,    98
   };
 
   const unsigned char
   SqlParser::yytable_[] =
   {
-      38,    40,    46,    47,    48,    49,    50,    51,    52,    53,
-      54,    55,    56,     1,    39,     4,     5,     8,    61,    63,
-      46,    47,    48,    49,    66,    67,    18,     9,    70,    71,
-      72,    73,    74,    75,    76,    77,    78,    79,    80,    68,
-      69,    19,    18,     5,    20,    21,    22,    23,    24,    25,
-      26,    27,    28,    84,    44,    45,    12,    36,    64,    65,
-      37,    21,    22,    23,    24,    25,    26,    27,    28,    48,
-      49,    13,    93,    46,    47,    48,    49,    14,    17,    33,
-     100,    46,    47,    48,    49,    46,    47,    48,    49,    35,
-      63,    90,    46,    47,    48,    49,    44,    45,    89,    62,
-      41,    88,   102,    46,    47,    48,    49,    50,    51,    52,
-      53,    54,    55,    56,    98,    46,    47,    48,    49,    57,
-      42,    43,    58,    91,    85,    45,    60,    81,    87,    92,
-      11,    95,    99,    16,    94,   101
+      39,    41,     1,    47,    48,    49,    50,    51,    52,    53,
+      54,    55,    56,    57,    40,    47,    48,    49,    50,    62,
+      64,    45,    46,     8,    63,    67,    68,     4,     5,    71,
+      72,    73,    74,    75,    76,    77,    78,    79,    80,    81,
+      69,    70,    18,    47,    48,    49,    50,    51,    52,    53,
+      54,    55,    56,    57,    85,    49,    50,    19,    45,    46,
+      20,    21,    22,    23,    24,    25,    26,    27,    28,    29,
+      18,    65,    66,    94,    91,    47,    48,    49,    50,     9,
+       5,   101,    12,    13,    14,    37,    17,    34,    38,    21,
+      22,    23,    24,    25,    26,    27,    28,    29,    47,    48,
+      49,    50,    47,    48,    49,    50,    47,    48,    49,    50,
+      99,    47,    48,    49,    50,    64,    36,    43,    42,    90,
+      44,    58,    59,   103,    86,    61,    88,    82,    89,    46,
+      92,    93,    96,   100,    11,    95,    16,   102
   };
 
   const unsigned char
   SqlParser::yycheck_[] =
   {
-      18,    19,    11,    12,    13,    14,    15,    16,    17,    18,
-      19,    20,    21,     3,    19,    29,    30,     0,    36,    28,
-      11,    12,    13,    14,    42,    43,    12,     4,    46,    47,
-      48,    49,    50,    51,    52,    53,    54,    55,    56,    44,
-      45,    27,    12,    30,    30,    31,    32,    33,    34,    35,
-      36,    37,    38,    58,    25,    26,    10,    27,    23,    24,
-      30,    31,    32,    33,    34,    35,    36,    37,    38,    13,
-      14,    27,    90,    11,    12,    13,    14,     5,    31,     6,
-      98,    11,    12,    13,    14,    11,    12,    13,    14,    10,
-      28,    10,    11,    12,    13,    14,    25,    26,    28,    28,
-      22,    24,    28,    11,    12,    13,    14,    15,    16,    17,
-      18,    19,    20,    21,    10,    11,    12,    13,    14,     9,
-      27,    27,     7,    10,     8,    26,    31,    30,    28,     9,
-       4,    30,    10,    12,    91,    99
+      18,    19,     3,    11,    12,    13,    14,    15,    16,    17,
+      18,    19,    20,    21,    19,    11,    12,    13,    14,    37,
+      28,    25,    26,     0,    28,    43,    44,    29,    30,    47,
+      48,    49,    50,    51,    52,    53,    54,    55,    56,    57,
+      45,    46,    12,    11,    12,    13,    14,    15,    16,    17,
+      18,    19,    20,    21,    59,    13,    14,    27,    25,    26,
+      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
+      12,    23,    24,    91,    10,    11,    12,    13,    14,     4,
+      30,    99,    10,    27,     5,    27,    31,     6,    30,    31,
+      32,    33,    34,    35,    36,    37,    38,    39,    11,    12,
+      13,    14,    11,    12,    13,    14,    11,    12,    13,    14,
+      10,    11,    12,    13,    14,    28,    10,    27,    22,    28,
+      27,     9,     7,    28,     8,    31,    28,    30,    24,    26,
+      10,     9,    30,    10,     4,    92,    12,   100
   };
 
   const unsigned char
   SqlParser::yystos_[] =
   {
-       0,     3,    41,    44,    29,    30,    45,    46,     0,     4,
-      47,    45,    10,    27,     5,    48,    46,    31,    12,    27,
-      30,    31,    32,    33,    34,    35,    36,    37,    38,    42,
-      43,    49,    50,     6,    51,    10,    27,    30,    50,    49,
-      50,    22,    27,    27,    25,    26,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,     9,     7,    54,
-      31,    50,    28,    28,    23,    24,    50,    50,    49,    49,
-      50,    50,    50,    50,    50,    50,    50,    50,    50,    50,
-      50,    30,    52,    53,    49,     8,    55,    28,    24,    28,
-      10,    10,     9,    50,    53,    30,    56,    57,    10,    10,
-      50,    57,    28
+       0,     3,    42,    45,    29,    30,    46,    47,     0,     4,
+      48,    46,    10,    27,     5,    49,    47,    31,    12,    27,
+      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
+      43,    44,    50,    51,     6,    52,    10,    27,    30,    51,
+      50,    51,    22,    27,    27,    25,    26,    11,    12,    13,
+      14,    15,    16,    17,    18,    19,    20,    21,     9,     7,
+      55,    31,    51,    28,    28,    23,    24,    51,    51,    50,
+      50,    51,    51,    51,    51,    51,    51,    51,    51,    51,
+      51,    51,    30,    53,    54,    50,     8,    56,    28,    24,
+      28,    10,    10,     9,    51,    54,    30,    57,    58,    10,
+      10,    51,    58,    28
   };
 
   const unsigned char
   SqlParser::yyr1_[] =
   {
-       0,    40,    41,    42,    42,    42,    42,    43,    44,    44,
-      45,    45,    46,    47,    48,    48,    49,    49,    49,    49,
-      49,    49,    49,    49,    49,    49,    49,    49,    50,    50,
-      50,    50,    50,    50,    50,    50,    50,    50,    50,    50,
-      51,    51,    52,    52,    53,    54,    54,    55,    55,    56,
-      56,    57
+       0,    41,    42,    43,    43,    43,    43,    44,    45,    45,
+      46,    46,    47,    48,    49,    49,    50,    50,    50,    50,
+      50,    50,    50,    50,    50,    50,    50,    50,    51,    51,
+      51,    51,    51,    51,    51,    51,    51,    51,    51,    51,
+      51,    52,    52,    53,    53,    54,    55,    55,    56,    56,
+      57,    57,    58
   };
 
   const unsigned char
@@ -1382,8 +1407,8 @@ namespace yy {
        1,     3,     1,     6,     0,     2,     3,     3,     3,     3,
        3,     3,     3,     3,     3,     3,     3,     4,     3,     3,
        3,     3,     3,     2,     4,     8,     1,     1,     1,     1,
-       0,     3,     1,     3,     1,     0,     2,     0,     3,     1,
-       3,     1
+       1,     0,     3,     1,     3,     1,     0,     2,     0,     3,
+       1,     3,     1
   };
 
 
@@ -1398,12 +1423,12 @@ namespace yy {
   "\"+\"", "\"-\"", "\"*\"", "\"/\"", "\"=\"", "\"!=\"", "\"<\"", "\">\"",
   "\"<=\"", "\">=\"", "\"LIKE\"", "\"IS\"", "\"NOT\"", "\"NULL\"",
   "\"AND\"", "\"OR\"", "\"(\"", "\")\"", "\"DISTINCT\"", "\"identifier\"",
-  "\"string\"", "\"long\"", "\"double\"", "\"STR\"", "\"INT\"", "\"SUM\"",
-  "\"COUNT\"", "\"SUBSTR\"", "UMINUS", "$accept", "query", "fn1", "fn3",
-  "select_stmt", "select_fields", "select_field", "from_stmt",
-  "where_stmt", "boolean_expr", "expr", "group_by_stmt", "group_by_fields",
-  "group_by_field", "having_stmt", "order_by_stmt", "order_by_fields",
-  "order_by_field", YY_NULLPTR
+  "\"string\"", "\"long\"", "\"double\"", "\"bool\"", "\"STR\"", "\"INT\"",
+  "\"SUM\"", "\"COUNT\"", "\"SUBSTR\"", "UMINUS", "$accept", "query",
+  "fn1", "fn3", "select_stmt", "select_fields", "select_field",
+  "from_stmt", "where_stmt", "boolean_expr", "expr", "group_by_stmt",
+  "group_by_fields", "group_by_field", "having_stmt", "order_by_stmt",
+  "order_by_fields", "order_by_field", YY_NULLPTR
   };
 
 #if YYDEBUG
@@ -1414,8 +1439,8 @@ namespace yy {
      100,   101,   103,   105,   109,   110,   115,   116,   117,   118,
      119,   120,   121,   122,   123,   124,   125,   126,   133,   134,
      135,   136,   137,   138,   139,   140,   141,   142,   143,   144,
-     147,   147,   148,   148,   149,   151,   151,   153,   153,   154,
-     154,   155
+     145,   148,   148,   149,   149,   150,   152,   152,   154,   154,
+     155,   155,   156
   };
 
   // Print the state stack on the debug stream.
@@ -1450,8 +1475,8 @@ namespace yy {
 
 
 } // yy
-#line 1454 "sql.tab.cc" // lalr1.cc:1167
-#line 157 "../sql.yy" // lalr1.cc:1168
+#line 1479 "sql.tab.cc" // lalr1.cc:1167
+#line 158 "../sql.yy" // lalr1.cc:1168
 
 void yy::SqlParser::error(const yy::SqlParser::location_type& loc,
                           const std::string& msg) {
