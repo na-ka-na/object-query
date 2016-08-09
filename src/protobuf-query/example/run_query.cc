@@ -43,7 +43,7 @@ void runQuery(int argc, char** argv) {
 
 int main(int argc, char** argv) {
   if (argc < 3) {
-    cerr << "Usage: ./QueryEngine <sql-query> <generated-query-file>"
+    cerr << "Usage: ./RunQuery <sql-query> <generated-query-file>"
          << " [arguments for generated query ...]" << endl;
     exit(1);
   }

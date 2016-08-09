@@ -390,7 +390,7 @@ void printTuples(const vector<TupleType>& tuples) {
   out << "  parsePbFromFile(" << fromFile << ", " << queryGraph.root.objName
       << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;
-  out << "  runSelect(company, tuples);" << endl;
+  out << "  runSelect(" << queryGraph.root.objName << ", tuples);" << endl;
   out << "  printTuples(tuples);" << endl;
   out << "}" << endl;
 }
