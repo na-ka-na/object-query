@@ -76,7 +76,7 @@ struct Node {
 struct QueryGraph {
   Proto proto;
   Node root;
-  // map of idx in query.selectFields => pointer in readFields
+  // map of idx in query.selectFields => Field
   map<size_t, Field> selectFieldIdxReadFieldMap;
 
   static string constructObjNameForRepeated(const FieldDescriptor* field);

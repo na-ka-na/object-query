@@ -209,6 +209,10 @@ void NullaryBooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
   identifiers.insert(identifier);
 }
 
+void SelectField::getAllIdentifiers(set<string>& identifiers) const {
+  expr.getAllIdentifiers(identifiers);
+}
+
 void WhereStmt::getAllIdentifiers(set<string>& identifiers) const {
   if (booleanExpr) {
     booleanExpr->getAllIdentifiers(identifiers);
@@ -228,19 +232,6 @@ void WhereStmt::canoncialize(vector<const BooleanExpr*>& andClauses) const {
   if (booleanExpr) {
     booleanExpr->canoncialize(andClauses);
   }
-}
-
-string SelectField::str() const {
-  return identifier;
-}
-
-string SelectStmt::str() const {
-  return "SELECT " + string(distinct ? "DISTINCT " : "") +
-         joinVec(", ", selectFields, strfn<SelectField>());
-}
-
-string FromStmt::str() const {
-  return "FROM ('" + fromFile + "', '" + fromRootProto + "')";
 }
 
 string BinaryExpr::str() const {
@@ -340,6 +331,19 @@ string BooleanExpr::str() const {
   case NULLARY: return nullaryBooleanExpr.str();
   default:      return "<BooleanExpr>";
   }
+}
+
+string SelectField::str() const {
+  return expr.str();
+}
+
+string SelectStmt::str() const {
+  return "SELECT " + string(distinct ? "DISTINCT " : "") +
+         joinVec(", ", selectFields, strfn<SelectField>());
+}
+
+string FromStmt::str() const {
+  return "FROM ('" + fromFile + "', '" + fromRootProto + "')";
 }
 
 string WhereStmt::str() const {
@@ -448,4 +452,8 @@ string BooleanExpr::code(const map<string, string>& idMap) const {
   case NULLARY: return nullaryBooleanExpr.code(idMap);
   default:      return "<BooleanExpr>";
   }
+}
+
+string SelectField::code(const map<string, string>& idMap) const {
+  return expr.code(idMap);
 }

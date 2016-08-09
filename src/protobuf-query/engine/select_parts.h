@@ -11,22 +11,7 @@
 
 using namespace std;
 
-struct SelectField {
-  string identifier;
-  string str() const;
-};
-
-struct SelectStmt {
-  bool distinct = false;
-  vector<SelectField> selectFields;
-  string str() const;
-};
-
-struct FromStmt {
-  string fromFile;
-  string fromRootProto;
-  string str() const;
-};
+struct Expr;
 
 // note: update Expr::str() on mod
 enum ExprType {
@@ -60,8 +45,6 @@ enum Fn1 {
 enum Fn3 {
   SUBSTR
 };
-
-struct Expr;
 
 struct BinaryExpr {
   BinaryExprOp op;
@@ -181,6 +164,25 @@ struct BooleanExpr {
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
   string code(const map<string, string>& idMap) const;
+  string str() const;
+};
+
+struct SelectField {
+  Expr expr;
+  void getAllIdentifiers(set<string>& identifiers) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
+};
+
+struct SelectStmt {
+  bool distinct = false;
+  vector<SelectField> selectFields;
+  string str() const;
+};
+
+struct FromStmt {
+  string fromFile;
+  string fromRootProto;
   string str() const;
 };
 

@@ -746,7 +746,7 @@ namespace yy {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const signed char yypact_[];
+  static const short int yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
@@ -764,7 +764,7 @@ namespace yy {
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const unsigned char yycheck_[];
+  static const signed char yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -884,9 +884,9 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 137,     ///< Last index in yytable_.
+      yylast_ = 153,     ///< Last index in yytable_.
       yynnts_ = 18,  ///< Number of nonterminal symbols.
-      yyfinal_ = 8, ///< Termination state number.
+      yyfinal_ = 22, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
       yyntokens_ = 41  ///< Number of tokens.

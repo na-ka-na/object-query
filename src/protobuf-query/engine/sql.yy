@@ -100,7 +100,7 @@ select_stmt: "SELECT" select_fields  {$$=SelectStmt(); $$.selectFields=$2;}
 select_fields: select_field        {$$=vector<SelectField>{$1};}
  | select_fields "," select_field  {$$=$1; $$.push_back($3);}
  ;
-select_field: "identifier" {$$=SelectField(); $$.identifier=$1;};
+select_field: expr {$$=SelectField(); $$.expr=$1;};
 
 from_stmt: "FROM" "(" "string" "," "string" ")"
  {$$=FromStmt(); $$.fromFile=$3; $$.fromRootProto=$5;}
