@@ -10,6 +10,12 @@ using optional = std::experimental::optional<T>;
 
 using namespace std;
 
+template<typename T>
+ostream& operator<<(ostream& os, const optional<T>& obj) {
+  obj ? (os << *obj) : (os << "NULL");
+  return os;
+}
+
 class Assert {
 public:
   template<typename... Args>

@@ -387,7 +387,7 @@ void printTuples(const vector<TupleType>& tuples) {
       << " " << queryGraph.root.objName << ";" << endl;
   string fromFile = (query.fromStmt.fromFile.find("argv") == 0) ?
       query.fromStmt.fromFile : ("\"" + query.fromStmt.fromFile + "\"");
-  out << "  parsePbFromFile(" << fromFile << ", " << queryGraph.root.objName
+  out << "  ParsePbFromFile(" << fromFile << ", " << queryGraph.root.objName
       << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;
   out << "  runSelect(" << queryGraph.root.objName << ", tuples);" << endl;

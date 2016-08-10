@@ -114,14 +114,14 @@ void printTuples(const vector<TupleType>& tuples) {
     sizes.push_back(header[i].size());
   }
   for (const TupleType& t : tuples) {
-    sizes[0] = max(sizes[0], stringify(get<2>(t)).size());
-    sizes[1] = max(sizes[1], stringify(get<3>(t)).size());
-    sizes[2] = max(sizes[2], stringify(get<4>(t)).size());
-    sizes[3] = max(sizes[3], stringify(get<5>(t)).size());
-    sizes[4] = max(sizes[4], stringify(get<6>(t)).size());
-    sizes[5] = max(sizes[5], stringify(get<7>(t)).size());
-    sizes[6] = max(sizes[6], stringify(get<0>(t)).size());
-    sizes[7] = max(sizes[7], stringify(get<1>(t)).size());
+    sizes[0] = max(sizes[0], Stringify(get<2>(t)).size());
+    sizes[1] = max(sizes[1], Stringify(get<3>(t)).size());
+    sizes[2] = max(sizes[2], Stringify(get<4>(t)).size());
+    sizes[3] = max(sizes[3], Stringify(get<5>(t)).size());
+    sizes[4] = max(sizes[4], Stringify(get<6>(t)).size());
+    sizes[5] = max(sizes[5], Stringify(get<7>(t)).size());
+    sizes[6] = max(sizes[6], Stringify(get<0>(t)).size());
+    sizes[7] = max(sizes[7], Stringify(get<1>(t)).size());
   }
   cout << left;
   for (size_t i=0; i<header.size(); i++) {
@@ -133,21 +133,21 @@ void printTuples(const vector<TupleType>& tuples) {
   }
   cout << endl;
   for(const TupleType& t : tuples) {
-    cout <<          setw(sizes[0]) << stringify(get<2>(t));
-    cout << " | " << setw(sizes[1]) << stringify(get<3>(t));
-    cout << " | " << setw(sizes[2]) << stringify(get<4>(t));
-    cout << " | " << setw(sizes[3]) << stringify(get<5>(t));
-    cout << " | " << setw(sizes[4]) << stringify(get<6>(t));
-    cout << " | " << setw(sizes[5]) << stringify(get<7>(t));
-    cout << " | " << setw(sizes[6]) << stringify(get<0>(t));
-    cout << " | " << setw(sizes[7]) << stringify(get<1>(t));
+    cout <<          setw(sizes[0]) << Stringify(get<2>(t));
+    cout << " | " << setw(sizes[1]) << Stringify(get<3>(t));
+    cout << " | " << setw(sizes[2]) << Stringify(get<4>(t));
+    cout << " | " << setw(sizes[3]) << Stringify(get<5>(t));
+    cout << " | " << setw(sizes[4]) << Stringify(get<6>(t));
+    cout << " | " << setw(sizes[5]) << Stringify(get<7>(t));
+    cout << " | " << setw(sizes[6]) << Stringify(get<0>(t));
+    cout << " | " << setw(sizes[7]) << Stringify(get<1>(t));
     cout << endl;
   }
 }
 
 int main(int argc, char** argv) {
   Company company;
-  parsePbFromFile(argv[1], company);
+  ParsePbFromFile(argv[1], company);
   vector<TupleType> tuples;
   runSelect(company, tuples);
   printTuples(tuples);

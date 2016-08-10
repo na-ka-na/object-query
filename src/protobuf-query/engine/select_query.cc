@@ -359,10 +359,10 @@ string SelectQuery::str() const {
 string BinaryExpr::code(const map<string, string>& idMap) const {
   string opFn;
   switch (op) {
-  case PLUS:   opFn = "plus"; break;
-  case MINUS:  opFn = "minus"; break;
-  case MULT:   opFn = "mult"; break;
-  case DIVIDE: opFn = "divide"; break;
+  case PLUS:   opFn = "Plus"; break;
+  case MINUS:  opFn = "Minus"; break;
+  case MULT:   opFn = "Mult"; break;
+  case DIVIDE: opFn = "Divide"; break;
   default:     opFn = "<BinaryExpOp>";
   }
   return opFn + "(" + lhs->code(idMap) + ", " + rhs->code(idMap) + ")";
@@ -371,7 +371,7 @@ string BinaryExpr::code(const map<string, string>& idMap) const {
 string UnaryExpr::code(const map<string, string>& idMap) const {
   string unaryFn;
   switch (op) {
-  case UMINUS: unaryFn = "uminus"; break;
+  case UMINUS: unaryFn = "Uminus"; break;
   default:     unaryFn = "<UnaryExpOp>";
   }
   return unaryFn + "(" + expr->code(idMap) + ")";
@@ -380,8 +380,8 @@ string UnaryExpr::code(const map<string, string>& idMap) const {
 string Fn1CallExpr::code(const map<string, string>& idMap) const {
   string fnStr;
   switch (fn1) {
-  case STR:   fnStr = "stringify"; break;
-  case INT:   fnStr = "toInt"; break;
+  case STR:   fnStr = "Stringify"; break;
+  case INT:   fnStr = "ToInt"; break;
   default:    fnStr = "<fn1>";
   }
   return fnStr + "(" + expr->code(idMap) + ")";
@@ -390,7 +390,7 @@ string Fn1CallExpr::code(const map<string, string>& idMap) const {
 string Fn3CallExpr::code(const map<string, string>& idMap) const {
   string fnStr;
   switch (fn3) {
-  case SUBSTR: fnStr = "SUBSTR"; break;
+  case SUBSTR: fnStr = "substr"; break;
   default:     fnStr = "<fn3>";
   }
   return fnStr + "(" + expr1->code(idMap) + "," + expr2->code(idMap) + "," +
@@ -406,7 +406,7 @@ string Expr::code(const map<string, string>& idMap) const {
   case IDENTIFIER:    {auto f = idMap.find(identifier);
                        return f==idMap.end() ? identifier : f->second;}
   case STRING:        return string("optional<string>(") + "\"" + stringValue + "\")";
-  case LONG:          return string("optional<int64_t>(") + to_string(longValue) + ")";
+  case LONG:          return string("optional<int64>(") + to_string(longValue) + ")";
   case DOUBLE:        return string("optional<double>(") + to_string(doubleValue) + ")";
   case BOOL:          return string("optional<bool>(") + (boolValue ? "true" : "false") + ")";
   default:            return "<Expr>";
@@ -426,13 +426,13 @@ string CompoundBooleanExpr::code(const map<string, string>& idMap) const {
 string SimpleBooleanExpr::code(const map<string, string>& idMap) const {
   string opFn;
   switch (op) {
-  case EQ:   opFn = "eq"; break;
-  case NE:   opFn = "ne"; break;
-  case LT:   opFn = "lt"; break;
-  case GT:   opFn = "gt"; break;
-  case LE:   opFn = "le"; break;
-  case GE:   opFn = "ge"; break;
-  case LIKE: opFn = "like"; break;
+  case EQ:   opFn = "Eq"; break;
+  case NE:   opFn = "Ne"; break;
+  case LT:   opFn = "Lt"; break;
+  case GT:   opFn = "Gt"; break;
+  case LE:   opFn = "Le"; break;
+  case GE:   opFn = "Ge"; break;
+  case LIKE: opFn = "Like"; break;
   default:   opFn = "<SimpleBooleanExprOp>";
   }
   return opFn + "(" + lhs.code(idMap) + ", " + rhs.code(idMap) + ")";
@@ -442,7 +442,7 @@ string NullaryBooleanExpr::code(const map<string, string>& idMap) const {
   Expr expr;
   expr.type = IDENTIFIER;
   expr.identifier = identifier;
-  return string(isNull ? "isNull" : "isNotNull") + "(" + expr.code(idMap) + ")";
+  return string(isNull ? "IsNull" : "IsNotNull") + "(" + expr.code(idMap) + ")";
 }
 
 string BooleanExpr::code(const map<string, string>& idMap) const {
