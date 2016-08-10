@@ -457,3 +457,7 @@ string BooleanExpr::code(const map<string, string>& idMap) const {
 string SelectField::code(const map<string, string>& idMap) const {
   return expr.code(idMap);
 }
+
+string Expr::cppType(const map<string, string>& idDefaultsMap) const {
+  return "decltype(" + code(idDefaultsMap) + ")";
+}

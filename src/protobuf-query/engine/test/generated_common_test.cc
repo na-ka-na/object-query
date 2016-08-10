@@ -1,14 +1,6 @@
 // Unit tests for generated_common.h
 
-#include <iostream>
-#include "generated_common.h"
-
-using namespace std;
-
-#ifndef EXPECT_EQ
-#define EXPECT_EQ(expected, actual, ...) \
-  ASSERT(expected == actual, "expected:", expected, "actual", actual, ##__VA_ARGS__)
-#endif
+#include "test_commons.h"
 
 void TestArthimeticFunctions() {
   auto a = Uminus(optional<double>(1.1));
@@ -29,11 +21,5 @@ void TestArthimeticFunctions() {
 }
 
 int main() {
-  using S0 = optional<int>;
-  using S1 = optional<double>;
-  decltype(Mult(S1(), Minus(S0(), Plus(S0(), S1())))) x;
-  x = 2.3;
-  cout << x << endl;
-
   TestArthimeticFunctions();
 }

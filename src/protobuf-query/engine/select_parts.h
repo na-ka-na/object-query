@@ -104,6 +104,7 @@ struct Expr {
   static Expr createPrimitive(bool value);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
+  string cppType(const map<string, string>& idDefaultsMap) const;
   string str() const;
 };
 
