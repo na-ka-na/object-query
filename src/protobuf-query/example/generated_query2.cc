@@ -2,13 +2,14 @@
 SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.id IS NOT NULL AND (((all_employees.name = "def") AND (all_employees.active = TRUE)) OR (all_employees.name = "abc"))) AND (financial.quarterly_profits > 0))
 
 for (1..1) {
+  company = parseFromFile()
   for each quarterly_profit in company.financial().quarterly_profits() {
     if (!(financial.quarterly_profits > 0)) { continue; }
     for each all_employee in company.all_employees() {
       if (!all_employees.id IS NOT NULL) { continue; }
       if (!(((all_employees.name = "def") AND (all_employees.active = TRUE)) OR (all_employees.name = "abc"))) { continue; }
-      print all_employee.id()
-      print all_employee.name()
+      print all_employees.id()
+      print all_employees.name()
     } //all_employee
   } //quarterly_profit
 } //company

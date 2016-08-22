@@ -2,6 +2,7 @@
 SELECT financial.quarterly_profits, financial.quarterly_revenues, all_employees.id, all_employees.name, all_employees.active, all_employees.active_direct_reports, founded, board_of_directors FROM ('argv[1]', 'Example1.Company')
 
 for (1..1) {
+  company = parseFromFile()
   print company.founded()
   for each board_of_director in company.board_of_directors() {
     print board_of_director
@@ -10,9 +11,9 @@ for (1..1) {
       for each quarterly_revenue in company.financial().quarterly_revenues() {
         print quarterly_revenue
         for each all_employee in company.all_employees() {
-          print all_employee.id()
-          print all_employee.name()
-          print all_employee.active()
+          print all_employees.id()
+          print all_employees.name()
+          print all_employees.active()
           for each active_direct_report in all_employee.active_direct_reports() {
             print active_direct_report
           } //active_direct_report
@@ -46,7 +47,7 @@ using S4 = optional<int32>;  /*.id()*/
 using S5 = optional<string>; /*.name()*/
 using S6 = optional<bool>;   /*.active()*/
 using S7 = optional<int32>;  /*.active_direct_reports()*/
-using TupleType = tuple<S0, S1, S2, S3, S4, S5, S6, S7>;
+using TupleType = tuple<S2, S3, S4, S5, S6, S7, S0, S1>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
@@ -81,30 +82,30 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
                       if (all_employee.active_direct_reports_size() > 0) {
                         for (const int32& active_direct_report : all_employee.active_direct_reports()) {
                           S7 s7 = active_direct_report;
-                          tuples.emplace_back(s0, s1, s2, s3, s4, s5, s6, s7);
+                          tuples.emplace_back(s2, s3, s4, s5, s6, s7, s0, s1);
                         }
                       } else { // no active_direct_report
-                        tuples.emplace_back(s0, s1, s2, s3, s4, s5, s6, S7());
+                        tuples.emplace_back(s2, s3, s4, s5, s6, S7(), s0, s1);
                       }
                     }
                   } else { // no all_employee
-                    tuples.emplace_back(s0, s1, s2, s3, S4(), S5(), S6(), S7());
+                    tuples.emplace_back(s2, s3, S4(), S5(), S6(), S7(), s0, s1);
                   }
                 }
               } else { // no quarterly_revenue
-                tuples.emplace_back(s0, s1, s2, S3(), S4(), S5(), S6(), S7());
+                tuples.emplace_back(s2, S3(), S4(), S5(), S6(), S7(), s0, s1);
               }
             }
           } else { // no quarterly_profit
-            tuples.emplace_back(s0, s1, S2(), S3(), S4(), S5(), S6(), S7());
+            tuples.emplace_back(S2(), S3(), S4(), S5(), S6(), S7(), s0, s1);
           }
         }
       } else { // no board_of_director
-        tuples.emplace_back(s0, S1(), S2(), S3(), S4(), S5(), S6(), S7());
+        tuples.emplace_back(S2(), S3(), S4(), S5(), S6(), S7(), s0, S1());
       }
     }
   } else { // no company
-    tuples.emplace_back(S0(), S1(), S2(), S3(), S4(), S5(), S6(), S7());
+    tuples.emplace_back(S2(), S3(), S4(), S5(), S6(), S7(), S0(), S1());
   }
 }
 
@@ -114,14 +115,14 @@ void printTuples(const vector<TupleType>& tuples) {
     sizes.push_back(header[i].size());
   }
   for (const TupleType& t : tuples) {
-    sizes[0] = max(sizes[0], Stringify(get<2>(t)).size());
-    sizes[1] = max(sizes[1], Stringify(get<3>(t)).size());
-    sizes[2] = max(sizes[2], Stringify(get<4>(t)).size());
-    sizes[3] = max(sizes[3], Stringify(get<5>(t)).size());
-    sizes[4] = max(sizes[4], Stringify(get<6>(t)).size());
-    sizes[5] = max(sizes[5], Stringify(get<7>(t)).size());
-    sizes[6] = max(sizes[6], Stringify(get<0>(t)).size());
-    sizes[7] = max(sizes[7], Stringify(get<1>(t)).size());
+    sizes[0] = max(sizes[0], Stringify(get<0>(t)).size());
+    sizes[1] = max(sizes[1], Stringify(get<1>(t)).size());
+    sizes[2] = max(sizes[2], Stringify(get<2>(t)).size());
+    sizes[3] = max(sizes[3], Stringify(get<3>(t)).size());
+    sizes[4] = max(sizes[4], Stringify(get<4>(t)).size());
+    sizes[5] = max(sizes[5], Stringify(get<5>(t)).size());
+    sizes[6] = max(sizes[6], Stringify(get<6>(t)).size());
+    sizes[7] = max(sizes[7], Stringify(get<7>(t)).size());
   }
   cout << left;
   for (size_t i=0; i<header.size(); i++) {
@@ -133,14 +134,14 @@ void printTuples(const vector<TupleType>& tuples) {
   }
   cout << endl;
   for(const TupleType& t : tuples) {
-    cout <<          setw(sizes[0]) << Stringify(get<2>(t));
-    cout << " | " << setw(sizes[1]) << Stringify(get<3>(t));
-    cout << " | " << setw(sizes[2]) << Stringify(get<4>(t));
-    cout << " | " << setw(sizes[3]) << Stringify(get<5>(t));
-    cout << " | " << setw(sizes[4]) << Stringify(get<6>(t));
-    cout << " | " << setw(sizes[5]) << Stringify(get<7>(t));
-    cout << " | " << setw(sizes[6]) << Stringify(get<0>(t));
-    cout << " | " << setw(sizes[7]) << Stringify(get<1>(t));
+    cout <<          setw(sizes[0]) << Stringify(get<0>(t));
+    cout << " | " << setw(sizes[1]) << Stringify(get<1>(t));
+    cout << " | " << setw(sizes[2]) << Stringify(get<2>(t));
+    cout << " | " << setw(sizes[3]) << Stringify(get<3>(t));
+    cout << " | " << setw(sizes[4]) << Stringify(get<4>(t));
+    cout << " | " << setw(sizes[5]) << Stringify(get<5>(t));
+    cout << " | " << setw(sizes[6]) << Stringify(get<6>(t));
+    cout << " | " << setw(sizes[7]) << Stringify(get<7>(t));
     cout << endl;
   }
 }

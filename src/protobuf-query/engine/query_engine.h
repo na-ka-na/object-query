@@ -53,11 +53,11 @@ struct Node {
   // children of this node, repeated fields, repeated field => Node.
   map<Field, Node> children;
   // list of non-repeating read fields for this node.
-  set<Field> selectFields;
   set<Field> allFields;
   // list of all canonical where clauses
   vector<const BooleanExpr*> whereClauses;
-  vector<map<string, Field>> whereClauseIdMaps;
+  // list of all select fields
+  vector<const SelectField*> selectFields;
 
   // Node tree walk, modified DFS which vists each node twice,
   // one in depth first order, second in reverse order.
@@ -76,13 +76,13 @@ struct Node {
 struct QueryGraph {
   Proto proto;
   Node root;
-  // map of idx in query.selectFields => Field
-  map<size_t, Field> selectFieldIdxReadFieldMap;
+  map<string, Field> idFieldMap;
 
   static string constructObjNameForRepeated(const FieldDescriptor* field);
-  Field addReadIdentifier(const string& identifier, bool partOfSelect);
-  void readFieldsFromSelect(const SelectStmt& selectStmt);
+  void addReadIdentifier(const string& identifier);
+  void processSelect(const SelectStmt& selectStmt);
   void processWhere(const WhereStmt& whereStmt);
+  void processExpr(const set<string>& identifiers, function<void(Node& node)>);
   void calculateGraph(const SelectQuery& query);
 };
 

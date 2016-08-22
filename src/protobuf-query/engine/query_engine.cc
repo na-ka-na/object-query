@@ -86,7 +86,10 @@ string QueryGraph::constructObjNameForRepeated(const FieldDescriptor* field) {
       fieldName.substr(0, fieldName.size()-1) : fieldName;
 }
 
-Field QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect) {
+void QueryGraph::addReadIdentifier(const string& identifier) {
+  if (idFieldMap.find(identifier) != idFieldMap.end()) {
+    return;
+  }
   const Descriptor* parentDescriptor = proto.defaultInstance->GetDescriptor();
   Node* parent = &root;
   Field field;
@@ -119,19 +122,20 @@ Field QueryGraph::addReadIdentifier(const string& identifier, bool partOfSelect)
         child.repeatedField = field;
         parent = &child;
       }
-      if (partOfSelect) {
-        parent->selectFields.insert(field);
-      }
       parent->allFields.insert(field);
     }
   }
-  return field;
+  idFieldMap.emplace(identifier, field);
 }
 
-void QueryGraph::readFieldsFromSelect(const SelectStmt& selectStmt) {
-  for (size_t i=0; i<selectStmt.selectFields.size(); i++) {
-    selectFieldIdxReadFieldMap[i] =
-        addReadIdentifier(selectStmt.selectFields[i].identifier, true);
+void QueryGraph::processSelect(const SelectStmt& selectStmt) {
+  for (const SelectField& selectField : selectStmt.selectFields) {
+    set<string> identifiers;
+    selectField.expr.getAllIdentifiers(identifiers);
+    auto callback = [&selectField](Node& node) {
+      node.selectFields.push_back(&selectField);
+    };
+    processExpr(identifiers, callback);
   }
 }
 
@@ -141,32 +145,37 @@ void QueryGraph::processWhere(const WhereStmt& whereStmt) {
   for (const BooleanExpr* clause : andClauses) {
     set<string> identifiers;
     clause->getAllIdentifiers(identifiers);
-    set<Field> fields;
-    map<string, Field> whereClauseIdMap;
-    for (const string& identifier : identifiers) {
-      Field f = addReadIdentifier(identifier, false);
-      fields.insert(f);
-      whereClauseIdMap.emplace(identifier, f);
-    }
-    StartNodeFn startNodeFn = [&](int indent, Node& node, Node* parent){
-      if (fields.empty()) {
-        return;
-      }
-      for(auto it = fields.begin(); it != fields.end();) {
-        if (node.allFields.find(*it) != node.allFields.end()) {
-          it = fields.erase(it);
-        } else {
-          ++it;
-        }
-      }
-      if (fields.empty()) {
-        node.whereClauses.push_back(clause);
-        node.whereClauseIdMaps.push_back(whereClauseIdMap);
-      }
+    auto callback = [clause](Node& node) {
+      node.whereClauses.push_back(clause);
     };
-    EndNodeFn endNodeFn = [](int indent, Node& node) {};
-    Node::walkNode(root, startNodeFn, endNodeFn);
+    processExpr(identifiers, callback);
   }
+}
+
+void QueryGraph::processExpr(
+    const set<string>& identifiers, function<void(Node& node)> callback) {
+  set<Field> fields;
+  for (const string& identifier : identifiers) {
+    addReadIdentifier(identifier);
+    fields.insert(idFieldMap[identifier]);
+  }
+  StartNodeFn startNodeFn = [&](int indent, Node& node, Node* parent){
+    if (fields.empty()) {
+      return;
+    }
+    for(auto it = fields.begin(); it != fields.end();) {
+      if (node.allFields.find(*it) != node.allFields.end()) {
+        it = fields.erase(it);
+      } else {
+        ++it;
+      }
+    }
+    if (fields.empty()) {
+      callback(node);
+    }
+  };
+  EndNodeFn endNodeFn = [](int indent, Node& node) {};
+  Node::walkNode(root, startNodeFn, endNodeFn);
 }
 
 void QueryGraph::calculateGraph(const SelectQuery& query) {
@@ -176,7 +185,7 @@ void QueryGraph::calculateGraph(const SelectQuery& query) {
   root.objName = rootDescriptor->name();
   std::transform(root.objName.begin(), root.objName.end(),
                  root.objName.begin(), ::tolower);
-  readFieldsFromSelect(query.selectStmt);
+  processSelect(query.selectStmt);
   processWhere(query.whereStmt);
 }
 
@@ -187,6 +196,8 @@ void QueryEngine::printPlan() {
   StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node* parent) {
     if (!parent) { //root
       out << string(indent, ' ') << "for (1..1) {" << endl;
+      out << string(indent, ' ') << "  " << queryGraph.root.objName
+          << " = parseFromFile()" << endl;
     } else {
       out << string(indent, ' ') << "for each " << node.objName << " in "
           << node.repeatedField.accessor(parent->objName) << " {" << endl;
@@ -196,10 +207,12 @@ void QueryEngine::printPlan() {
       out << string(indent, ' ') << "if (!" << expr->str()
           << ") { continue; }" << endl;
     }
-    for (const Field& field : node.selectFields) {
+    for (const SelectField* field : node.selectFields) {
       out << string(indent, ' ') << "print "
-          << ((node.type == REPEATED_PRIMITIVE) ? node.objName :
-              field.accessor(node.objName)) << endl;
+          << ((node.type == REPEATED_PRIMITIVE)
+              ? node.objName : ((!parent ? queryGraph.root.objName + "." : "")
+                  + field->str() + "()"))
+          << endl;
     }
   };
   EndNodeFn endNodeFn = [this](int indent, const Node& node) {
@@ -216,11 +229,8 @@ void QueryEngine::printCode() {
   StartNodeFn startNodeFn = [](int indent, const Node& node, const Node* parent) {};
   EndNodeFn endNodeFn = [](int indent, const Node& node) {};
 
-  vector<Field> allSelectFields, allFields;
+  vector<Field> allFields;
   startNodeFn = [&](int indent, const Node& node, const Node* parent) {
-    for (const Field& field : node.selectFields) {
-      allSelectFields.push_back(field);
-    }
     for (const Field& field : node.allFields) {
       allFields.push_back(field);
     }
@@ -229,29 +239,60 @@ void QueryEngine::printCode() {
 
   // select fields header
   string header = "vector<string> header = {\n";
-  for (const SelectField& selectField : query.selectStmt.selectFields) {
-    header += "  \"" + selectField.identifier + "\",\n";
-  }
-  header += "};";
+  header += joinVec<SelectField>(
+      "\n", query.selectStmt.selectFields,
+      [](const SelectField& field) {return "  \"" + field.str() + "\",";});
+  header += "\n};";
   out << header << endl;
 
   map<Field, string> fieldVarMap;
   map<Field, string> fieldTypeMap;
   map<Field, string> fieldDefaultMap;
-  for (uint32_t i=0; i<allFields.size(); i++) {
-    const Field& field = allFields[i];
-    fieldVarMap[field] = "s" + to_string(i);
-    fieldTypeMap[field] = "S" + to_string(i);
-    fieldDefaultMap[field] = fieldTypeMap[field] + "()";
+  uint32_t varIdx = 0;
+  for (const Field& field : allFields) {
+    fieldVarMap[field] = "s" + to_string(varIdx);
+    fieldTypeMap[field] = "S" + to_string(varIdx);
+    fieldDefaultMap[field] = "S" + to_string(varIdx) + "()";
+    varIdx++;
     string type = "optional<" + field.type() + ">";
     string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
     out << "using " << fieldTypeMap[field] << " = " << type << ";"
         << spaces << " /*" << field.accessor("") << "*/" << endl;
   }
+  map<const SelectField*, string> selectFieldVarMap;
+  map<const SelectField*, string> selectFieldTypeMap;
+  map<const SelectField*, string> selectFieldDefaultMap;
+  for (const SelectField& selectField : query.selectStmt.selectFields) {
+    if (selectField.expr.type == IDENTIFIER) {
+      Field f = queryGraph.idFieldMap[selectField.expr.identifier];
+      selectFieldVarMap[&selectField] = fieldVarMap[f];
+      selectFieldTypeMap[&selectField] = fieldTypeMap[f];
+      selectFieldDefaultMap[&selectField] = fieldDefaultMap[f];
+    } else {
+      selectFieldVarMap[&selectField] = "s" + to_string(varIdx);
+      selectFieldTypeMap[&selectField] = "S" + to_string(varIdx);
+      selectFieldTypeMap[&selectField] = "S" + to_string(varIdx) + "()";
+      varIdx++;
+      set<string> identifiers;
+      selectField.expr.getAllIdentifiers(identifiers);
+      map<string, string> idDefaultsMap;
+      for (const string& id : identifiers) {
+        idDefaultsMap[id] = fieldDefaultMap[queryGraph.idFieldMap[id]];
+      }
+      string type = selectField.expr.cppType(idDefaultsMap);
+      string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
+      out << "using " << selectFieldTypeMap[&selectField] << " = " << type << ";"
+          << spaces << " /*" << selectField.str() << "*/" << endl;
+    }
+  }
+  map<string, string> idVarMap;
+  for (const auto& e : queryGraph.idFieldMap) {
+    idVarMap[e.first] = fieldVarMap[e.second];
+  }
   string tupleType = "using TupleType = tuple<";
-  tupleType += joinVec<Field>(
-      ", ", allSelectFields,
-      [&](const Field& field) {return fieldTypeMap[field];});
+  tupleType += joinVec<SelectField>(
+      ", ", query.selectStmt.selectFields,
+      [&](const SelectField& field) {return selectFieldTypeMap[&field];});
   tupleType += ">;";
   out << tupleType << endl;
   out << endl;
@@ -259,7 +300,8 @@ void QueryEngine::printCode() {
   out << "void runSelect(const "
       << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
       << queryGraph.root.objName << ", vector<TupleType>& tuples) {" << endl;
-  vector<Field> selectFieldsProcessed;
+  unsigned numSelectFieldsProcessed = 0;
+  bool allSelectFieldsProcessed = false;
   startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     string ind = string(indent+2, ' ');
     if (!parent) { //root
@@ -275,10 +317,6 @@ void QueryEngine::printCode() {
     indent+=4;
     ind = string(indent+2, ' ');
     for (const Field& field : node.allFields) {
-      bool isSelect = node.selectFields.find(field) != node.selectFields.end();
-      if (isSelect) {
-        selectFieldsProcessed.push_back(field);
-      }
       out << ind << fieldTypeMap[field] << " "
           << fieldVarMap[field] << " = "
           << ((node.type == REPEATED_PRIMITIVE) ? node.objName :
@@ -296,35 +334,39 @@ void QueryEngine::printCode() {
       }
     }
     // TODO(sanchay): print variable assignment and where clauses in optimal order
-    for (size_t i=0; i<node.whereClauses.size(); i++) {
-      const BooleanExpr* whereClause = node.whereClauses[i];
-      const map<string, Field>& whereClauseIdMap = node.whereClauseIdMaps[i];
-      map<string, string> idVarMap;
-      for (const auto& e : whereClauseIdMap) {
-        idVarMap.emplace(e.first, fieldVarMap[e.second]);
-      }
+    for (const BooleanExpr* whereClause : node.whereClauses) {
       out << ind << "if (!" << whereClause->code(idVarMap)
           << ") { continue; }" << endl;
     }
-    if (selectFieldsProcessed.size() == allSelectFields.size()) {
-      string selectList = joinVec<Field>(", ", allSelectFields,
-          [&](const Field& field) {return fieldVarMap[field];});
+    for (const SelectField* selectField : node.selectFields) {
+      if (selectField->expr.type != IDENTIFIER) {
+        out << ind << selectFieldVarMap[selectField] << " = "
+            << selectField->code(idVarMap) << ";" << endl;
+      }
+    }
+    numSelectFieldsProcessed += node.selectFields.size();
+    if (!allSelectFieldsProcessed &&
+        (numSelectFieldsProcessed == query.selectStmt.selectFields.size())) {
+      string selectList = joinVec<SelectField>(
+          ", ", query.selectStmt.selectFields,
+          [&](const SelectField& field) {return selectFieldVarMap[&field];});
       out << ind << "tuples.emplace_back(" + selectList + ");" << endl;
+      allSelectFieldsProcessed = true;
     }
   };
-  set<Field> endedFieldSet;
+  set<const SelectField*> endedSelectFieldSet;
   endNodeFn = [&](int indent, const Node& node) {
     string ind = string(indent+2, ' ');
     out << ind << "  }" << endl;
     out << ind << "} else { // no " << node.objName << endl;
-    for (const Field& field : node.selectFields) {
-      endedFieldSet.insert(field);
+    for (const SelectField* selectField : node.selectFields) {
+      endedSelectFieldSet.insert(selectField);
     }
-    string selectList = joinVec<Field>(
-        ", ", selectFieldsProcessed,
-        [&](const Field& field) {
-            return endedFieldSet.find(field) == endedFieldSet.end() ?
-                fieldVarMap[field] : fieldDefaultMap[field];
+    string selectList = joinVec<SelectField>(
+        ", ", query.selectStmt.selectFields,
+        [&](const SelectField& field) {
+            return endedSelectFieldSet.find(&field) == endedSelectFieldSet.end()
+                ? selectFieldVarMap[&field] : selectFieldDefaultMap[&field];
         });
     out << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
     out << ind << "}" << endl;
@@ -333,19 +375,6 @@ void QueryEngine::printCode() {
   out << "}" << endl;
 
   // print tuples
-  map<uint32_t, uint32_t> querySelectsIdxToTupleIdxMap;
-  for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
-    const Field& readField = queryGraph.selectFieldIdxReadFieldMap[i];
-    int idx = -1;
-    for (size_t j=0; j<allSelectFields.size(); j++) {
-      if (allSelectFields[j] == readField) {
-        idx = j;
-        break;
-      }
-    }
-    ASSERT(idx >= 0, "Unable to find", readField.accessor(""), "in tuples");
-    querySelectsIdxToTupleIdxMap[i] = idx;
-  }
   out << R"fff(
 void printTuples(const vector<TupleType>& tuples) {
   vector<size_t> sizes;
@@ -355,8 +384,8 @@ void printTuples(const vector<TupleType>& tuples) {
 )fff";
   out << "  for (const TupleType& t : tuples) {" << endl;
   for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
-    out << "    sizes[" << i << "] = max(sizes[" << i << "], stringify(get<"
-        << querySelectsIdxToTupleIdxMap[i] << ">(t)).size());" << endl;
+    out << "    sizes[" << i << "] = max(sizes[" << i << "], Stringify(get<"
+        << i << ">(t)).size());" << endl;
   }
   out << "  }" << endl;
   out << "  cout << left;";
@@ -374,8 +403,7 @@ void printTuples(const vector<TupleType>& tuples) {
   for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
     out << "    cout << " << ((i==0) ? "         " : "\" | \" << ")
         << "setw(sizes[" << i << "]) << "
-        << "stringify(get<" << querySelectsIdxToTupleIdxMap[i]
-        << ">(t));" << endl;
+        << "Stringify(get<" << i << ">(t));" << endl;
   }
   out << "    cout << endl;" << endl;
   out << "  }" << endl;
