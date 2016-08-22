@@ -8,8 +8,8 @@ for (1..1) {
     for each all_employee in company.all_employees() {
       if (!all_employees.id IS NOT NULL) { continue; }
       if (!(((all_employees.name = "def") AND (all_employees.active = TRUE)) OR (all_employees.name = "abc"))) { continue; }
-      print all_employees.id()
-      print all_employees.name()
+      print all_employees.id
+      print all_employees.name
     } //all_employee
   } //quarterly_profit
 } //company

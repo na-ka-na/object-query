@@ -208,11 +208,7 @@ void QueryEngine::printPlan() {
           << ") { continue; }" << endl;
     }
     for (const SelectField* field : node.selectFields) {
-      out << string(indent, ' ') << "print "
-          << ((node.type == REPEATED_PRIMITIVE)
-              ? node.objName : ((!parent ? queryGraph.root.objName + "." : "")
-                  + field->str() + "()"))
-          << endl;
+      out << string(indent, ' ') << "print " << field->str() << endl;
     }
   };
   EndNodeFn endNodeFn = [this](int indent, const Node& node) {
@@ -271,7 +267,7 @@ void QueryEngine::printCode() {
     } else {
       selectFieldVarMap[&selectField] = "s" + to_string(varIdx);
       selectFieldTypeMap[&selectField] = "S" + to_string(varIdx);
-      selectFieldTypeMap[&selectField] = "S" + to_string(varIdx) + "()";
+      selectFieldDefaultMap[&selectField] = "S" + to_string(varIdx) + "()";
       varIdx++;
       set<string> identifiers;
       selectField.expr.getAllIdentifiers(identifiers);
@@ -340,7 +336,8 @@ void QueryEngine::printCode() {
     }
     for (const SelectField* selectField : node.selectFields) {
       if (selectField->expr.type != IDENTIFIER) {
-        out << ind << selectFieldVarMap[selectField] << " = "
+        out << ind << selectFieldTypeMap[selectField] << " "
+            << selectFieldVarMap[selectField] << " = "
             << selectField->code(idVarMap) << ";" << endl;
       }
     }

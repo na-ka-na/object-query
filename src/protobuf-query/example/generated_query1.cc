@@ -3,19 +3,19 @@ SELECT financial.quarterly_profits, financial.quarterly_revenues, all_employees.
 
 for (1..1) {
   company = parseFromFile()
-  print company.founded()
+  print founded
   for each board_of_director in company.board_of_directors() {
-    print board_of_director
+    print board_of_directors
     for each quarterly_profit in company.financial().quarterly_profits() {
-      print quarterly_profit
+      print financial.quarterly_profits
       for each quarterly_revenue in company.financial().quarterly_revenues() {
-        print quarterly_revenue
+        print financial.quarterly_revenues
         for each all_employee in company.all_employees() {
-          print all_employees.id()
-          print all_employees.name()
-          print all_employees.active()
+          print all_employees.id
+          print all_employees.name
+          print all_employees.active
           for each active_direct_report in all_employee.active_direct_reports() {
-            print active_direct_report
+            print all_employees.active_direct_reports
           } //active_direct_report
         } //all_employee
       } //quarterly_revenue
