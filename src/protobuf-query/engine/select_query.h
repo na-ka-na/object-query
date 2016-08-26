@@ -41,6 +41,7 @@ public:
   SelectStmt selectStmt;
   FromStmt fromStmt;
   WhereStmt whereStmt;
+  OrderByStmt orderByStmt;
 
   bool parse();
   void mark_lexer_invalid_char(char c);

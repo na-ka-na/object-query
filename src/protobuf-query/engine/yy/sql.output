@@ -68,7 +68,7 @@ Grammar
    49 order_by_fields: order_by_field
    50                | order_by_fields "," order_by_field
 
-   51 order_by_field: "identifier"
+   51 order_by_field: expr
 
 
 Terminals, with rules where they appear
@@ -102,7 +102,7 @@ error (256)
 "(" (282) 12 15 27 33 34
 ")" (283) 12 15 27 33 34
 "DISTINCT" (284) 8
-"identifier" (285) 25 26 35 44 51
+"identifier" (285) 25 26 35 44
 "string" (286) 12 36
 "long" (287) 37
 "double" (288) 38
@@ -140,7 +140,7 @@ boolean_expr (50)
     17 46
 expr (51)
     on left: 27 28 29 30 31 32 33 34 35 36 37 38 39, on right: 11 18
-    19 20 21 22 23 24 27 28 29 30 31 32 33 34
+    19 20 21 22 23 24 27 28 29 30 31 32 33 34 51
 group_by_stmt (52)
     on left: 40 41, on right: 1
 group_by_fields (53)
@@ -2009,13 +2009,45 @@ State 94
 
 State 95
 
+    2 fn1: . "STR"
+    3    | . "INT"
+    4    | . "SUM"
+    5    | . "COUNT"
+    6 fn3: . "SUBSTR"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
+   39     | . "bool"
    48 order_by_stmt: "ORDER" "BY" . order_by_fields
    49 order_by_fields: . order_by_field
    50                | . order_by_fields "," order_by_field
-   51 order_by_field: . "identifier"
+   51 order_by_field: . expr
 
-    "identifier"  shift, and go to state 98
+    "-"           shift, and go to state 4
+    "("           shift, and go to state 5
+    "identifier"  shift, and go to state 7
+    "string"      shift, and go to state 8
+    "long"        shift, and go to state 9
+    "double"      shift, and go to state 10
+    "bool"        shift, and go to state 11
+    "STR"         shift, and go to state 12
+    "INT"         shift, and go to state 13
+    "SUM"         shift, and go to state 14
+    "COUNT"       shift, and go to state 15
+    "SUBSTR"      shift, and go to state 16
 
+    fn1              go to state 17
+    fn3              go to state 18
+    expr             go to state 98
     order_by_fields  go to state 99
     order_by_field   go to state 100
 
@@ -2044,7 +2076,16 @@ State 97
 
 State 98
 
-   51 order_by_field: "identifier" .
+   28 expr: expr . "+" expr
+   29     | expr . "-" expr
+   30     | expr . "*" expr
+   31     | expr . "/" expr
+   51 order_by_field: expr .  ["end of file", ","]
+
+    "+"  shift, and go to state 31
+    "-"  shift, and go to state 32
+    "*"  shift, and go to state 33
+    "/"  shift, and go to state 34
 
     $default  reduce using rule 51 (order_by_field)
 
@@ -2075,11 +2116,43 @@ State 101
 
 State 102
 
+    2 fn1: . "STR"
+    3    | . "INT"
+    4    | . "SUM"
+    5    | . "COUNT"
+    6 fn3: . "SUBSTR"
+   27 expr: . "(" expr ")"
+   28     | . expr "+" expr
+   29     | . expr "-" expr
+   30     | . expr "*" expr
+   31     | . expr "/" expr
+   32     | . "-" expr
+   33     | . fn1 "(" expr ")"
+   34     | . fn3 "(" expr "," expr "," expr ")"
+   35     | . "identifier"
+   36     | . "string"
+   37     | . "long"
+   38     | . "double"
+   39     | . "bool"
    50 order_by_fields: order_by_fields "," . order_by_field
-   51 order_by_field: . "identifier"
+   51 order_by_field: . expr
 
-    "identifier"  shift, and go to state 98
+    "-"           shift, and go to state 4
+    "("           shift, and go to state 5
+    "identifier"  shift, and go to state 7
+    "string"      shift, and go to state 8
+    "long"        shift, and go to state 9
+    "double"      shift, and go to state 10
+    "bool"        shift, and go to state 11
+    "STR"         shift, and go to state 12
+    "INT"         shift, and go to state 13
+    "SUM"         shift, and go to state 14
+    "COUNT"       shift, and go to state 15
+    "SUBSTR"      shift, and go to state 16
 
+    fn1             go to state 17
+    fn3             go to state 18
+    expr            go to state 98
     order_by_field  go to state 103
 
 

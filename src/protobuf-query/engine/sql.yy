@@ -71,6 +71,10 @@
 %type <std::vector<SelectField>> select_fields
 %type <SelectField> select_field
 
+%type <OrderByStmt> order_by_stmt
+%type <std::vector<OrderByField>> order_by_fields
+%type <OrderByField> order_by_field
+
 %type <FromStmt> from_stmt
 
 %type <WhereStmt> where_stmt
@@ -88,7 +92,8 @@ query: select_stmt
        order_by_stmt
  {query.selectStmt = $1;
   query.fromStmt = $2;
-  query.whereStmt = $3;}
+  query.whereStmt = $3;
+  query.orderByStmt = $6;}
  ;
 
 fn1: "STR" | "INT" | "SUM" | "COUNT";
@@ -151,9 +156,13 @@ group_by_field: "identifier";
 
 having_stmt: %empty | "HAVING" boolean_expr;
 
-order_by_stmt: %empty | "ORDER" "BY" order_by_fields;
-order_by_fields: order_by_field | order_by_fields "," order_by_field;
-order_by_field: "identifier";
+order_by_stmt: %empty                  {$$=OrderByStmt();}
+ | "ORDER" "BY" order_by_fields        {$$=OrderByStmt(); $$.orderByFields=$3;}
+ ;
+order_by_fields: order_by_field        {$$=vector<OrderByField>{$1};}
+ | order_by_fields "," order_by_field  {$$=$1; $$.push_back($3);}
+ ;
+order_by_field: expr                   {$$=OrderByField(); $$.expr=$1;};
 
 %%
 void yy::SqlParser::error(const yy::SqlParser::location_type& loc,

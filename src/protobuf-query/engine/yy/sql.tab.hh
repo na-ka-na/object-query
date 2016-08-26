@@ -308,30 +308,39 @@ namespace yy {
       // from_stmt
       char dummy5[sizeof(FromStmt)];
 
+      // order_by_field
+      char dummy6[sizeof(OrderByField)];
+
+      // order_by_stmt
+      char dummy7[sizeof(OrderByStmt)];
+
       // select_field
-      char dummy6[sizeof(SelectField)];
+      char dummy8[sizeof(SelectField)];
 
       // select_stmt
-      char dummy7[sizeof(SelectStmt)];
+      char dummy9[sizeof(SelectStmt)];
 
       // where_stmt
-      char dummy8[sizeof(WhereStmt)];
+      char dummy10[sizeof(WhereStmt)];
 
       // "bool"
-      char dummy9[sizeof(bool)];
+      char dummy11[sizeof(bool)];
 
       // "double"
-      char dummy10[sizeof(double)];
+      char dummy12[sizeof(double)];
 
       // "long"
-      char dummy11[sizeof(long)];
+      char dummy13[sizeof(long)];
 
       // "identifier"
       // "string"
-      char dummy12[sizeof(std::string)];
+      char dummy14[sizeof(std::string)];
+
+      // order_by_fields
+      char dummy15[sizeof(std::vector<OrderByField>)];
 
       // select_fields
-      char dummy13[sizeof(std::vector<SelectField>)];
+      char dummy16[sizeof(std::vector<SelectField>)];
 };
 
     /// Symbol semantic values.
@@ -440,6 +449,10 @@ namespace yy {
 
   basic_symbol (typename Base::kind_type t, const FromStmt v, const location_type& l);
 
+  basic_symbol (typename Base::kind_type t, const OrderByField v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const OrderByStmt v, const location_type& l);
+
   basic_symbol (typename Base::kind_type t, const SelectField v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const SelectStmt v, const location_type& l);
@@ -453,6 +466,8 @@ namespace yy {
   basic_symbol (typename Base::kind_type t, const long v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
+
+  basic_symbol (typename Base::kind_type t, const std::vector<OrderByField> v, const location_type& l);
 
   basic_symbol (typename Base::kind_type t, const std::vector<SelectField> v, const location_type& l);
 
@@ -884,7 +899,7 @@ namespace yy {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 153,     ///< Last index in yytable_.
+      yylast_ = 157,     ///< Last index in yytable_.
       yynnts_ = 18,  ///< Number of nonterminal symbols.
       yyfinal_ = 22, ///< Termination state number.
       yyterror_ = 1,
@@ -995,6 +1010,14 @@ namespace yy {
         value.copy< FromStmt > (other.value);
         break;
 
+      case 58: // order_by_field
+        value.copy< OrderByField > (other.value);
+        break;
+
+      case 56: // order_by_stmt
+        value.copy< OrderByStmt > (other.value);
+        break;
+
       case 47: // select_field
         value.copy< SelectField > (other.value);
         break;
@@ -1022,6 +1045,10 @@ namespace yy {
       case 30: // "identifier"
       case 31: // "string"
         value.copy< std::string > (other.value);
+        break;
+
+      case 57: // order_by_fields
+        value.copy< std::vector<OrderByField> > (other.value);
         break;
 
       case 46: // select_fields
@@ -1070,6 +1097,14 @@ namespace yy {
         value.copy< FromStmt > (v);
         break;
 
+      case 58: // order_by_field
+        value.copy< OrderByField > (v);
+        break;
+
+      case 56: // order_by_stmt
+        value.copy< OrderByStmt > (v);
+        break;
+
       case 47: // select_field
         value.copy< SelectField > (v);
         break;
@@ -1097,6 +1132,10 @@ namespace yy {
       case 30: // "identifier"
       case 31: // "string"
         value.copy< std::string > (v);
+        break;
+
+      case 57: // order_by_fields
+        value.copy< std::vector<OrderByField> > (v);
         break;
 
       case 46: // select_fields
@@ -1154,6 +1193,20 @@ namespace yy {
   {}
 
   template <typename Base>
+  SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const OrderByField v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const OrderByStmt v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
   SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const SelectField v, const location_type& l)
     : Base (t)
     , value (v)
@@ -1197,6 +1250,13 @@ namespace yy {
 
   template <typename Base>
   SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+
+  template <typename Base>
+  SqlParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::vector<OrderByField> v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -1260,6 +1320,14 @@ namespace yy {
         value.template destroy< FromStmt > ();
         break;
 
+      case 58: // order_by_field
+        value.template destroy< OrderByField > ();
+        break;
+
+      case 56: // order_by_stmt
+        value.template destroy< OrderByStmt > ();
+        break;
+
       case 47: // select_field
         value.template destroy< SelectField > ();
         break;
@@ -1287,6 +1355,10 @@ namespace yy {
       case 30: // "identifier"
       case 31: // "string"
         value.template destroy< std::string > ();
+        break;
+
+      case 57: // order_by_fields
+        value.template destroy< std::vector<OrderByField> > ();
         break;
 
       case 46: // select_fields
@@ -1341,6 +1413,14 @@ namespace yy {
         value.move< FromStmt > (s.value);
         break;
 
+      case 58: // order_by_field
+        value.move< OrderByField > (s.value);
+        break;
+
+      case 56: // order_by_stmt
+        value.move< OrderByStmt > (s.value);
+        break;
+
       case 47: // select_field
         value.move< SelectField > (s.value);
         break;
@@ -1368,6 +1448,10 @@ namespace yy {
       case 30: // "identifier"
       case 31: // "string"
         value.move< std::string > (s.value);
+        break;
+
+      case 57: // order_by_fields
+        value.move< std::vector<OrderByField> > (s.value);
         break;
 
       case 46: // select_fields
@@ -1675,7 +1759,7 @@ namespace yy {
 
 
 } // yy
-#line 1679 "sql.tab.hh" // lalr1.cc:392
+#line 1763 "sql.tab.hh" // lalr1.cc:392
 
 
 

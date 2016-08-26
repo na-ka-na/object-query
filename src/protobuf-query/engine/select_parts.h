@@ -181,6 +181,18 @@ struct SelectStmt {
   string str() const;
 };
 
+struct OrderByField {
+  Expr expr;
+  void getAllIdentifiers(set<string>& identifiers) const;
+  string code(const map<string, string>& idMap) const;
+  string str() const;
+};
+
+struct OrderByStmt {
+  vector<OrderByField> orderByFields;
+  string str() const;
+};
+
 struct FromStmt {
   string fromFile;
   string fromRootProto;

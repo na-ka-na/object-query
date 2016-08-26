@@ -213,6 +213,10 @@ void SelectField::getAllIdentifiers(set<string>& identifiers) const {
   expr.getAllIdentifiers(identifiers);
 }
 
+void OrderByField::getAllIdentifiers(set<string>& identifiers) const {
+  expr.getAllIdentifiers(identifiers);
+}
+
 void WhereStmt::getAllIdentifiers(set<string>& identifiers) const {
   if (booleanExpr) {
     booleanExpr->getAllIdentifiers(identifiers);
@@ -342,6 +346,15 @@ string SelectStmt::str() const {
          joinVec(", ", selectFields, strfn<SelectField>());
 }
 
+string OrderByField::str() const {
+  return expr.str();
+}
+
+string OrderByStmt::str() const {
+  return orderByFields.empty() ? "" :
+      ("ORDER BY " + joinVec(", ", orderByFields, strfn<OrderByField>()));
+}
+
 string FromStmt::str() const {
   return "FROM ('" + fromFile + "', '" + fromRootProto + "')";
 }
@@ -351,9 +364,13 @@ string WhereStmt::str() const {
 }
 
 string SelectQuery::str() const {
+  string selectStr = selectStmt.str();
+  string fromStr = fromStmt.str();
   string whereStr = whereStmt.str();
-  return selectStmt.str() + " " + fromStmt.str() +
-         (whereStr.empty() ? "" : (" " + whereStr));
+  string orderByStr = orderByStmt.str();
+  return selectStr + " " + fromStr +
+         (whereStr.empty() ? "" : (" " + whereStr)) +
+         (orderByStr.empty() ? "" : (" " + orderByStr));
 }
 
 string BinaryExpr::code(const map<string, string>& idMap) const {
@@ -452,6 +469,10 @@ string BooleanExpr::code(const map<string, string>& idMap) const {
   case NULLARY: return nullaryBooleanExpr.code(idMap);
   default:      return "<BooleanExpr>";
   }
+}
+
+string OrderByField::code(const map<string, string>& idMap) const {
+  return expr.code(idMap);
 }
 
 string SelectField::code(const map<string, string>& idMap) const {
