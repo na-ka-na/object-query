@@ -67,6 +67,16 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
     tuples.emplace_back(S3(), S2(), S0(), S1());
   }
 }
+bool compareTuples(const TupleType& t1, const TupleType& t2) {
+  int c;
+  c = Compare(get<2>(t1), get<2>(t2));
+  if (c < 0) {return true;} else if (c > 0) {return false;}
+  c = Compare(get<0>(t1), get<0>(t2));
+  if (c < 0) {return true;} else if (c > 0) {return false;}
+  c = Compare(get<3>(t1), get<3>(t2));
+  if (c < 0) {return true;} else if (c > 0) {return false;}
+  return false;
+}
 
 void printTuples(const vector<TupleType>& tuples) {
   vector<size_t> sizes;
@@ -100,5 +110,6 @@ int main(int argc, char** argv) {
   ParsePbFromFile(argv[1], company);
   vector<TupleType> tuples;
   runSelect(company, tuples);
+  std::sort(tuples.begin(), tuples.end(), compareTuples);
   printTuples(tuples);
 }

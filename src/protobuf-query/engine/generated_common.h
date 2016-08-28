@@ -132,3 +132,24 @@ template<typename T>
 inline int ToInt(const optional<T>& t) {
   return (int) t;
 }
+
+template<typename T>
+inline int Compare(const T& t1, const T& t2) {
+  return t1 - t2;
+}
+
+template<>
+inline int Compare(const string& t1, const string& t2) {
+  return t1.compare(t2);
+}
+
+template<typename T>
+inline int Compare(const optional<T>& t1, const optional<T>& t2) {
+  if (!t1) {
+    return t2 ? -1 : 0;
+  } else if (!t2) {
+    return 1;
+  } else {
+    return Compare(*t1, *t2);
+  }
+}

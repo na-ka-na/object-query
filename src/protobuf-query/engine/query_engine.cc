@@ -416,6 +416,26 @@ void QueryEngine::printCode() {
   Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 4);
   out << "}" << endl;
 
+  if (!query.orderByStmt.orderByFields.empty()) {
+    out << "bool compareTuples(const TupleType& t1, const TupleType& t2) {" << endl;
+    out << "  int c;" << endl;
+    for (const OrderByField& orderByField : query.orderByStmt.orderByFields) {
+      int idx = -1;
+      string exprStr = orderByField.expr.str();
+      for (size_t j=0; j<selectAndOrderByExprs.size(); j++) {
+        if (exprStr == selectAndOrderByExprs[j]->str()) {
+          idx = j;
+          break;
+        }
+      }
+      ASSERT(idx != -1);
+      out << "  c = Compare(get<" << idx << ">(t1), get<" << idx << ">(t2));" << endl;
+      out << "  if (c < 0) {return true;} else if (c > 0) {return false;}" << endl;
+    }
+    out << "  return false;" << endl;
+    out << "}" << endl;
+  }
+
   // print tuples
   out << R"fff(
 void printTuples(const vector<TupleType>& tuples) {
@@ -461,6 +481,9 @@ void printTuples(const vector<TupleType>& tuples) {
       << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;
   out << "  runSelect(" << queryGraph.root.objName << ", tuples);" << endl;
+  if (!query.orderByStmt.orderByFields.empty()) {
+    out << "  std::sort(tuples.begin(), tuples.end(), compareTuples);" << endl;
+  }
   out << "  printTuples(tuples);" << endl;
   out << "}" << endl;
 }
