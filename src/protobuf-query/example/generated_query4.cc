@@ -1,5 +1,5 @@
 /*
-SELECT financial.quarterly_profits, all_employees.name, all_employees.active FROM ('argv[1]', 'Example1.Company') ORDER BY all_employees.active, financial.quarterly_profits, all_employees.id
+SELECT financial.quarterly_profits, all_employees.name, all_employees.active FROM ('argv[1]', 'Example1.Company') ORDER BY all_employees.active, financial.quarterly_profits DESC, all_employees.id
 
 for (1..1) {
   company = parseFromFile()
@@ -67,11 +67,12 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
     tuples.emplace_back(S3(), S2(), S0(), S1());
   }
 }
+
 bool compareTuples(const TupleType& t1, const TupleType& t2) {
   int c;
   c = Compare(get<2>(t1), get<2>(t2));
   if (c < 0) {return true;} else if (c > 0) {return false;}
-  c = Compare(get<0>(t1), get<0>(t2));
+  c = -Compare(get<0>(t1), get<0>(t2));
   if (c < 0) {return true;} else if (c > 0) {return false;}
   c = Compare(get<3>(t1), get<3>(t2));
   if (c < 0) {return true;} else if (c > 0) {return false;}

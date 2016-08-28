@@ -417,6 +417,7 @@ void QueryEngine::printCode() {
   out << "}" << endl;
 
   if (!query.orderByStmt.orderByFields.empty()) {
+    out << endl;
     out << "bool compareTuples(const TupleType& t1, const TupleType& t2) {" << endl;
     out << "  int c;" << endl;
     for (const OrderByField& orderByField : query.orderByStmt.orderByFields) {
@@ -429,14 +430,14 @@ void QueryEngine::printCode() {
         }
       }
       ASSERT(idx != -1);
-      out << "  c = Compare(get<" << idx << ">(t1), get<" << idx << ">(t2));" << endl;
+      out << "  c = " << (orderByField.desc ? "-" : "")
+          << "Compare(get<" << idx << ">(t1), get<" << idx << ">(t2));" << endl;
       out << "  if (c < 0) {return true;} else if (c > 0) {return false;}" << endl;
     }
     out << "  return false;" << endl;
     out << "}" << endl;
   }
 
-  // print tuples
   out << R"fff(
 void printTuples(const vector<TupleType>& tuples) {
   vector<size_t> sizes;

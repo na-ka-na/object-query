@@ -347,7 +347,7 @@ string SelectStmt::str() const {
 }
 
 string OrderByField::str() const {
-  return expr.str();
+  return expr.str() + (desc ? " DESC" : "");
 }
 
 string OrderByStmt::str() const {

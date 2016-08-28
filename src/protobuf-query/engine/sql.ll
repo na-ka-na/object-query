@@ -62,6 +62,8 @@ query.loc.step();
 "COUNT"     return yy::SqlParser::make_COUNT(Fn1::COUNT, query.loc);
 "SUBSTR"    return yy::SqlParser::make_SUBSTR(Fn3::SUBSTR, query.loc);
 "DISTINCT"  return yy::SqlParser::make_DISTINCT(query.loc);
+"ASC"       return yy::SqlParser::make_ASC(query.loc);
+"DESC"      return yy::SqlParser::make_DESC(query.loc);
 "TRUE"      return yy::SqlParser::make_BOOL(true, query.loc);
 "FALSE"     return yy::SqlParser::make_BOOL(false, query.loc);
 "true"      return yy::SqlParser::make_BOOL(true, query.loc);

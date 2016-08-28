@@ -51,6 +51,8 @@
   LPAREN     "("
   RPAREN     ")"
   DISTINCT   "DISTINCT"
+  ASC        "ASC"
+  DESC       "DESC"
 ;
 
 %token <std::string> IDENTIFIER "identifier"
@@ -162,7 +164,10 @@ order_by_stmt: %empty                  {$$=OrderByStmt();}
 order_by_fields: order_by_field        {$$=vector<OrderByField>{$1};}
  | order_by_fields "," order_by_field  {$$=$1; $$.push_back($3);}
  ;
-order_by_field: expr                   {$$=OrderByField(); $$.expr=$1;};
+order_by_field: expr                   {$$=OrderByField(); $$.expr=$1;}
+ | expr "ASC"                          {$$=OrderByField(); $$.expr=$1;}
+ | expr "DESC"                         {$$=OrderByField(); $$.expr=$1; $$.desc=true;}
+ ;
 
 %%
 void yy::SqlParser::error(const yy::SqlParser::location_type& loc,

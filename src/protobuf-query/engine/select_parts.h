@@ -183,6 +183,7 @@ struct SelectStmt {
 
 struct OrderByField {
   Expr expr;
+  bool desc = false;
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string str() const;
