@@ -291,30 +291,50 @@ void QueryEngine::printCode() {
     out << "using " << fieldTypeMap[field] << " = " << type << ";"
         << spaces << " /*" << field.accessor("") << "*/" << endl;
   }
-  map<const SelectField*, string> selectFieldVarMap;
-  map<const SelectField*, string> selectFieldTypeMap;
-  map<const SelectField*, string> selectFieldDefaultMap;
+
+  vector<const Expr*> selectAndOrderByExprs;
   for (const SelectField& selectField : query.selectStmt.selectFields) {
-    if (selectField.expr.type == IDENTIFIER) {
-      Field f = queryGraph.idFieldMap[selectField.expr.identifier];
-      selectFieldVarMap[&selectField] = fieldVarMap[f];
-      selectFieldTypeMap[&selectField] = fieldTypeMap[f];
-      selectFieldDefaultMap[&selectField] = fieldDefaultMap[f];
+    auto f = std::find_if(
+        selectAndOrderByExprs.begin(), selectAndOrderByExprs.end(),
+        [&] (const Expr* expr) {return expr->str() == selectField.expr.str();});
+    if (f == selectAndOrderByExprs.end()) {
+      selectAndOrderByExprs.push_back(&(selectField.expr));
+    }
+  }
+  for (const OrderByField& orderByField : query.orderByStmt.orderByFields) {
+    auto f = std::find_if(
+        selectAndOrderByExprs.begin(), selectAndOrderByExprs.end(),
+        [&] (const Expr* expr) {return expr->str() == orderByField.expr.str();});
+    if (f == selectAndOrderByExprs.end()) {
+      selectAndOrderByExprs.push_back(&(orderByField.expr));
+    }
+  }
+
+  map<string, string> exprVarMap;
+  map<string, string> exprTypeMap;
+  map<string, string> exprDefaultMap;
+  for (const Expr* expr : selectAndOrderByExprs) {
+    string exprStr = expr->str();
+    if (expr->type == IDENTIFIER) {
+      Field f = queryGraph.idFieldMap[expr->identifier];
+      exprVarMap[exprStr] = fieldVarMap[f];
+      exprTypeMap[exprStr] = fieldTypeMap[f];
+      exprDefaultMap[exprStr] = fieldDefaultMap[f];
     } else {
-      selectFieldVarMap[&selectField] = "s" + to_string(varIdx);
-      selectFieldTypeMap[&selectField] = "S" + to_string(varIdx);
-      selectFieldDefaultMap[&selectField] = "S" + to_string(varIdx) + "()";
+      exprVarMap[exprStr] = "s" + to_string(varIdx);
+      exprTypeMap[exprStr] = "S" + to_string(varIdx);
+      exprDefaultMap[exprStr] = "S" + to_string(varIdx) + "()";
       varIdx++;
       set<string> identifiers;
-      selectField.expr.getAllIdentifiers(identifiers);
+      expr->getAllIdentifiers(identifiers);
       map<string, string> idDefaultsMap;
       for (const string& id : identifiers) {
         idDefaultsMap[id] = fieldDefaultMap[queryGraph.idFieldMap[id]];
       }
-      string type = selectField.expr.cppType(idDefaultsMap);
+      string type = expr->cppType(idDefaultsMap);
       string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
-      out << "using " << selectFieldTypeMap[&selectField] << " = " << type << ";"
-          << spaces << " /*" << selectField.str() << "*/" << endl;
+      out << "using " << exprTypeMap[exprStr] << " = " << type << ";"
+          << spaces << " /*" << exprStr << "*/" << endl;
     }
   }
   map<string, string> idVarMap;
@@ -324,7 +344,7 @@ void QueryEngine::printCode() {
   string tupleType = "using TupleType = tuple<";
   tupleType += joinVec<SelectField>(
       ", ", query.selectStmt.selectFields,
-      [&](const SelectField& field) {return selectFieldTypeMap[&field];});
+      [&](const SelectField& field) {return exprTypeMap[field.expr.str()];});
   tupleType += ">;";
   out << tupleType << endl;
   out << endl;
@@ -372,8 +392,8 @@ void QueryEngine::printCode() {
     }
     for (const SelectField* selectField : node.selectFields) {
       if (selectField->expr.type != IDENTIFIER) {
-        out << ind << selectFieldTypeMap[selectField] << " "
-            << selectFieldVarMap[selectField] << " = "
+        out << ind << exprTypeMap[selectField->expr.str()] << " "
+            << exprVarMap[selectField->expr.str()] << " = "
             << selectField->code(idVarMap) << ";" << endl;
       }
     }
@@ -382,7 +402,7 @@ void QueryEngine::printCode() {
         (numSelectFieldsProcessed == query.selectStmt.selectFields.size())) {
       string selectList = joinVec<SelectField>(
           ", ", query.selectStmt.selectFields,
-          [&](const SelectField& field) {return selectFieldVarMap[&field];});
+          [&](const SelectField& field) {return exprVarMap[field.expr.str()];});
       out << ind << "tuples.emplace_back(" + selectList + ");" << endl;
       allSelectFieldsProcessed = true;
     }
@@ -399,7 +419,8 @@ void QueryEngine::printCode() {
         ", ", query.selectStmt.selectFields,
         [&](const SelectField& field) {
             return endedSelectFieldSet.find(&field) == endedSelectFieldSet.end()
-                ? selectFieldVarMap[&field] : selectFieldDefaultMap[&field];
+                ? exprVarMap[field.expr.str()]
+                : exprDefaultMap[field.expr.str()];
         });
     out << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
     out << ind << "}" << endl;
