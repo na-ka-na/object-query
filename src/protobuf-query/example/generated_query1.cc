@@ -41,73 +41,73 @@ vector<string> header = {
   "founded",
   "board_of_directors",
 };
-using S0 = optional<int32>;  /*.founded()*/
-using S1 = optional<int32>;  /*.board_of_directors()*/
-using S2 = optional<float>;  /*.financial().quarterly_profits()*/
-using S3 = optional<float>;  /*.financial().quarterly_revenues()*/
-using S4 = optional<int32>;  /*.id()*/
-using S5 = optional<string>; /*.name()*/
-using S6 = optional<bool>;   /*.active()*/
-using S7 = optional<int32>;  /*.active_direct_reports()*/
-using TupleType = tuple<S2, S3, S4, S5, S6, S7, S0, S1>;
+using S0 = optional<bool>;   /*.active()*/
+using S1 = optional<int32>;  /*.active_direct_reports()*/
+using S2 = optional<int32>;  /*.id()*/
+using S3 = optional<string>; /*.name()*/
+using S4 = optional<int32>;  /*.board_of_directors()*/
+using S5 = optional<float>;  /*.financial().quarterly_profits()*/
+using S6 = optional<float>;  /*.financial().quarterly_revenues()*/
+using S7 = optional<int32>;  /*.founded()*/
+using TupleType = tuple<S5, S6, S2, S3, S0, S1, S7, S4>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
     for (int _=0; _<1; _++) {
-      S0 s0 = S0();
+      S7 s7 = S7();
       if(company.has_founded()) {
-        s0 = company.founded();
+        s7 = company.founded();
       }
       if (company.board_of_directors_size() > 0) {
         for (const int32& board_of_director : company.board_of_directors()) {
-          S1 s1 = board_of_director;
+          S4 s4 = board_of_director;
           if (company.financial().quarterly_profits_size() > 0) {
             for (const float& quarterly_profit : company.financial().quarterly_profits()) {
-              S2 s2 = quarterly_profit;
+              S5 s5 = quarterly_profit;
               if (company.financial().quarterly_revenues_size() > 0) {
                 for (const float& quarterly_revenue : company.financial().quarterly_revenues()) {
-                  S3 s3 = quarterly_revenue;
+                  S6 s6 = quarterly_revenue;
                   if (company.all_employees_size() > 0) {
                     for (const Employee& all_employee : company.all_employees()) {
-                      S4 s4 = S4();
+                      S2 s2 = S2();
                       if(all_employee.has_id()) {
-                        s4 = all_employee.id();
+                        s2 = all_employee.id();
                       }
-                      S5 s5 = S5();
+                      S3 s3 = S3();
                       if(all_employee.has_name()) {
-                        s5 = all_employee.name();
+                        s3 = all_employee.name();
                       }
-                      S6 s6 = S6();
+                      S0 s0 = S0();
                       if(all_employee.has_active()) {
-                        s6 = all_employee.active();
+                        s0 = all_employee.active();
                       }
                       if (all_employee.active_direct_reports_size() > 0) {
                         for (const int32& active_direct_report : all_employee.active_direct_reports()) {
-                          S7 s7 = active_direct_report;
-                          tuples.emplace_back(s2, s3, s4, s5, s6, s7, s0, s1);
+                          S1 s1 = active_direct_report;
+                          tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
                         }
                       } else { // no active_direct_report
-                        tuples.emplace_back(s2, s3, s4, s5, s6, S7(), s0, s1);
+                        tuples.emplace_back(s5, s6, s2, s3, s0, S1(), s7, s4);
                       }
                     }
                   } else { // no all_employee
-                    tuples.emplace_back(s2, s3, S4(), S5(), S6(), S7(), s0, s1);
+                    tuples.emplace_back(s5, s6, S2(), S3(), S0(), S1(), s7, s4);
                   }
                 }
               } else { // no quarterly_revenue
-                tuples.emplace_back(s2, S3(), S4(), S5(), S6(), S7(), s0, s1);
+                tuples.emplace_back(s5, S6(), S2(), S3(), S0(), S1(), s7, s4);
               }
             }
           } else { // no quarterly_profit
-            tuples.emplace_back(S2(), S3(), S4(), S5(), S6(), S7(), s0, s1);
+            tuples.emplace_back(S5(), S6(), S2(), S3(), S0(), S1(), s7, s4);
           }
         }
       } else { // no board_of_director
-        tuples.emplace_back(S2(), S3(), S4(), S5(), S6(), S7(), s0, S1());
+        tuples.emplace_back(S5(), S6(), S2(), S3(), S0(), S1(), s7, S4());
       }
     }
   } else { // no company
-    tuples.emplace_back(S2(), S3(), S4(), S5(), S6(), S7(), S0(), S1());
+    tuples.emplace_back(S5(), S6(), S2(), S3(), S0(), S1(), S7(), S4());
   }
 }
 

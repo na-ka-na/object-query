@@ -56,10 +56,8 @@ struct Node {
   set<Field> allFields;
   // list of all canonical where clauses
   vector<const BooleanExpr*> whereClauses;
-  // list of all select fields
-  vector<const SelectField*> selectFields;
-  // list of all orderBy fields
-  vector<const OrderByField*> orderByFields;
+  // list of all select and order by exprs
+  vector<const Expr*> selectAndOrderByExprs;
 
   // Node tree walk, modified DFS which vists each node twice,
   // one in depth first order, second in reverse order.
@@ -87,6 +85,7 @@ struct QueryGraph {
   void processOrderBy(const OrderByStmt& orderByStmt);
   void processExpr(const set<string>& identifiers, function<void(Node& node)>);
   void calculateGraph(const SelectQuery& query);
+  static void addExpr(vector<const Expr*>& exprs, const Expr* expr);
 };
 
 class QueryEngine {

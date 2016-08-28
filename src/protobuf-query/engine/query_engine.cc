@@ -133,7 +133,7 @@ void QueryGraph::processSelect(const SelectStmt& selectStmt) {
     set<string> identifiers;
     selectField.expr.getAllIdentifiers(identifiers);
     auto callback = [&selectField](Node& node) {
-      node.selectFields.push_back(&selectField);
+      QueryGraph::addExpr(node.selectAndOrderByExprs, &(selectField.expr));
     };
     processExpr(identifiers, callback);
   }
@@ -157,7 +157,7 @@ void QueryGraph::processOrderBy(const OrderByStmt& orderByStmt) {
     set<string> identifiers;
     orderByField.expr.getAllIdentifiers(identifiers);
     auto callback = [&orderByField](Node& node) {
-      node.orderByFields.push_back(&orderByField);
+      QueryGraph::addExpr(node.selectAndOrderByExprs, &(orderByField.expr));
     };
     processExpr(identifiers, callback);
   }
@@ -201,6 +201,15 @@ void QueryGraph::calculateGraph(const SelectQuery& query) {
   processOrderBy(query.orderByStmt);
 }
 
+void QueryGraph::addExpr(vector<const Expr*>& exprs, const Expr* expr) {
+  string exprStr = expr->str();
+  auto f = std::find_if(exprs.begin(), exprs.end(),
+      [&] (const Expr* expr) {return expr->str() == exprStr;});
+  if (f == exprs.end()) {
+    exprs.push_back(expr);
+  }
+}
+
 QueryEngine::QueryEngine(const string& rawSql, ostream& out) :
     query(SelectQuery(rawSql)), out(out) {}
 
@@ -219,11 +228,8 @@ void QueryEngine::printPlan() {
       out << string(indent, ' ') << "if (!" << expr->str()
           << ") { continue; }" << endl;
     }
-    for (const SelectField* field : node.selectFields) {
-      out << string(indent, ' ') << "tuples.add(" << field->str() << ")" << endl;
-    }
-    for (const OrderByField* field : node.orderByFields) {
-      out << string(indent, ' ') << "tuples.add(" << field->str() << ")" << endl;
+    for (const Expr* expr : node.selectAndOrderByExprs) {
+      out << string(indent, ' ') << "tuples.add(" << expr->str() << ")" << endl;
     }
   };
   bool firstEnd = true;
@@ -258,16 +264,6 @@ void QueryEngine::printCode() {
   out << "#include \"generated_common.h\"" << endl << endl;
   out << "using namespace std;" << endl;
   out << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl << endl;
-  StartNodeFn startNodeFn = [](int indent, const Node& node, const Node* parent) {};
-  EndNodeFn endNodeFn = [](int indent, const Node& node) {};
-
-  vector<Field> allFields;
-  startNodeFn = [&](int indent, const Node& node, const Node* parent) {
-    for (const Field& field : node.allFields) {
-      allFields.push_back(field);
-    }
-  };
-  Node::walkNode(queryGraph.root, startNodeFn, endNodeFn);
 
   // select fields header
   string header = "vector<string> header = {\n";
@@ -281,7 +277,8 @@ void QueryEngine::printCode() {
   map<Field, string> fieldTypeMap;
   map<Field, string> fieldDefaultMap;
   uint32_t varIdx = 0;
-  for (const Field& field : allFields) {
+  for (const auto& e : queryGraph.idFieldMap) {
+    const Field& field = e.second;
     fieldVarMap[field] = "s" + to_string(varIdx);
     fieldTypeMap[field] = "S" + to_string(varIdx);
     fieldDefaultMap[field] = "S" + to_string(varIdx) + "()";
@@ -294,20 +291,10 @@ void QueryEngine::printCode() {
 
   vector<const Expr*> selectAndOrderByExprs;
   for (const SelectField& selectField : query.selectStmt.selectFields) {
-    auto f = std::find_if(
-        selectAndOrderByExprs.begin(), selectAndOrderByExprs.end(),
-        [&] (const Expr* expr) {return expr->str() == selectField.expr.str();});
-    if (f == selectAndOrderByExprs.end()) {
-      selectAndOrderByExprs.push_back(&(selectField.expr));
-    }
+    QueryGraph::addExpr(selectAndOrderByExprs, &(selectField.expr));
   }
   for (const OrderByField& orderByField : query.orderByStmt.orderByFields) {
-    auto f = std::find_if(
-        selectAndOrderByExprs.begin(), selectAndOrderByExprs.end(),
-        [&] (const Expr* expr) {return expr->str() == orderByField.expr.str();});
-    if (f == selectAndOrderByExprs.end()) {
-      selectAndOrderByExprs.push_back(&(orderByField.expr));
-    }
+    QueryGraph::addExpr(selectAndOrderByExprs, &(orderByField.expr));
   }
 
   map<string, string> exprVarMap;
@@ -342,9 +329,9 @@ void QueryEngine::printCode() {
     idVarMap[e.first] = fieldVarMap[e.second];
   }
   string tupleType = "using TupleType = tuple<";
-  tupleType += joinVec<SelectField>(
-      ", ", query.selectStmt.selectFields,
-      [&](const SelectField& field) {return exprTypeMap[field.expr.str()];});
+  tupleType += joinVec<const Expr*>(
+      ", ", selectAndOrderByExprs,
+      [&](const Expr* expr) {return exprTypeMap[expr->str()];});
   tupleType += ">;";
   out << tupleType << endl;
   out << endl;
@@ -352,9 +339,9 @@ void QueryEngine::printCode() {
   out << "void runSelect(const "
       << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
       << queryGraph.root.objName << ", vector<TupleType>& tuples) {" << endl;
-  unsigned numSelectFieldsProcessed = 0;
-  bool allSelectFieldsProcessed = false;
-  startNodeFn = [&](int indent, const Node& node, const Node* parent) {
+  unsigned numSelectAndOrderByFieldsProcessed = 0;
+  bool allSelectAndOrderByFieldsProcessed = false;
+  StartNodeFn startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     string ind = string(indent+2, ' ');
     if (!parent) { //root
       out << ind << "if (" << node.objName << ".ByteSize()) {" << endl;
@@ -390,39 +377,40 @@ void QueryEngine::printCode() {
       out << ind << "if (!" << whereClause->code(idVarMap)
           << ") { continue; }" << endl;
     }
-    for (const SelectField* selectField : node.selectFields) {
-      if (selectField->expr.type != IDENTIFIER) {
-        out << ind << exprTypeMap[selectField->expr.str()] << " "
-            << exprVarMap[selectField->expr.str()] << " = "
-            << selectField->code(idVarMap) << ";" << endl;
+    for (const Expr* expr : node.selectAndOrderByExprs) {
+      if (expr->type != IDENTIFIER) {
+        out << ind << exprTypeMap[expr->str()] << " "
+            << exprVarMap[expr->str()] << " = "
+            << expr->code(idVarMap) << ";" << endl;
       }
     }
-    numSelectFieldsProcessed += node.selectFields.size();
-    if (!allSelectFieldsProcessed &&
-        (numSelectFieldsProcessed == query.selectStmt.selectFields.size())) {
-      string selectList = joinVec<SelectField>(
-          ", ", query.selectStmt.selectFields,
-          [&](const SelectField& field) {return exprVarMap[field.expr.str()];});
-      out << ind << "tuples.emplace_back(" + selectList + ");" << endl;
-      allSelectFieldsProcessed = true;
+    numSelectAndOrderByFieldsProcessed += node.selectAndOrderByExprs.size();
+    if (!allSelectAndOrderByFieldsProcessed &&
+        (numSelectAndOrderByFieldsProcessed == selectAndOrderByExprs.size())) {
+      string tuplesList = joinVec<const Expr*>(
+          ", ", selectAndOrderByExprs,
+          [&](const Expr* expr) {return exprVarMap[expr->str()];});
+      out << ind << "tuples.emplace_back(" + tuplesList + ");" << endl;
+      allSelectAndOrderByFieldsProcessed = true;
     }
   };
-  set<const SelectField*> endedSelectFieldSet;
-  endNodeFn = [&](int indent, const Node& node) {
+  set<const Expr*> endedSelectAndOrderByFieldSet;
+  EndNodeFn endNodeFn = [&](int indent, const Node& node) {
     string ind = string(indent+2, ' ');
     out << ind << "  }" << endl;
     out << ind << "} else { // no " << node.objName << endl;
-    for (const SelectField* selectField : node.selectFields) {
-      endedSelectFieldSet.insert(selectField);
+    for (const Expr* expr : node.selectAndOrderByExprs) {
+      endedSelectAndOrderByFieldSet.insert(expr);
     }
-    string selectList = joinVec<SelectField>(
-        ", ", query.selectStmt.selectFields,
-        [&](const SelectField& field) {
-            return endedSelectFieldSet.find(&field) == endedSelectFieldSet.end()
-                ? exprVarMap[field.expr.str()]
-                : exprDefaultMap[field.expr.str()];
+    string tuplesList = joinVec<const Expr*>(
+        ", ", selectAndOrderByExprs,
+        [&](const Expr* expr) {
+            return (endedSelectAndOrderByFieldSet.find(expr) ==
+                    endedSelectAndOrderByFieldSet.end())
+                ? exprVarMap[expr->str()]
+                : exprDefaultMap[expr->str()];
         });
-    out << ind << "  " << "tuples.emplace_back(" + selectList + ");" << endl;
+    out << ind << "  " << "tuples.emplace_back(" + tuplesList + ");" << endl;
     out << ind << "}" << endl;
   };
   Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 4);

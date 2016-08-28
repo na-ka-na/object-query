@@ -27,10 +27,10 @@ vector<string> header = {
   "all_employees.id",
   "(financial.quarterly_revenues/all_employees.active_direct_reports)",
 };
-using S0 = optional<float>;  /*.financial().quarterly_revenues()*/
+using S0 = optional<int32>;  /*.active_direct_reports()*/
 using S1 = optional<int32>;  /*.id()*/
-using S2 = optional<int32>;  /*.active_direct_reports()*/
-using S3 = decltype(Divide(S0(), S2())); /*(financial.quarterly_revenues/all_employees.active_direct_reports)*/
+using S2 = optional<float>;  /*.financial().quarterly_revenues()*/
+using S3 = decltype(Divide(S2(), S0())); /*(financial.quarterly_revenues/all_employees.active_direct_reports)*/
 using TupleType = tuple<S1, S3>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
@@ -38,8 +38,8 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
     for (int _=0; _<1; _++) {
       if (company.financial().quarterly_revenues_size() > 0) {
         for (const float& quarterly_revenue : company.financial().quarterly_revenues()) {
-          S0 s0 = quarterly_revenue;
-          if (!Gt(Mult(s0, optional<int64>(2)), optional<int64>(1))) { continue; }
+          S2 s2 = quarterly_revenue;
+          if (!Gt(Mult(s2, optional<int64>(2)), optional<int64>(1))) { continue; }
           if (company.all_employees_size() > 0) {
             for (const Employee& all_employee : company.all_employees()) {
               S1 s1 = S1();
@@ -48,9 +48,9 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
               }
               if (all_employee.active_direct_reports_size() > 0) {
                 for (const int32& active_direct_report : all_employee.active_direct_reports()) {
-                  S2 s2 = active_direct_report;
-                  if (!Gt(s2, optional<int64>(0))) { continue; }
-                  S3 s3 = Divide(s0, s2);
+                  S0 s0 = active_direct_report;
+                  if (!Gt(s0, optional<int64>(0))) { continue; }
+                  S3 s3 = Divide(s2, s0);
                   tuples.emplace_back(s1, s3);
                 }
               } else { // no active_direct_report

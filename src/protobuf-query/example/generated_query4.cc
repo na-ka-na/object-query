@@ -5,10 +5,8 @@ for (1..1) {
   company = parseFromFile()
   for each quarterly_profit in company.financial().quarterly_profits() {
     tuples.add(financial.quarterly_profits)
-    tuples.add(financial.quarterly_profits)
     for each all_employee in company.all_employees() {
       tuples.add(all_employees.name)
-      tuples.add(all_employees.active)
       tuples.add(all_employees.active)
       tuples.add(all_employees.id)
       tuples.record()
@@ -29,18 +27,18 @@ vector<string> header = {
   "all_employees.name",
   "all_employees.active",
 };
-using S0 = optional<float>;  /*.financial().quarterly_profits()*/
+using S0 = optional<bool>;   /*.active()*/
 using S1 = optional<int32>;  /*.id()*/
 using S2 = optional<string>; /*.name()*/
-using S3 = optional<bool>;   /*.active()*/
-using TupleType = tuple<S0, S2, S3>;
+using S3 = optional<float>;  /*.financial().quarterly_profits()*/
+using TupleType = tuple<S3, S2, S0, S1>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
     for (int _=0; _<1; _++) {
       if (company.financial().quarterly_profits_size() > 0) {
         for (const float& quarterly_profit : company.financial().quarterly_profits()) {
-          S0 s0 = quarterly_profit;
+          S3 s3 = quarterly_profit;
           if (company.all_employees_size() > 0) {
             for (const Employee& all_employee : company.all_employees()) {
               S1 s1 = S1();
@@ -51,22 +49,22 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
               if(all_employee.has_name()) {
                 s2 = all_employee.name();
               }
-              S3 s3 = S3();
+              S0 s0 = S0();
               if(all_employee.has_active()) {
-                s3 = all_employee.active();
+                s0 = all_employee.active();
               }
-              tuples.emplace_back(s0, s2, s3);
+              tuples.emplace_back(s3, s2, s0, s1);
             }
           } else { // no all_employee
-            tuples.emplace_back(s0, S2(), S3());
+            tuples.emplace_back(s3, S2(), S0(), S1());
           }
         }
       } else { // no quarterly_profit
-        tuples.emplace_back(S0(), S2(), S3());
+        tuples.emplace_back(S3(), S2(), S0(), S1());
       }
     }
   } else { // no company
-    tuples.emplace_back(S0(), S2(), S3());
+    tuples.emplace_back(S3(), S2(), S0(), S1());
   }
 }
 
