@@ -4,13 +4,19 @@ SELECT financial.quarterly_profits, all_employees.name, all_employees.active FRO
 for (1..1) {
   company = parseFromFile()
   for each quarterly_profit in company.financial().quarterly_profits() {
-    print financial.quarterly_profits
+    tuples.add(financial.quarterly_profits)
+    tuples.add(financial.quarterly_profits)
     for each all_employee in company.all_employees() {
-      print all_employees.name
-      print all_employees.active
+      tuples.add(all_employees.name)
+      tuples.add(all_employees.active)
+      tuples.add(all_employees.active)
+      tuples.add(all_employees.id)
+      tuples.record()
     } //all_employee
   } //quarterly_profit
 } //company
+tuples.sortBy('all_employees.active', 'financial.quarterly_profits', 'all_employees.id')
+tuples.print('financial.quarterly_profits', 'all_employees.name', 'all_employees.active')
 */
 #include "example1.pb.h"
 #include "generated_common.h"
@@ -24,9 +30,10 @@ vector<string> header = {
   "all_employees.active",
 };
 using S0 = optional<float>;  /*.financial().quarterly_profits()*/
-using S1 = optional<string>; /*.name()*/
-using S2 = optional<bool>;   /*.active()*/
-using TupleType = tuple<S0, S1, S2>;
+using S1 = optional<int32>;  /*.id()*/
+using S2 = optional<string>; /*.name()*/
+using S3 = optional<bool>;   /*.active()*/
+using TupleType = tuple<S0, S2, S3>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
@@ -37,25 +44,29 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
           if (company.all_employees_size() > 0) {
             for (const Employee& all_employee : company.all_employees()) {
               S1 s1 = S1();
-              if(all_employee.has_name()) {
-                s1 = all_employee.name();
+              if(all_employee.has_id()) {
+                s1 = all_employee.id();
               }
               S2 s2 = S2();
-              if(all_employee.has_active()) {
-                s2 = all_employee.active();
+              if(all_employee.has_name()) {
+                s2 = all_employee.name();
               }
-              tuples.emplace_back(s0, s1, s2);
+              S3 s3 = S3();
+              if(all_employee.has_active()) {
+                s3 = all_employee.active();
+              }
+              tuples.emplace_back(s0, s2, s3);
             }
           } else { // no all_employee
-            tuples.emplace_back(s0, S1(), S2());
+            tuples.emplace_back(s0, S2(), S3());
           }
         }
       } else { // no quarterly_profit
-        tuples.emplace_back(S0(), S1(), S2());
+        tuples.emplace_back(S0(), S2(), S3());
       }
     }
   } else { // no company
-    tuples.emplace_back(S0(), S1(), S2());
+    tuples.emplace_back(S0(), S2(), S3());
   }
 }
 

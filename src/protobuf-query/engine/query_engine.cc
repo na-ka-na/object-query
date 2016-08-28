@@ -152,6 +152,17 @@ void QueryGraph::processWhere(const WhereStmt& whereStmt) {
   }
 }
 
+void QueryGraph::processOrderBy(const OrderByStmt& orderByStmt) {
+  for (const OrderByField& orderByField : orderByStmt.orderByFields) {
+    set<string> identifiers;
+    orderByField.expr.getAllIdentifiers(identifiers);
+    auto callback = [&orderByField](Node& node) {
+      node.orderByFields.push_back(&orderByField);
+    };
+    processExpr(identifiers, callback);
+  }
+}
+
 void QueryGraph::processExpr(
     const set<string>& identifiers, function<void(Node& node)> callback) {
   set<Field> fields;
@@ -187,6 +198,7 @@ void QueryGraph::calculateGraph(const SelectQuery& query) {
                  root.objName.begin(), ::tolower);
   processSelect(query.selectStmt);
   processWhere(query.whereStmt);
+  processOrderBy(query.orderByStmt);
 }
 
 QueryEngine::QueryEngine(const string& rawSql, ostream& out) :
@@ -208,13 +220,37 @@ void QueryEngine::printPlan() {
           << ") { continue; }" << endl;
     }
     for (const SelectField* field : node.selectFields) {
-      out << string(indent, ' ') << "print " << field->str() << endl;
+      out << string(indent, ' ') << "tuples.add(" << field->str() << ")" << endl;
+    }
+    for (const OrderByField* field : node.orderByFields) {
+      out << string(indent, ' ') << "tuples.add(" << field->str() << ")" << endl;
     }
   };
-  EndNodeFn endNodeFn = [this](int indent, const Node& node) {
+  bool firstEnd = true;
+  EndNodeFn endNodeFn = [this, &firstEnd](int indent, const Node& node) {
+    if (firstEnd) {
+      out << string(indent+2, ' ') << "tuples.record()" << endl;
+      firstEnd = false;
+    }
     out << string(indent, ' ') << "} //" << node.objName << endl;
   };
   Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
+  if (!query.orderByStmt.orderByFields.empty()) {
+    out << "tuples.sortBy("
+        << joinVec<OrderByField>(
+            ", ", query.orderByStmt.orderByFields,
+            [](const OrderByField& orderByField) {
+              return "'" + orderByField.expr.str() + "'";
+            })
+        << ")" << endl;
+  }
+  out << "tuples.print("
+      << joinVec<SelectField>(
+          ", ", query.selectStmt.selectFields,
+          [](const SelectField& selectField) {
+            return "'" + selectField.expr.str() + "'";
+          })
+      << ")" << endl;
 }
 
 void QueryEngine::printCode() {

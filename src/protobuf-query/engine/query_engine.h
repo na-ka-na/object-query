@@ -58,6 +58,8 @@ struct Node {
   vector<const BooleanExpr*> whereClauses;
   // list of all select fields
   vector<const SelectField*> selectFields;
+  // list of all orderBy fields
+  vector<const OrderByField*> orderByFields;
 
   // Node tree walk, modified DFS which vists each node twice,
   // one in depth first order, second in reverse order.
@@ -82,6 +84,7 @@ struct QueryGraph {
   void addReadIdentifier(const string& identifier);
   void processSelect(const SelectStmt& selectStmt);
   void processWhere(const WhereStmt& whereStmt);
+  void processOrderBy(const OrderByStmt& orderByStmt);
   void processExpr(const set<string>& identifiers, function<void(Node& node)>);
   void calculateGraph(const SelectQuery& query);
 };

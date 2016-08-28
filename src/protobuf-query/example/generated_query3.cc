@@ -6,14 +6,16 @@ for (1..1) {
   for each quarterly_revenue in company.financial().quarterly_revenues() {
     if (!((financial.quarterly_revenues*2) > 1)) { continue; }
     for each all_employee in company.all_employees() {
-      print all_employees.id
+      tuples.add(all_employees.id)
       for each active_direct_report in all_employee.active_direct_reports() {
         if (!(all_employees.active_direct_reports > 0)) { continue; }
-        print (financial.quarterly_revenues/all_employees.active_direct_reports)
+        tuples.add((financial.quarterly_revenues/all_employees.active_direct_reports))
+        tuples.record()
       } //active_direct_report
     } //all_employee
   } //quarterly_revenue
 } //company
+tuples.print('all_employees.id', '(financial.quarterly_revenues/all_employees.active_direct_reports)')
 */
 #include "example1.pb.h"
 #include "generated_common.h"

@@ -3,25 +3,27 @@ SELECT financial.quarterly_profits, financial.quarterly_revenues, all_employees.
 
 for (1..1) {
   company = parseFromFile()
-  print founded
+  tuples.add(founded)
   for each board_of_director in company.board_of_directors() {
-    print board_of_directors
+    tuples.add(board_of_directors)
     for each quarterly_profit in company.financial().quarterly_profits() {
-      print financial.quarterly_profits
+      tuples.add(financial.quarterly_profits)
       for each quarterly_revenue in company.financial().quarterly_revenues() {
-        print financial.quarterly_revenues
+        tuples.add(financial.quarterly_revenues)
         for each all_employee in company.all_employees() {
-          print all_employees.id
-          print all_employees.name
-          print all_employees.active
+          tuples.add(all_employees.id)
+          tuples.add(all_employees.name)
+          tuples.add(all_employees.active)
           for each active_direct_report in all_employee.active_direct_reports() {
-            print all_employees.active_direct_reports
+            tuples.add(all_employees.active_direct_reports)
+            tuples.record()
           } //active_direct_report
         } //all_employee
       } //quarterly_revenue
     } //quarterly_profit
   } //board_of_director
 } //company
+tuples.print('financial.quarterly_profits', 'financial.quarterly_revenues', 'all_employees.id', 'all_employees.name', 'all_employees.active', 'all_employees.active_direct_reports', 'founded', 'board_of_directors')
 */
 #include "example1.pb.h"
 #include "generated_common.h"
