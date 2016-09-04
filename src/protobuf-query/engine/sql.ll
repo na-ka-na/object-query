@@ -37,6 +37,7 @@ query.loc.step();
 "HAVING"    return yy::SqlParser::make_HAVING(query.loc);
 "ORDER"     return yy::SqlParser::make_ORDER(query.loc);
 "BY"        return yy::SqlParser::make_BY(query.loc);
+"AS"        return yy::SqlParser::make_AS(query.loc);
 ","         return yy::SqlParser::make_COMMA(query.loc);
 "+"         return yy::SqlParser::make_PLUS(query.loc);
 "-"         return yy::SqlParser::make_MINUS(query.loc);

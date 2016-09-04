@@ -170,6 +170,7 @@ struct BooleanExpr {
 
 struct SelectField {
   Expr expr;
+  string alias;
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string str() const;

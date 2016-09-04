@@ -449,8 +449,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 	yyg->yy_c_buf_p = yy_cp;
 
 /* %% [4.0] data tables for the DFA and the user's section 1 definitions go here */
-#define YY_NUM_RULES 46
-#define YY_END_OF_BUFFER 47
+#define YY_NUM_RULES 47
+#define YY_END_OF_BUFFER 48
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -460,21 +460,21 @@ struct yy_trans_info
 	};
 static yyconst flex_int16_t yy_accept[135] =
     {   0,
-        0,    0,   47,   45,    1,    2,   45,   45,   27,   28,
-       13,   11,   10,   12,   45,   14,   42,   17,   15,   18,
-       44,   44,   44,   44,   44,   44,   44,   44,   44,   44,
-       44,   44,   44,   44,   44,   44,   44,    1,    2,   16,
-        0,    0,   43,   43,   43,   42,    0,   19,   20,   44,
-       44,   44,    9,   44,   44,   44,   44,   44,   44,   44,
-       44,   22,   44,   44,   44,   26,   44,   44,   44,   44,
-       44,   44,   44,   41,    0,    0,   43,   25,   35,   44,
-       44,   44,   44,   44,   44,   44,   30,   44,   23,   44,
-       44,   44,   29,   44,   31,   44,   44,   44,   44,    0,
+        0,    0,   48,   46,    1,    2,   46,   46,   28,   29,
+       14,   12,   11,   13,   46,   15,   43,   18,   16,   19,
+       45,   45,   45,   45,   45,   45,   45,   45,   45,   45,
+       45,   45,   45,   45,   45,   45,   45,    1,    2,   17,
+        0,    0,   44,   44,   44,   43,    0,   20,   21,   45,
+       45,   10,    9,   45,   45,   45,   45,   45,   45,   45,
+       45,   23,   45,   45,   45,   27,   45,   45,   45,   45,
+       45,   45,   45,   42,    0,    0,   44,   26,   36,   45,
+       45,   45,   45,   45,   45,   45,   31,   45,   24,   45,
+       45,   45,   30,   45,   32,   45,   45,   45,   45,    0,
 
-       43,   44,   36,   44,   44,    4,   44,   44,   21,   24,
-       44,   44,   44,   37,   44,   44,   39,   32,   44,   38,
-        6,   44,    8,   44,   44,    5,   40,   44,    7,    3,
-       33,   44,   34,    0
+       44,   45,   37,   45,   45,    4,   45,   45,   22,   25,
+       45,   45,   45,   38,   45,   45,   40,   33,   45,   39,
+        6,   45,    8,   45,   45,    5,   41,   45,    7,    3,
+       34,   45,   35,    0
     } ;
 
 static yyconst YY_CHAR yy_ec[256] =
@@ -614,13 +614,13 @@ static yyconst flex_int16_t yy_chk[223] =
       134,  134
     } ;
 
-static yyconst flex_int16_t yy_rule_linenum[46] =
+static yyconst flex_int16_t yy_rule_linenum[47] =
     {   0,
        31,   32,   33,   34,   35,   36,   37,   38,   39,   40,
        41,   42,   43,   44,   45,   46,   47,   48,   49,   50,
        51,   52,   53,   54,   55,   56,   57,   58,   59,   60,
        61,   62,   63,   64,   65,   66,   67,   68,   69,   70,
-       72,   75,   78,   81,   83
+       71,   73,   76,   79,   82,   84
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1032,13 +1032,13 @@ do_action:	/* This label is used only to access EOF actions. */
 			{
 			if ( yy_act == 0 )
 				fprintf( stderr, "--scanner backing up\n" );
-			else if ( yy_act < 46 )
+			else if ( yy_act < 47 )
 				fprintf( stderr, "--accepting rule at line %ld (\"%s\")\n",
 				         (long)yy_rule_linenum[yy_act], yytext );
-			else if ( yy_act == 46 )
+			else if ( yy_act == 47 )
 				fprintf( stderr, "--accepting default rule (\"%s\")\n",
 				         yytext );
-			else if ( yy_act == 47 )
+			else if ( yy_act == 48 )
 				fprintf( stderr, "--(end of buffer or a NUL)\n" );
 			else
 				fprintf( stderr, "--EOF (start condition %d)\n", YY_START );
@@ -1103,196 +1103,201 @@ return yy::SqlParser::make_BY(query.loc);
 case 10:
 YY_RULE_SETUP
 #line 40 "../sql.ll"
-return yy::SqlParser::make_COMMA(query.loc);
+return yy::SqlParser::make_AS(query.loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
 #line 41 "../sql.ll"
-return yy::SqlParser::make_PLUS(query.loc);
+return yy::SqlParser::make_COMMA(query.loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 42 "../sql.ll"
-return yy::SqlParser::make_MINUS(query.loc);
+return yy::SqlParser::make_PLUS(query.loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
 #line 43 "../sql.ll"
-return yy::SqlParser::make_MULT(query.loc);
+return yy::SqlParser::make_MINUS(query.loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
 #line 44 "../sql.ll"
-return yy::SqlParser::make_DIVIDE(query.loc);
+return yy::SqlParser::make_MULT(query.loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
 #line 45 "../sql.ll"
-return yy::SqlParser::make_EQ(query.loc);
+return yy::SqlParser::make_DIVIDE(query.loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 46 "../sql.ll"
-return yy::SqlParser::make_NE(query.loc);
+return yy::SqlParser::make_EQ(query.loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 47 "../sql.ll"
-return yy::SqlParser::make_LT(query.loc);
+return yy::SqlParser::make_NE(query.loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 48 "../sql.ll"
-return yy::SqlParser::make_GT(query.loc);
+return yy::SqlParser::make_LT(query.loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 49 "../sql.ll"
-return yy::SqlParser::make_LE(query.loc);
+return yy::SqlParser::make_GT(query.loc);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
 #line 50 "../sql.ll"
-return yy::SqlParser::make_GE(query.loc);
+return yy::SqlParser::make_LE(query.loc);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
 #line 51 "../sql.ll"
-return yy::SqlParser::make_LIKE(query.loc);
+return yy::SqlParser::make_GE(query.loc);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 52 "../sql.ll"
-return yy::SqlParser::make_IS(query.loc);
+return yy::SqlParser::make_LIKE(query.loc);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 53 "../sql.ll"
-return yy::SqlParser::make_NOT(query.loc);
+return yy::SqlParser::make_IS(query.loc);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 54 "../sql.ll"
-return yy::SqlParser::make_NULL(query.loc);
+return yy::SqlParser::make_NOT(query.loc);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 55 "../sql.ll"
-return yy::SqlParser::make_AND(query.loc);
+return yy::SqlParser::make_NULL(query.loc);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 56 "../sql.ll"
-return yy::SqlParser::make_OR(query.loc);
+return yy::SqlParser::make_AND(query.loc);
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
 #line 57 "../sql.ll"
-return yy::SqlParser::make_LPAREN(query.loc);
+return yy::SqlParser::make_OR(query.loc);
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 58 "../sql.ll"
-return yy::SqlParser::make_RPAREN(query.loc);
+return yy::SqlParser::make_LPAREN(query.loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
 #line 59 "../sql.ll"
-return yy::SqlParser::make_STR(Fn1::STR, query.loc);
+return yy::SqlParser::make_RPAREN(query.loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
 #line 60 "../sql.ll"
-return yy::SqlParser::make_INT(Fn1::INT, query.loc);
+return yy::SqlParser::make_STR(Fn1::STR, query.loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
 #line 61 "../sql.ll"
-return yy::SqlParser::make_SUM(Fn1::SUM, query.loc);
+return yy::SqlParser::make_INT(Fn1::INT, query.loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
 #line 62 "../sql.ll"
-return yy::SqlParser::make_COUNT(Fn1::COUNT, query.loc);
+return yy::SqlParser::make_SUM(Fn1::SUM, query.loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
 #line 63 "../sql.ll"
-return yy::SqlParser::make_SUBSTR(Fn3::SUBSTR, query.loc);
+return yy::SqlParser::make_COUNT(Fn1::COUNT, query.loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
 #line 64 "../sql.ll"
-return yy::SqlParser::make_DISTINCT(query.loc);
+return yy::SqlParser::make_SUBSTR(Fn3::SUBSTR, query.loc);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
 #line 65 "../sql.ll"
-return yy::SqlParser::make_ASC(query.loc);
+return yy::SqlParser::make_DISTINCT(query.loc);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
 #line 66 "../sql.ll"
-return yy::SqlParser::make_DESC(query.loc);
+return yy::SqlParser::make_ASC(query.loc);
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
 #line 67 "../sql.ll"
-return yy::SqlParser::make_BOOL(true, query.loc);
+return yy::SqlParser::make_DESC(query.loc);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
 #line 68 "../sql.ll"
-return yy::SqlParser::make_BOOL(false, query.loc);
+return yy::SqlParser::make_BOOL(true, query.loc);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
 #line 69 "../sql.ll"
-return yy::SqlParser::make_BOOL(true, query.loc);
+return yy::SqlParser::make_BOOL(false, query.loc);
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
 #line 70 "../sql.ll"
-return yy::SqlParser::make_BOOL(false, query.loc);
+return yy::SqlParser::make_BOOL(true, query.loc);
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 72 "../sql.ll"
-{string s = yytext; s = s.substr(1, s.size()-2);
-             return yy::SqlParser::make_STRING(s, query.loc);}
+#line 71 "../sql.ll"
+return yy::SqlParser::make_BOOL(false, query.loc);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 75 "../sql.ll"
-{long n = std::strtol(yytext, NULL, 10);
-             return yy::SqlParser::make_LONG(n, query.loc);}
+#line 73 "../sql.ll"
+{string s = yytext; s = s.substr(1, s.size()-2);
+             return yy::SqlParser::make_STRING(s, query.loc);}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 78 "../sql.ll"
-{double d = std::strtod(yytext, NULL);
-             return yy::SqlParser::make_DOUBLE(d, query.loc);}
+#line 76 "../sql.ll"
+{long n = std::strtol(yytext, NULL, 10);
+             return yy::SqlParser::make_LONG(n, query.loc);}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 81 "../sql.ll"
-return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
+#line 79 "../sql.ll"
+{double d = std::strtod(yytext, NULL);
+             return yy::SqlParser::make_DOUBLE(d, query.loc);}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 83 "../sql.ll"
-query.mark_lexer_invalid_char(yytext[0]);
-	YY_BREAK
-case YY_STATE_EOF(INITIAL):
-#line 84 "../sql.ll"
-return yy::SqlParser::make_END(query.loc);
+#line 82 "../sql.ll"
+return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
+#line 84 "../sql.ll"
+query.mark_lexer_invalid_char(yytext[0]);
+	YY_BREAK
+case YY_STATE_EOF(INITIAL):
 #line 85 "../sql.ll"
+return yy::SqlParser::make_END(query.loc);
+	YY_BREAK
+case 47:
+YY_RULE_SETUP
+#line 86 "../sql.ll"
 ECHO;
 	YY_BREAK
-#line 1296 "sql.lex.cc"
+#line 1301 "sql.lex.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2565,7 +2570,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 /* %ok-for-header */
 
-#line 85 "../sql.ll"
+#line 86 "../sql.ll"
 
 
 

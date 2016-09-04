@@ -338,7 +338,7 @@ string BooleanExpr::str() const {
 }
 
 string SelectField::str() const {
-  return expr.str();
+  return expr.str() + (alias.empty() ? "" : (" AS " + alias));
 }
 
 string SelectStmt::str() const {

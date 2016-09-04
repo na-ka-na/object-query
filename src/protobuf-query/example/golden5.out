@@ -1,4 +1,4 @@
-(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')
-------------------------------------------------------------------------------------------
-1: abc (false)                                                                            
-2: def (true)                                                                             
+employee      
+--------------
+1: abc (false)
+2: def (true) 

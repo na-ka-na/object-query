@@ -270,7 +270,9 @@ void QueryEngine::printCode() {
   string header = "vector<string> header = {\n";
   header += joinVec<SelectField>(
       "\n", query.selectStmt.selectFields,
-      [](const SelectField& field) {return "  \"" + field.str() + "\",";});
+      [](const SelectField& sf) {
+        return "  \"" + (sf.alias.empty() ? sf.str() : sf.alias) + "\",";
+      });
   header += "\n};";
   out << header << endl;
 

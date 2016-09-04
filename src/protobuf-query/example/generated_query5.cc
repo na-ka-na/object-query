@@ -1,5 +1,5 @@
 /*
-SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') FROM ('argv[1]', 'Example1.Company')
+SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') AS employee FROM ('argv[1]', 'Example1.Company')
 
 for (1..1) {
   company = parseFromFile()
@@ -17,7 +17,7 @@ using namespace std;
 using namespace Example1;
 
 vector<string> header = {
-  "(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')",
+  "employee",
 };
 using S0 = optional<bool>;   /*.active()*/
 using S1 = optional<int32>;  /*.id()*/
