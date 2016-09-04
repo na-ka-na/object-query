@@ -1,5 +1,5 @@
 /*
-SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.id IS NOT NULL AND (((all_employees.name = "def") AND (all_employees.active = TRUE)) OR (all_employees.name = "abc"))) AND (financial.quarterly_profits > 0))
+SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.id IS NOT NULL AND (((all_employees.name = 'def') AND (all_employees.active = TRUE)) OR (all_employees.name = 'abc'))) AND (financial.quarterly_profits > 0))
 
 for (1..1) {
   company = parseFromFile()
@@ -7,7 +7,7 @@ for (1..1) {
     if (!(financial.quarterly_profits > 0)) { continue; }
     for each all_employee in company.all_employees() {
       if (!all_employees.id IS NOT NULL) { continue; }
-      if (!(((all_employees.name = "def") AND (all_employees.active = TRUE)) OR (all_employees.name = "abc"))) { continue; }
+      if (!(((all_employees.name = 'def') AND (all_employees.active = TRUE)) OR (all_employees.name = 'abc'))) { continue; }
       tuples.add(all_employees.id)
       tuples.add(all_employees.name)
       tuples.record()

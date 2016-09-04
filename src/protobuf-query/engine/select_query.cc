@@ -288,7 +288,7 @@ string Expr::str() const {
   case FN1_CALL_EXPR: return fn1CallExpr.str();
   case FN3_CALL_EXPR: return fn3CallExpr.str();
   case IDENTIFIER:    return identifier;
-  case STRING:        return "\""+stringValue+"\"";
+  case STRING:        return "'"+stringValue+"'";
   case LONG:          return to_string(longValue);
   case DOUBLE:        return to_string(doubleValue);
   case BOOL:          return boolValue ? "TRUE" : "FALSE";
@@ -397,7 +397,7 @@ string UnaryExpr::code(const map<string, string>& idMap) const {
 string Fn1CallExpr::code(const map<string, string>& idMap) const {
   string fnStr;
   switch (fn1) {
-  case STR:   fnStr = "Stringify"; break;
+  case STR:   fnStr = "ToStr"; break;
   case INT:   fnStr = "ToInt"; break;
   default:    fnStr = "<fn1>";
   }

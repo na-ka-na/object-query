@@ -54,6 +54,16 @@ template<> inline string Stringify(const bool& t) {return t ? "true" : "false";}
 template<> inline string Stringify(const string& t) {return t;}
 
 template<typename T>
+inline optional<string> ToStr(const optional<T>& t) {
+  optional<string> s;
+  if (t) {
+    s = Stringify(*t);
+  }
+  return s;
+}
+
+
+template<typename T>
 inline bool IsNull(const optional<T>& t) {
   return !static_cast<bool>(t);
 }

@@ -113,8 +113,6 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
       }
       parentDescriptor = fieldPart->message_type();
     } else {
-      ASSERT(fieldPart->type() != FieldDescriptor::Type::TYPE_MESSAGE,
-             "FieldPart", selectFieldParts[j], "expected not to be message");
       if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
         Node& child = parent->children[field];
         child.type = REPEATED_PRIMITIVE;
@@ -261,6 +259,9 @@ void QueryEngine::printPlan() {
 
 void QueryEngine::printCode() {
   out << "#include \"" << queryGraph.proto.protoHeaderInclude << "\"" << endl;
+  if (!queryGraph.proto.extraInclude.empty()) {
+    out << "#include \"" << queryGraph.proto.extraInclude << "\"" << endl;
+  }
   out << "#include \"generated_common.h\"" << endl << endl;
   out << "using namespace std;" << endl;
   out << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl << endl;

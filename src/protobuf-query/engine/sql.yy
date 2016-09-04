@@ -98,8 +98,12 @@ query: select_stmt
   query.orderByStmt = $6;}
  ;
 
-fn1: "STR" | "INT" | "SUM" | "COUNT";
-fn3: "SUBSTR";
+fn1: "STR"  {$$=$1;}
+ | "INT"    {$$=$1;}
+ | "SUM"    {$$=$1;}
+ | "COUNT"  {$$=$1;}
+ ;
+fn3: "SUBSTR" {$$=$1;};
 
 select_stmt: "SELECT" select_fields  {$$=SelectStmt(); $$.selectFields=$2;}
  | "SELECT" "DISTINCT" select_fields {$$=SelectStmt(); $$.distinct=true; $$.selectFields=$3;}

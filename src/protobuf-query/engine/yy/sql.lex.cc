@@ -1198,12 +1198,12 @@ return yy::SqlParser::make_RPAREN(query.loc);
 case 29:
 YY_RULE_SETUP
 #line 59 "../sql.ll"
-return yy::SqlParser::make_SUM(Fn1::STR, query.loc);
+return yy::SqlParser::make_STR(Fn1::STR, query.loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
 #line 60 "../sql.ll"
-return yy::SqlParser::make_SUM(Fn1::INT, query.loc);
+return yy::SqlParser::make_INT(Fn1::INT, query.loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP

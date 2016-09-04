@@ -14,8 +14,9 @@ using namespace google::protobuf;
 
 struct Proto {
   const Message* defaultInstance;
-  const char* protoNamespace;
-  const char* protoHeaderInclude;
+  string protoNamespace;
+  string protoHeaderInclude;
+  string extraInclude;
 
   static void initProto(const string& protoName, Proto& proto);
 };
