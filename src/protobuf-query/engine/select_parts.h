@@ -161,6 +161,7 @@ struct SimpleBooleanExpr {
 struct NullaryBooleanExpr {
   bool isNull;
   string identifier;
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;

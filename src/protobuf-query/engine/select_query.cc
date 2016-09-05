@@ -570,11 +570,20 @@ void SimpleBooleanExpr::removeSelectAliases(const map<string, const Expr*>& alia
   rhs.removeSelectAliases(aliases);
 }
 
+void NullaryBooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  auto f = aliases.find(identifier);
+  if (f != aliases.end()) {
+    const Expr* expr = f->second;
+    ASSERT(expr->type == IDENTIFIER, "Only identifiers can be NULL checked");
+    identifier = expr->identifier;
+  }
+}
+
 void BooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
   switch (type) {
   case BOOLEAN: compoundBooleanExpr.removeSelectAliases(aliases); break;
   case SIMPLE: simpleBooleanExpr.removeSelectAliases(aliases); break;
-  case NULLARY: break;
+  case NULLARY: nullaryBooleanExpr.removeSelectAliases(aliases); break;
   default: THROW("Unhandled BooleanExpr case");
   }
 }
