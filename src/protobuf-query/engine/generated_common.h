@@ -105,7 +105,11 @@ inline bool Ge(const optional<L>& l, const optional<R>& r) {
 }
 
 inline bool Like(const optional<string>& l, const optional<string>& r) {
-  return (!l && !r) || (l && r && regex_match(*l, regex(*r)));
+  return (!l && !r) || (l && r && std::regex_match(*l, std::regex(*r)));
+}
+
+inline bool Like(const optional<string>& l, const std::regex& r) {
+  return (l && std::regex_match(*l, r));
 }
 
 template<typename T>

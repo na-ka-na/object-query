@@ -11,11 +11,12 @@ void TestExpr() {
   Expr e3 = Expr::create(MULT, y, e2);
   EXPECT_EQ("(y*(x-(x+y)))", e3.str());
   EXPECT_EQ("Mult(y, Minus(x, Plus(x, y)))", e3.code({}));
-  map<string, string> idMap{{"x", "s0"}, {"y", "s1"}};
-  EXPECT_EQ("Mult(s1, Minus(s0, Plus(s0, s1)))", e3.code(idMap));
-  map<string, string> idDefaultsMap{{"x", "S0()"}, {"y", "S1()"}};
+  CodeGenReqs cgr;
+  cgr.idVarMap = {{"x", "s0"}, {"y", "s1"}};
+  cgr.idDefaultMap = {{"x", "S0()"}, {"y", "S1()"}};
+  EXPECT_EQ("Mult(s1, Minus(s0, Plus(s0, s1)))", e3.code(cgr));
   EXPECT_EQ("decltype(Mult(S1(), Minus(S0(), Plus(S0(), S1()))))",
-            e3.cppType(idDefaultsMap));
+            e3.cppType(cgr));
 }
 
 int main() {

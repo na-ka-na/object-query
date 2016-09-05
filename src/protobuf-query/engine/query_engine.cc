@@ -276,11 +276,15 @@ void QueryEngine::printCode() {
   header += "\n};";
   out << header << endl;
 
+  CodeGenReqs cgr;
+  query.whereStmt.extractStatics(cgr);
+
   map<Field, string> fieldVarMap;
   map<Field, string> fieldTypeMap;
   map<Field, string> fieldDefaultMap;
   uint32_t varIdx = 0;
   for (const auto& e : queryGraph.idFieldMap) {
+    const string& id = e.first;
     const Field& field = e.second;
     fieldVarMap[field] = "s" + to_string(varIdx);
     fieldTypeMap[field] = "S" + to_string(varIdx);
@@ -290,6 +294,8 @@ void QueryEngine::printCode() {
     string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
     out << "using " << fieldTypeMap[field] << " = " << type << ";"
         << spaces << " /*" << field.accessor("") << "*/" << endl;
+    cgr.idVarMap[id] = fieldVarMap[field];
+    cgr.idDefaultMap[id] = fieldDefaultMap[field];
   }
 
   vector<const Expr*> selectAndOrderByExprs;
@@ -315,22 +321,13 @@ void QueryEngine::printCode() {
       exprTypeMap[exprStr] = "S" + to_string(varIdx);
       exprDefaultMap[exprStr] = "S" + to_string(varIdx) + "()";
       varIdx++;
-      set<string> identifiers;
-      expr->getAllIdentifiers(identifiers);
-      map<string, string> idDefaultsMap;
-      for (const string& id : identifiers) {
-        idDefaultsMap[id] = fieldDefaultMap[queryGraph.idFieldMap[id]];
-      }
-      string type = expr->cppType(idDefaultsMap);
+      string type = expr->cppType(cgr);
       string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
       out << "using " << exprTypeMap[exprStr] << " = " << type << ";"
           << spaces << " /*" << exprStr << "*/" << endl;
     }
   }
-  map<string, string> idVarMap;
-  for (const auto& e : queryGraph.idFieldMap) {
-    idVarMap[e.first] = fieldVarMap[e.second];
-  }
+
   string tupleType = "using TupleType = tuple<";
   tupleType += joinVec<const Expr*>(
       ", ", selectAndOrderByExprs,
@@ -338,6 +335,17 @@ void QueryEngine::printCode() {
   tupleType += ">;";
   out << tupleType << endl;
   out << endl;
+
+  if (!cgr.regexMap.empty()) {
+    for (auto& e : cgr.regexMap) {
+      string regexVar = "r" + to_string(varIdx);
+      varIdx++;
+      out << "std::regex " << regexVar << "(\"" << e.first << "\", "
+          << "std::regex::optimize);" << endl;
+      e.second = regexVar;
+    }
+    out << endl;
+  }
 
   out << "void runSelect(const "
       << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
@@ -377,14 +385,14 @@ void QueryEngine::printCode() {
     }
     // TODO(sanchay): print variable assignment and where clauses in optimal order
     for (const BooleanExpr* whereClause : node.whereClauses) {
-      out << ind << "if (!" << whereClause->code(idVarMap)
+      out << ind << "if (!" << whereClause->code(cgr)
           << ") { continue; }" << endl;
     }
     for (const Expr* expr : node.selectAndOrderByExprs) {
       if (expr->type != IDENTIFIER) {
         out << ind << exprTypeMap[expr->str()] << " "
             << exprVarMap[expr->str()] << " = "
-            << expr->code(idVarMap) << ";" << endl;
+            << expr->code(cgr) << ";" << endl;
       }
     }
     numSelectAndOrderByFieldsProcessed += node.selectAndOrderByExprs.size();

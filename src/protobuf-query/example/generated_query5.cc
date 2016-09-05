@@ -30,6 +30,8 @@ using S4 = decltype(Plus(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(": ")
 using S5 = decltype(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(": ")), S2()), optional<string>(" (")), ToStr(S0())), optional<string>(")"))), optional<string>(" ")), ToStr(S3()))); /*((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded))*/
 using TupleType = tuple<S4, S5>;
 
+std::regex r6(".*true.*", std::regex::optimize);
+
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
     for (int _=0; _<1; _++) {
@@ -51,7 +53,7 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
           if(all_employee.has_active()) {
             s0 = all_employee.active();
           }
-          if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), optional<string>(".*true.*"))) { continue; }
+          if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), r6)) { continue; }
           S4 s4 = Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"));
           S5 s5 = Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3));
           tuples.emplace_back(s4, s5);

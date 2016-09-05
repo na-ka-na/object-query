@@ -11,6 +11,12 @@
 
 using namespace std;
 
+struct CodeGenReqs {
+  map<string, string> idVarMap;
+  map<string, string> idDefaultMap;
+  map<string, string> regexMap;
+};
+
 struct Expr;
 
 // note: update Expr::str() on mod
@@ -52,7 +58,7 @@ struct BinaryExpr {
   shared_ptr<Expr> rhs;
   void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -61,7 +67,7 @@ struct UnaryExpr {
   shared_ptr<Expr> expr;
   void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -70,7 +76,7 @@ struct Fn1CallExpr {
   shared_ptr<Expr> expr;
   void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -79,7 +85,7 @@ struct Fn3CallExpr {
   shared_ptr<Expr> expr1, expr2, expr3;
   void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -108,8 +114,8 @@ struct Expr {
   static Expr createPrimitive(bool value);
   void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
-  string cppType(const map<string, string>& idDefaultsMap) const;
+  string code(const CodeGenReqs& cgr) const;
+  string cppType(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -136,7 +142,8 @@ struct CompoundBooleanExpr {
   shared_ptr<BooleanExpr> rhs;
   void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  void extractStatics(CodeGenReqs& cgr) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -146,7 +153,8 @@ struct SimpleBooleanExpr {
   Expr rhs;
   void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  void extractStatics(CodeGenReqs& cgr) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -154,7 +162,7 @@ struct NullaryBooleanExpr {
   bool isNull;
   string identifier;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -172,7 +180,8 @@ struct BooleanExpr {
   void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
-  string code(const map<string, string>& idMap) const;
+  void extractStatics(CodeGenReqs& cgr) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -180,7 +189,7 @@ struct SelectField {
   Expr expr;
   string alias;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -194,7 +203,7 @@ struct OrderByField {
   Expr expr;
   bool desc = false;
   void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const map<string, string>& idMap) const;
+  string code(const CodeGenReqs& cgr) const;
   string str() const;
 };
 
@@ -211,6 +220,7 @@ struct FromStmt {
 
 struct WhereStmt {
   optional<BooleanExpr> booleanExpr;
+  void extractStatics(CodeGenReqs& cgr) const;
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
   string str() const;

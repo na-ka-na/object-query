@@ -373,7 +373,33 @@ string SelectQuery::str() const {
          (orderByStr.empty() ? "" : (" " + orderByStr));
 }
 
-string BinaryExpr::code(const map<string, string>& idMap) const {
+void CompoundBooleanExpr::extractStatics(CodeGenReqs& cgr) const {
+  lhs->extractStatics(cgr);
+  rhs->extractStatics(cgr);
+}
+
+void SimpleBooleanExpr::extractStatics(CodeGenReqs& cgr) const {
+  if ((op == LIKE) && (rhs.type == STRING)) {
+    cgr.regexMap.emplace(rhs.stringValue, "");
+  }
+}
+
+void BooleanExpr::extractStatics(CodeGenReqs& cgr) const {
+  switch (type) {
+  case BOOLEAN: compoundBooleanExpr.extractStatics(cgr); break;
+  case SIMPLE: simpleBooleanExpr.extractStatics(cgr); break;
+  case NULLARY: break;
+  default: THROW("Unhandled BooleanExpr case");
+  }
+}
+
+void WhereStmt::extractStatics(CodeGenReqs& cgr) const {
+  if (booleanExpr) {
+    booleanExpr->extractStatics(cgr);
+  }
+}
+
+string BinaryExpr::code(const CodeGenReqs& cgr) const {
   string opFn;
   switch (op) {
   case PLUS:   opFn = "Plus"; break;
@@ -382,46 +408,46 @@ string BinaryExpr::code(const map<string, string>& idMap) const {
   case DIVIDE: opFn = "Divide"; break;
   default:     opFn = "<BinaryExpOp>";
   }
-  return opFn + "(" + lhs->code(idMap) + ", " + rhs->code(idMap) + ")";
+  return opFn + "(" + lhs->code(cgr) + ", " + rhs->code(cgr) + ")";
 }
 
-string UnaryExpr::code(const map<string, string>& idMap) const {
+string UnaryExpr::code(const CodeGenReqs& cgr) const {
   string unaryFn;
   switch (op) {
   case UMINUS: unaryFn = "Uminus"; break;
   default:     unaryFn = "<UnaryExpOp>";
   }
-  return unaryFn + "(" + expr->code(idMap) + ")";
+  return unaryFn + "(" + expr->code(cgr) + ")";
 }
 
-string Fn1CallExpr::code(const map<string, string>& idMap) const {
+string Fn1CallExpr::code(const CodeGenReqs& cgr) const {
   string fnStr;
   switch (fn1) {
   case STR:   fnStr = "ToStr"; break;
   case INT:   fnStr = "ToInt"; break;
   default:    fnStr = "<fn1>";
   }
-  return fnStr + "(" + expr->code(idMap) + ")";
+  return fnStr + "(" + expr->code(cgr) + ")";
 }
 
-string Fn3CallExpr::code(const map<string, string>& idMap) const {
+string Fn3CallExpr::code(const CodeGenReqs& cgr) const {
   string fnStr;
   switch (fn3) {
   case SUBSTR: fnStr = "substr"; break;
   default:     fnStr = "<fn3>";
   }
-  return fnStr + "(" + expr1->code(idMap) + "," + expr2->code(idMap) + "," +
-         expr3->code(idMap) + ")";
+  return fnStr + "(" + expr1->code(cgr) + "," + expr2->code(cgr) + "," +
+         expr3->code(cgr) + ")";
 }
 
-string Expr::code(const map<string, string>& idMap) const {
+string Expr::code(const CodeGenReqs& cgr) const {
   switch (type) {
-  case BINARY_EXPR:   return binaryExpr.code(idMap);
-  case UNARY_EXPR:    return unaryExpr.code(idMap);
-  case FN1_CALL_EXPR: return fn1CallExpr.code(idMap);
-  case FN3_CALL_EXPR: return fn3CallExpr.code(idMap);
-  case IDENTIFIER:    {auto f = idMap.find(identifier);
-                       return f==idMap.end() ? identifier : f->second;}
+  case BINARY_EXPR:   return binaryExpr.code(cgr);
+  case UNARY_EXPR:    return unaryExpr.code(cgr);
+  case FN1_CALL_EXPR: return fn1CallExpr.code(cgr);
+  case FN3_CALL_EXPR: return fn3CallExpr.code(cgr);
+  case IDENTIFIER:    {auto f = cgr.idVarMap.find(identifier);
+                       return f==cgr.idVarMap.end() ? identifier : f->second;}
   case STRING:        return string("optional<string>(") + "\"" + stringValue + "\")";
   case LONG:          return string("optional<int64>(") + to_string(longValue) + ")";
   case DOUBLE:        return string("optional<double>(") + to_string(doubleValue) + ")";
@@ -430,17 +456,17 @@ string Expr::code(const map<string, string>& idMap) const {
   }
 }
 
-string CompoundBooleanExpr::code(const map<string, string>& idMap) const {
+string CompoundBooleanExpr::code(const CodeGenReqs& cgr) const {
   string opStr;
   switch (op) {
   case AND: opStr = "&&"; break;
   case OR:  opStr = "||"; break;
   default:  opStr = "<CompoundBooleanExprOp>";
   }
-  return "(" + lhs->code(idMap) + " " + opStr + " " + rhs->code(idMap) + ")";
+  return "(" + lhs->code(cgr) + " " + opStr + " " + rhs->code(cgr) + ")";
 }
 
-string SimpleBooleanExpr::code(const map<string, string>& idMap) const {
+string SimpleBooleanExpr::code(const CodeGenReqs& cgr) const {
   string opFn;
   switch (op) {
   case EQ:   opFn = "Eq"; break;
@@ -452,35 +478,46 @@ string SimpleBooleanExpr::code(const map<string, string>& idMap) const {
   case LIKE: opFn = "Like"; break;
   default:   opFn = "<SimpleBooleanExprOp>";
   }
-  return opFn + "(" + lhs.code(idMap) + ", " + rhs.code(idMap) + ")";
+  string lhs_code = lhs.code(cgr);
+  string rhs_code;
+  if ((op == LIKE) && (rhs.type == STRING)) {
+    auto f = cgr.regexMap.find(rhs.stringValue);
+    ASSERT(f != cgr.regexMap.end());
+    rhs_code = f->second;
+  } else {
+    rhs_code = rhs.code(cgr);
+  }
+  return opFn + "(" + lhs_code + ", " + rhs_code + ")";
 }
 
-string NullaryBooleanExpr::code(const map<string, string>& idMap) const {
+string NullaryBooleanExpr::code(const CodeGenReqs& cgr) const {
   Expr expr;
   expr.type = IDENTIFIER;
   expr.identifier = identifier;
-  return string(isNull ? "IsNull" : "IsNotNull") + "(" + expr.code(idMap) + ")";
+  return string(isNull ? "IsNull" : "IsNotNull") + "(" + expr.code(cgr) + ")";
 }
 
-string BooleanExpr::code(const map<string, string>& idMap) const {
+string BooleanExpr::code(const CodeGenReqs& cgr) const {
   switch (type) {
-  case BOOLEAN: return compoundBooleanExpr.code(idMap);
-  case SIMPLE:  return simpleBooleanExpr.code(idMap);
-  case NULLARY: return nullaryBooleanExpr.code(idMap);
+  case BOOLEAN: return compoundBooleanExpr.code(cgr);
+  case SIMPLE:  return simpleBooleanExpr.code(cgr);
+  case NULLARY: return nullaryBooleanExpr.code(cgr);
   default:      return "<BooleanExpr>";
   }
 }
 
-string OrderByField::code(const map<string, string>& idMap) const {
-  return expr.code(idMap);
+string OrderByField::code(const CodeGenReqs& cgr) const {
+  return expr.code(cgr);
 }
 
-string SelectField::code(const map<string, string>& idMap) const {
-  return expr.code(idMap);
+string SelectField::code(const CodeGenReqs& cgr) const {
+  return expr.code(cgr);
 }
 
-string Expr::cppType(const map<string, string>& idDefaultsMap) const {
-  return "decltype(" + code(idDefaultsMap) + ")";
+string Expr::cppType(const CodeGenReqs& cgr) const {
+  CodeGenReqs copy = cgr;
+  copy.idVarMap = copy.idDefaultMap;
+  return "decltype(" + code(copy) + ")";
 }
 
 void BinaryExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
