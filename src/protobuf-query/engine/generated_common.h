@@ -8,6 +8,7 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
+#include <regex>
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -101,6 +102,10 @@ inline bool Gt(const optional<L>& l, const optional<R>& r) {
 template<typename L, typename R>
 inline bool Ge(const optional<L>& l, const optional<R>& r) {
   return !Lt(l, r);
+}
+
+inline bool Like(const optional<string>& l, const optional<string>& r) {
+  return (!l && !r) || (l && r && regex_match(*l, regex(*r)));
 }
 
 template<typename T>

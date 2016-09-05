@@ -1,10 +1,10 @@
 /*
-SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') AS employee, ((((STR(all_employees.id)+' ')+employee)+' ')+STR(founded)) AS employee2 FROM ('argv[1]', 'Example1.Company') WHERE (employee2 != '')
+SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') AS employee, ((((STR(all_employees.id)+' ')+employee)+' ')+STR(founded)) AS employee2 FROM ('argv[1]', 'Example1.Company') WHERE (employee2 LIKE '.*true.*')
 
 for (1..1) {
   company = parseFromFile()
   for each all_employee in company.all_employees() {
-    if (!(((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded)) != '')) { continue; }
+    if (!(((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded)) LIKE '.*true.*')) { continue; }
     tuples.add((((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))
     tuples.add(((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded)))
     tuples.record()
@@ -51,7 +51,7 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
           if(all_employee.has_active()) {
             s0 = all_employee.active();
           }
-          if (!Ne(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), optional<string>(""))) { continue; }
+          if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), optional<string>(".*true.*"))) { continue; }
           S4 s4 = Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"));
           S5 s5 = Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3));
           tuples.emplace_back(s4, s5);
