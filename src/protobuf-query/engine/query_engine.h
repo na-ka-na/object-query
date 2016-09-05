@@ -79,7 +79,8 @@ struct QueryGraph {
   Node root;
   map<string, Field> idFieldMap;
 
-  static string constructObjNameForRepeated(const FieldDescriptor* field);
+  static string makePlural(const string& name);
+  static string makeSingular(const string& name);
   void addReadIdentifier(const string& identifier);
   void processSelect(const SelectStmt& selectStmt);
   void processWhere(const WhereStmt& whereStmt);

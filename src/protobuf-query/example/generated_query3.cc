@@ -33,9 +33,10 @@ using S2 = optional<float>;  /*.financial().quarterly_revenues()*/
 using S3 = decltype(Divide(S2(), S0())); /*(financial.quarterly_revenues/all_employees.active_direct_reports)*/
 using TupleType = tuple<S1, S3>;
 
-void runSelect(const Company& company, vector<TupleType>& tuples) {
-  if (company.ByteSize()) {
-    for (int _=0; _<1; _++) {
+void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
+for (int _=0; _<1; _++) { // dummy loop
+  if (companies.size() > 0) {
+    for (const Company& company: companies) {
       if (company.financial().quarterly_revenues_size() > 0) {
         for (const float& quarterly_revenue : company.financial().quarterly_revenues()) {
           S2 s2 = quarterly_revenue;
@@ -54,20 +55,40 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
                   tuples.emplace_back(s1, s3);
                 }
               } else { // no active_direct_report
-                tuples.emplace_back(s1, S3());
+                S0 s0 = S0();
+                S3 s3 = S3();
+                if (!Gt(s0, optional<int64>(0))) { continue; }
+                tuples.emplace_back(s1, s3);
               }
             }
           } else { // no all_employee
-            tuples.emplace_back(S1(), S3());
+            S1 s1 = S1();
+            S0 s0 = S0();
+            S3 s3 = S3();
+            if (!Gt(s0, optional<int64>(0))) { continue; }
+            tuples.emplace_back(s1, s3);
           }
         }
       } else { // no quarterly_revenue
-        tuples.emplace_back(S1(), S3());
+        S2 s2 = S2();
+        S1 s1 = S1();
+        S0 s0 = S0();
+        S3 s3 = S3();
+        if (!Gt(s0, optional<int64>(0))) { continue; }
+        if (!Gt(Mult(s2, optional<int64>(2)), optional<int64>(1))) { continue; }
+        tuples.emplace_back(s1, s3);
       }
     }
   } else { // no company
-    tuples.emplace_back(S1(), S3());
+    S2 s2 = S2();
+    S1 s1 = S1();
+    S0 s0 = S0();
+    S3 s3 = S3();
+    if (!Gt(s0, optional<int64>(0))) { continue; }
+    if (!Gt(Mult(s2, optional<int64>(2)), optional<int64>(1))) { continue; }
+    tuples.emplace_back(s1, s3);
   }
+}
 }
 
 void printTuples(const vector<TupleType>& tuples) {
@@ -99,6 +120,6 @@ int main(int argc, char** argv) {
   Company company;
   ParsePbFromFile(argv[1], company);
   vector<TupleType> tuples;
-  runSelect(company, tuples);
+  runSelect({company}, tuples);
   printTuples(tuples);
 }

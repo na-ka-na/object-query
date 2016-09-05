@@ -1,4 +1,5 @@
 
+#include <list>
 #include <algorithm>
 #include "utils.h"
 #include "query_engine.h"
@@ -87,10 +88,18 @@ void Node::walkNode(Node& root,
   }
 }
 
-string QueryGraph::constructObjNameForRepeated(const FieldDescriptor* field) {
-  string fieldName = field->name();
-  return (fieldName[fieldName.size()-1] == 's') ?
-      fieldName.substr(0, fieldName.size()-1) : fieldName;
+string QueryGraph::makePlural(const string& name) {
+  ASSERT(!name.empty());
+  return (name.back() == 'y')
+      ? (name.substr(0, name.size()-1) + "ies")
+      : (name + "s");
+}
+
+string QueryGraph::makeSingular(const string& name) {
+  ASSERT(!name.empty());
+  return ((name.size() > 3) && (name.substr(name.size()-3, 3) == "ies"))
+      ? (name.substr(0, name.size()-3) + "y")
+      : name.substr(0, name.size()-1);
 }
 
 void QueryGraph::addReadIdentifier(const string& identifier) {
@@ -113,7 +122,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
       if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
         Node& child = parent->children[field];
         child.type = REPEATED_MESSAGE;
-        child.objName = constructObjNameForRepeated(fieldPart);
+        child.objName = makeSingular(fieldPart->name());
         child.repeatedField = field;
         parent = &child;
         field.fieldParts.clear();
@@ -123,7 +132,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
       if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
         Node& child = parent->children[field];
         child.type = REPEATED_PRIMITIVE;
-        child.objName = constructObjNameForRepeated(fieldPart);
+        child.objName = makeSingular(fieldPart->name());
         child.repeatedField = field;
         parent = &child;
       }
@@ -354,16 +363,22 @@ void QueryEngine::printCode() {
     out << endl;
   }
 
-  out << "void runSelect(const "
-      << queryGraph.proto.defaultInstance->GetDescriptor()->name() << "& "
-      << queryGraph.root.objName << ", vector<TupleType>& tuples) {" << endl;
+  out << "void runSelect(const vector<"
+      << queryGraph.proto.defaultInstance->GetDescriptor()->name() << ">& "
+      << QueryGraph::makePlural(queryGraph.root.objName)
+      << ", vector<TupleType>& tuples) {" << endl;
+  out << "for (int _=0; _<1; _++) { // dummy loop" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
   bool allSelectAndOrderByFieldsProcessed = false;
   StartNodeFn startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     string ind = string(indent+2, ' ');
     if (!parent) { //root
-      out << ind << "if (" << node.objName << ".ByteSize()) {" << endl;
-      out << ind << "  for (int _=0; _<1; _++) {" << endl;
+      out << ind << "if (" << QueryGraph::makePlural(queryGraph.root.objName)
+          << ".size() > 0) {" << endl;
+      out << ind << "  for (const "
+          << queryGraph.proto.defaultInstance->GetDescriptor()->name()
+          << "& " << node.objName << ": "
+          << QueryGraph::makePlural(queryGraph.root.objName)  << ") {" << endl;
     } else {
       out << ind << "if (" << node.repeatedField.sizeAccessor(parent->objName)
           << " > 0) {" << endl;
@@ -412,26 +427,45 @@ void QueryEngine::printCode() {
       allSelectAndOrderByFieldsProcessed = true;
     }
   };
-  set<const Expr*> endedSelectAndOrderByFieldSet;
+  set<Field> endedFieldSet;
+  vector<const Expr*> endedSelectAndOrderByFieldSet;
+  vector<const BooleanExpr*> endedWhereClauses;
   EndNodeFn endNodeFn = [&](int indent, const Node& node) {
     string ind = string(indent+2, ' ');
     out << ind << "  }" << endl;
     out << ind << "} else { // no " << node.objName << endl;
+    for (const Field& field : node.allFields) {
+      endedFieldSet.insert(field);
+    }
     for (const Expr* expr : node.selectAndOrderByExprs) {
-      endedSelectAndOrderByFieldSet.insert(expr);
+      endedSelectAndOrderByFieldSet.push_back(expr);
+    }
+    for (const BooleanExpr* whereClause : node.whereClauses) {
+      endedWhereClauses.push_back(whereClause);
+    }
+    for (const Field& field : endedFieldSet) {
+      out << ind << "  " << fieldTypeMap[field] << " " << fieldVarMap[field]
+          << " = " << fieldDefaultMap[field] << ";" << endl;
+    }
+    for (const Expr* expr : endedSelectAndOrderByFieldSet) {
+      if (expr->type != IDENTIFIER) {
+        out << ind << "  " << exprTypeMap[expr->str()] << " "
+            << exprVarMap[expr->str()] << " = " << exprDefaultMap[expr->str()]
+            << ";" << endl;
+      }
+    }
+    for (const BooleanExpr* whereClause : endedWhereClauses) {
+      out << ind << "  if (!" << whereClause->code(cgr)
+          << ") { continue; }" << endl;
     }
     string tuplesList = joinVec<const Expr*>(
         ", ", selectAndOrderByExprs,
-        [&](const Expr* expr) {
-            return (endedSelectAndOrderByFieldSet.find(expr) ==
-                    endedSelectAndOrderByFieldSet.end())
-                ? exprVarMap[expr->str()]
-                : exprDefaultMap[expr->str()];
-        });
-    out << ind << "  " << "tuples.emplace_back(" + tuplesList + ");" << endl;
+        [&](const Expr* expr) {return exprVarMap[expr->str()];});
+    out << ind << "  tuples.emplace_back(" + tuplesList + ");" << endl;
     out << ind << "}" << endl;
   };
   Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 4);
+  out << "}" << endl;
   out << "}" << endl;
 
   if (!query.orderByStmt.orderByFields.empty()) {
@@ -499,7 +533,7 @@ void printTuples(const vector<TupleType>& tuples) {
   out << "  ParsePbFromFile(" << fromFile << ", " << queryGraph.root.objName
       << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;
-  out << "  runSelect(" << queryGraph.root.objName << ", tuples);" << endl;
+  out << "  runSelect({" << queryGraph.root.objName << "}, tuples);" << endl;
   if (!query.orderByStmt.orderByFields.empty()) {
     out << "  std::sort(tuples.begin(), tuples.end(), compareTuples);" << endl;
   }

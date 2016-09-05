@@ -33,9 +33,10 @@ using S2 = optional<string>; /*.name()*/
 using S3 = optional<float>;  /*.financial().quarterly_profits()*/
 using TupleType = tuple<S3, S2, S0, S1>;
 
-void runSelect(const Company& company, vector<TupleType>& tuples) {
-  if (company.ByteSize()) {
-    for (int _=0; _<1; _++) {
+void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
+for (int _=0; _<1; _++) { // dummy loop
+  if (companies.size() > 0) {
+    for (const Company& company: companies) {
       if (company.financial().quarterly_profits_size() > 0) {
         for (const float& quarterly_profit : company.financial().quarterly_profits()) {
           S3 s3 = quarterly_profit;
@@ -56,16 +57,28 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
               tuples.emplace_back(s3, s2, s0, s1);
             }
           } else { // no all_employee
-            tuples.emplace_back(s3, S2(), S0(), S1());
+            S1 s1 = S1();
+            S2 s2 = S2();
+            S0 s0 = S0();
+            tuples.emplace_back(s3, s2, s0, s1);
           }
         }
       } else { // no quarterly_profit
-        tuples.emplace_back(S3(), S2(), S0(), S1());
+        S1 s1 = S1();
+        S2 s2 = S2();
+        S0 s0 = S0();
+        S3 s3 = S3();
+        tuples.emplace_back(s3, s2, s0, s1);
       }
     }
   } else { // no company
-    tuples.emplace_back(S3(), S2(), S0(), S1());
+    S1 s1 = S1();
+    S2 s2 = S2();
+    S0 s0 = S0();
+    S3 s3 = S3();
+    tuples.emplace_back(s3, s2, s0, s1);
   }
+}
 }
 
 bool compareTuples(const TupleType& t1, const TupleType& t2) {
@@ -110,7 +123,7 @@ int main(int argc, char** argv) {
   Company company;
   ParsePbFromFile(argv[1], company);
   vector<TupleType> tuples;
-  runSelect(company, tuples);
+  runSelect({company}, tuples);
   std::sort(tuples.begin(), tuples.end(), compareTuples);
   printTuples(tuples);
 }

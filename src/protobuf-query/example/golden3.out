@@ -1,8 +1,6 @@
 all_employees.id | (financial.quarterly_revenues/all_employees.active_direct_reports)
 ---------------- | ------------------------------------------------------------------
-1                | NULL                                                              
 2                | 1.000000                                                          
 2                | 0.500000                                                          
-1                | NULL                                                              
 2                | 2.000000                                                          
 2                | 1.000000                                                          

@@ -1,0 +1,4 @@
+all_employees.name | all_employees.active_direct_reports
+------------------ | -----------------------------------
+def                | 1                                  
+def                | 2                                  

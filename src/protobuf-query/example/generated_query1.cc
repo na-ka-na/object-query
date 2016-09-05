@@ -51,9 +51,10 @@ using S6 = optional<float>;  /*.financial().quarterly_revenues()*/
 using S7 = optional<int32>;  /*.founded()*/
 using TupleType = tuple<S5, S6, S2, S3, S0, S1, S7, S4>;
 
-void runSelect(const Company& company, vector<TupleType>& tuples) {
-  if (company.ByteSize()) {
-    for (int _=0; _<1; _++) {
+void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
+for (int _=0; _<1; _++) { // dummy loop
+  if (companies.size() > 0) {
+    for (const Company& company: companies) {
       S7 s7 = S7();
       if(company.has_founded()) {
         s7 = company.founded();
@@ -87,28 +88,60 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
                           tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
                         }
                       } else { // no active_direct_report
-                        tuples.emplace_back(s5, s6, s2, s3, s0, S1(), s7, s4);
+                        S1 s1 = S1();
+                        tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
                       }
                     }
                   } else { // no all_employee
-                    tuples.emplace_back(s5, s6, S2(), S3(), S0(), S1(), s7, s4);
+                    S2 s2 = S2();
+                    S3 s3 = S3();
+                    S0 s0 = S0();
+                    S1 s1 = S1();
+                    tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
                   }
                 }
               } else { // no quarterly_revenue
-                tuples.emplace_back(s5, S6(), S2(), S3(), S0(), S1(), s7, s4);
+                S2 s2 = S2();
+                S3 s3 = S3();
+                S0 s0 = S0();
+                S1 s1 = S1();
+                S6 s6 = S6();
+                tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
               }
             }
           } else { // no quarterly_profit
-            tuples.emplace_back(S5(), S6(), S2(), S3(), S0(), S1(), s7, s4);
+            S2 s2 = S2();
+            S3 s3 = S3();
+            S0 s0 = S0();
+            S1 s1 = S1();
+            S5 s5 = S5();
+            S6 s6 = S6();
+            tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
           }
         }
       } else { // no board_of_director
-        tuples.emplace_back(S5(), S6(), S2(), S3(), S0(), S1(), s7, S4());
+        S2 s2 = S2();
+        S3 s3 = S3();
+        S0 s0 = S0();
+        S1 s1 = S1();
+        S4 s4 = S4();
+        S5 s5 = S5();
+        S6 s6 = S6();
+        tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
       }
     }
   } else { // no company
-    tuples.emplace_back(S5(), S6(), S2(), S3(), S0(), S1(), S7(), S4());
+    S2 s2 = S2();
+    S3 s3 = S3();
+    S0 s0 = S0();
+    S1 s1 = S1();
+    S7 s7 = S7();
+    S4 s4 = S4();
+    S5 s5 = S5();
+    S6 s6 = S6();
+    tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
   }
+}
 }
 
 void printTuples(const vector<TupleType>& tuples) {
@@ -152,6 +185,6 @@ int main(int argc, char** argv) {
   Company company;
   ParsePbFromFile(argv[1], company);
   vector<TupleType> tuples;
-  runSelect(company, tuples);
+  runSelect({company}, tuples);
   printTuples(tuples);
 }

@@ -32,9 +32,10 @@ using TupleType = tuple<S4, S5>;
 
 std::regex r6(".*true.*", std::regex::optimize);
 
-void runSelect(const Company& company, vector<TupleType>& tuples) {
-  if (company.ByteSize()) {
-    for (int _=0; _<1; _++) {
+void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
+for (int _=0; _<1; _++) { // dummy loop
+  if (companies.size() > 0) {
+    for (const Company& company: companies) {
       S3 s3 = S3();
       if(company.has_founded()) {
         s3 = company.founded();
@@ -59,12 +60,26 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
           tuples.emplace_back(s4, s5);
         }
       } else { // no all_employee
-        tuples.emplace_back(S4(), S5());
+        S1 s1 = S1();
+        S2 s2 = S2();
+        S0 s0 = S0();
+        S4 s4 = S4();
+        S5 s5 = S5();
+        if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), r6)) { continue; }
+        tuples.emplace_back(s4, s5);
       }
     }
   } else { // no company
-    tuples.emplace_back(S4(), S5());
+    S3 s3 = S3();
+    S1 s1 = S1();
+    S2 s2 = S2();
+    S0 s0 = S0();
+    S4 s4 = S4();
+    S5 s5 = S5();
+    if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), r6)) { continue; }
+    tuples.emplace_back(s4, s5);
   }
+}
 }
 
 void printTuples(const vector<TupleType>& tuples) {
@@ -96,6 +111,6 @@ int main(int argc, char** argv) {
   Company company;
   ParsePbFromFile(argv[1], company);
   vector<TupleType> tuples;
-  runSelect(company, tuples);
+  runSelect({company}, tuples);
   printTuples(tuples);
 }
