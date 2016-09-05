@@ -496,6 +496,7 @@ void QueryEngine::process() {
   ASSERT(query.parse(), "Parsing select query failed");
   out << "/*" << endl;
   out << query.str() << endl << endl;
+  query.preProcess();
   queryGraph.calculateGraph(query);
   printPlan();
   out << "*/" << endl;

@@ -7,7 +7,7 @@
 
 %option reentrant noyywrap nounput batch debug noinput
 
-string  '[^\n']+'
+string  '[^\n']*'
 ws      [ \t]
 alpha   [A-Za-z]
 dig     [0-9]

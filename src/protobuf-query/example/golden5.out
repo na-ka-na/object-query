@@ -1,4 +1,4 @@
-employee      
---------------
-1: abc (false)
-2: def (true) 
+employee       | employee2         
+-------------- | ------------------
+1: abc (false) | 1 1: abc (false) 1
+2: def (true)  | 2 2: def (true) 1 

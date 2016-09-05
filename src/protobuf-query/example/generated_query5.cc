@@ -1,14 +1,16 @@
 /*
-SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') AS employee FROM ('argv[1]', 'Example1.Company')
+SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') AS employee, ((((STR(all_employees.id)+' ')+employee)+' ')+STR(founded)) AS employee2 FROM ('argv[1]', 'Example1.Company') WHERE (employee2 != '')
 
 for (1..1) {
   company = parseFromFile()
   for each all_employee in company.all_employees() {
+    if (!(((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded)) != '')) { continue; }
     tuples.add((((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))
+    tuples.add(((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded)))
     tuples.record()
   } //all_employee
 } //company
-tuples.print('(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')')
+tuples.print('(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')', '((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded))')
 */
 #include "example1.pb.h"
 #include "generated_common.h"
@@ -18,16 +20,23 @@ using namespace Example1;
 
 vector<string> header = {
   "employee",
+  "employee2",
 };
 using S0 = optional<bool>;   /*.active()*/
 using S1 = optional<int32>;  /*.id()*/
 using S2 = optional<string>; /*.name()*/
-using S3 = decltype(Plus(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(": ")), S2()), optional<string>(" (")), ToStr(S0())), optional<string>(")"))); /*(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')*/
-using TupleType = tuple<S3>;
+using S3 = optional<int32>;  /*.founded()*/
+using S4 = decltype(Plus(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(": ")), S2()), optional<string>(" (")), ToStr(S0())), optional<string>(")"))); /*(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')*/
+using S5 = decltype(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(": ")), S2()), optional<string>(" (")), ToStr(S0())), optional<string>(")"))), optional<string>(" ")), ToStr(S3()))); /*((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded))*/
+using TupleType = tuple<S4, S5>;
 
 void runSelect(const Company& company, vector<TupleType>& tuples) {
   if (company.ByteSize()) {
     for (int _=0; _<1; _++) {
+      S3 s3 = S3();
+      if(company.has_founded()) {
+        s3 = company.founded();
+      }
       if (company.all_employees_size() > 0) {
         for (const Employee& all_employee : company.all_employees()) {
           S1 s1 = S1();
@@ -42,15 +51,17 @@ void runSelect(const Company& company, vector<TupleType>& tuples) {
           if(all_employee.has_active()) {
             s0 = all_employee.active();
           }
-          S3 s3 = Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"));
-          tuples.emplace_back(s3);
+          if (!Ne(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), optional<string>(""))) { continue; }
+          S4 s4 = Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"));
+          S5 s5 = Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3));
+          tuples.emplace_back(s4, s5);
         }
       } else { // no all_employee
-        tuples.emplace_back(S3());
+        tuples.emplace_back(S4(), S5());
       }
     }
   } else { // no company
-    tuples.emplace_back(S3());
+    tuples.emplace_back(S4(), S5());
   }
 }
 
@@ -61,6 +72,7 @@ void printTuples(const vector<TupleType>& tuples) {
   }
   for (const TupleType& t : tuples) {
     sizes[0] = max(sizes[0], Stringify(get<0>(t)).size());
+    sizes[1] = max(sizes[1], Stringify(get<1>(t)).size());
   }
   cout << left;
   for (size_t i=0; i<header.size(); i++) {
@@ -73,6 +85,7 @@ void printTuples(const vector<TupleType>& tuples) {
   cout << endl;
   for(const TupleType& t : tuples) {
     cout <<          setw(sizes[0]) << Stringify(get<0>(t));
+    cout << " | " << setw(sizes[1]) << Stringify(get<1>(t));
     cout << endl;
   }
 }

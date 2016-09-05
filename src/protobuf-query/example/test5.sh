@@ -1,7 +1,7 @@
 #!/bin/bash
 source common_test.sh
 
-sql="SELECT STR(all_employees.id) + ': ' + all_employees.name + ' (' + STR(all_employees.active) + ')' AS employee FROM ('argv[1]', 'Example1.Company')"
+sql="SELECT STR(all_employees.id) + ': ' + all_employees.name + ' (' + STR(all_employees.active) + ')' AS employee, STR(all_employees.id) + ' ' + employee + ' ' + STR(founded) AS employee2 FROM ('argv[1]', 'Example1.Company') WHERE employee2 != ''"
 generated_file="generated_query5"
 proto_file="../../../src/protobuf-query/example_protos/example1.proto.gz"
 golden_out="golden5.out"

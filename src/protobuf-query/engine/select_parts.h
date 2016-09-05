@@ -50,6 +50,7 @@ struct BinaryExpr {
   BinaryExprOp op;
   shared_ptr<Expr> lhs;
   shared_ptr<Expr> rhs;
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string str() const;
@@ -58,6 +59,7 @@ struct BinaryExpr {
 struct UnaryExpr {
   UnaryExprOp op;
   shared_ptr<Expr> expr;
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string str() const;
@@ -66,6 +68,7 @@ struct UnaryExpr {
 struct Fn1CallExpr {
   Fn1 fn1;
   shared_ptr<Expr> expr;
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string str() const;
@@ -74,6 +77,7 @@ struct Fn1CallExpr {
 struct Fn3CallExpr {
   Fn3 fn3;
   shared_ptr<Expr> expr1, expr2, expr3;
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string str() const;
@@ -102,6 +106,7 @@ struct Expr {
   static Expr createPrimitive(long value);
   static Expr createPrimitive(double value);
   static Expr createPrimitive(bool value);
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string cppType(const map<string, string>& idDefaultsMap) const;
@@ -129,6 +134,7 @@ struct CompoundBooleanExpr {
   CompoundBooleanOp op;
   shared_ptr<BooleanExpr> lhs;
   shared_ptr<BooleanExpr> rhs;
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string str() const;
@@ -138,6 +144,7 @@ struct SimpleBooleanExpr {
   SimpleBooleanOp op;
   Expr lhs;
   Expr rhs;
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const map<string, string>& idMap) const;
   string str() const;
@@ -162,6 +169,7 @@ struct BooleanExpr {
   static BooleanExpr create(
       SimpleBooleanOp op, const Expr& lhs, const Expr& rhs);
   static BooleanExpr createNullary(bool isNull, const string& identifier);
+  void removeSelectAliases(const map<string, const Expr*>& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
   string code(const map<string, string>& idMap) const;

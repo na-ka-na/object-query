@@ -182,7 +182,7 @@ void Expr::getAllIdentifiers(set<string>& identifiers) const {
   case LONG: break;
   case DOUBLE: break;
   case BOOL: break;
-  default: ASSERT(false);
+  default: THROW("Unhandled Expr case");
   }
 }
 
@@ -201,7 +201,7 @@ void BooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
   case BOOLEAN: compoundBooleanExpr.getAllIdentifiers(identifiers); break;
   case SIMPLE: simpleBooleanExpr.getAllIdentifiers(identifiers); break;
   case NULLARY: nullaryBooleanExpr.getAllIdentifiers(identifiers); break;
-  default: ASSERT(false);
+  default: THROW("Unhandled BooleanExpr case");
   }
 }
 
@@ -481,4 +481,87 @@ string SelectField::code(const map<string, string>& idMap) const {
 
 string Expr::cppType(const map<string, string>& idDefaultsMap) const {
   return "decltype(" + code(idDefaultsMap) + ")";
+}
+
+void BinaryExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  lhs->removeSelectAliases(aliases);
+  rhs->removeSelectAliases(aliases);
+}
+
+void UnaryExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  expr->removeSelectAliases(aliases);
+}
+
+void Fn1CallExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  expr->removeSelectAliases(aliases);
+}
+
+void Fn3CallExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  expr1->removeSelectAliases(aliases);
+  expr2->removeSelectAliases(aliases);
+  expr3->removeSelectAliases(aliases);
+}
+
+void Expr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  switch (type) {
+  case BINARY_EXPR:   binaryExpr.removeSelectAliases(aliases); break;
+  case UNARY_EXPR:    unaryExpr.removeSelectAliases(aliases); break;
+  case FN1_CALL_EXPR: fn1CallExpr.removeSelectAliases(aliases); break;
+  case FN3_CALL_EXPR: fn3CallExpr.removeSelectAliases(aliases); break;
+  case IDENTIFIER:    {
+                       auto f = aliases.find(identifier);
+                       if (f != aliases.end()) {
+                         *this = *(f->second);
+                       }
+                      }
+                      break;
+  case STRING:        break;
+  case LONG:          break;
+  case DOUBLE:        break;
+  case BOOL:          break;
+  default:            THROW("Unhandled Expr case");
+  }
+}
+
+void CompoundBooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  lhs->removeSelectAliases(aliases);
+  rhs->removeSelectAliases(aliases);
+}
+
+void SimpleBooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  lhs.removeSelectAliases(aliases);
+  rhs.removeSelectAliases(aliases);
+}
+
+void BooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+  switch (type) {
+  case BOOLEAN: compoundBooleanExpr.removeSelectAliases(aliases); break;
+  case SIMPLE: simpleBooleanExpr.removeSelectAliases(aliases); break;
+  case NULLARY: break;
+  default: THROW("Unhandled BooleanExpr case");
+  }
+}
+
+void SelectQuery::removeSelectAliases() {
+  map<string, const Expr*> aliases;
+  for (SelectField& selectField : selectStmt.selectFields) {
+    if (!aliases.empty()) {
+      selectField.expr.removeSelectAliases(aliases);
+    }
+    if (!selectField.alias.empty()) {
+      aliases.emplace(selectField.alias, &(selectField.expr));
+    }
+  }
+  if (!aliases.empty()) {
+    if (whereStmt.booleanExpr) {
+      whereStmt.booleanExpr->removeSelectAliases(aliases);
+    }
+    for (OrderByField& orderByField : orderByStmt.orderByFields) {
+      orderByField.expr.removeSelectAliases(aliases);
+    }
+  }
+}
+
+void SelectQuery::preProcess() {
+  removeSelectAliases();
 }
