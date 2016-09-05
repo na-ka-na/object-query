@@ -20,6 +20,8 @@ string Field::type() const {
   if (lastPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
     const Descriptor* msgType = lastPart->message_type();
     return msgType->name();
+  } else if (lastPart->type() == FieldDescriptor::Type::TYPE_ENUM) {
+    return "string";
   } else {
     return lastPart->cpp_type_name();
   }
@@ -29,6 +31,11 @@ string Field::accessor(const string& objName) const {
   string str = objName;
   for (const FieldDescriptor* part : fieldParts) {
     str += "." + part->name() + "()";
+  }
+  if (!fieldParts.empty() &&
+      (fieldParts.back()->type() == FieldDescriptor::Type::TYPE_ENUM)) {
+    const EnumDescriptor* enumType = fieldParts.back()->enum_type();
+    str = enumType->name() + "_Name(" + str + ")";
   }
   return str;
 }
