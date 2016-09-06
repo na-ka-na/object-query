@@ -1,11 +1,139 @@
 
-#include <list>
+#include <regex>
 #include <algorithm>
 #include "utils.h"
 #include "query_engine.h"
 
 using namespace std;
 using namespace google::protobuf;
+
+void FieldPart::parseFrom(const Descriptor& parentDescriptor,
+                          const string& partName) {
+  descriptor = parentDescriptor.FindFieldByName(partName);
+  if (descriptor != nullptr) {
+    part_type = NORMAL;
+    return;
+  }
+  static std::regex size_regex("^(.+)_size$");
+  std::smatch size_match;
+  if (std::regex_match(partName, size_match, size_regex)) {
+    std::ssub_match base_match = size_match[1];
+    string base_part = base_match.str();
+    descriptor = parentDescriptor.FindFieldByName(base_part);
+    if (descriptor != nullptr) {
+      part_type = SIZE;
+      return;
+    }
+  }
+  static std::regex has_regex("^has_(.+)$");
+  std::smatch has_match;
+  if (std::regex_match(partName, has_match, has_regex)) {
+    std::ssub_match base_match = has_match[1];
+    string base_part = base_match.str();
+    descriptor = parentDescriptor.FindFieldByName(base_part);
+    if (descriptor != nullptr) {
+      part_type = HAS;
+      return;
+    }
+  }
+  THROW("No fieldPart by name", partName);
+}
+
+bool FieldPart::operator<(const FieldPart& other) const {
+  if (part_type < other.part_type) {
+    return true;
+  } else if (part_type == other.part_type) {
+    return descriptor < other.descriptor;
+  } else {
+    return false;
+  }
+}
+
+bool FieldPart::operator==(const FieldPart& other) const {
+  return (part_type == other.part_type) && (descriptor == other.descriptor);
+}
+
+string FieldPart::name() const {
+  switch (part_type) {
+  case NORMAL : return descriptor->name();
+  case SIZE : return descriptor->name() + "_size";
+  case HAS : return "has_" + descriptor->name();
+  default : THROW("Unhandled type");
+  }
+}
+
+FieldDescriptor::Type FieldPart::type() const {
+  switch (part_type) {
+  case NORMAL : return descriptor->type();
+  case SIZE : return FieldDescriptor::Type::TYPE_INT32;
+  case HAS : return FieldDescriptor::Type::TYPE_BOOL;
+  default : THROW("Unhandled type");
+  }
+}
+
+string FieldPart::type_name() const {
+  return FieldDescriptor::TypeName(type());
+}
+
+FieldDescriptor::CppType FieldPart::cpp_type() const {
+  return FieldDescriptor::TypeToCppType(type());
+}
+
+string FieldPart::cpp_type_name() const {
+  return FieldDescriptor::CppTypeName(cpp_type());
+}
+
+bool FieldPart::is_message() const {
+  return type() == FieldDescriptor::Type::TYPE_MESSAGE;
+}
+
+const Descriptor* FieldPart::message_descriptor() const {
+  ASSERT(is_message());
+  return descriptor->message_type();
+}
+
+bool FieldPart::is_repeated() const {
+  return (part_type == NORMAL) &&
+      (descriptor->label() == FieldDescriptor::LABEL_REPEATED);
+}
+
+bool FieldPart::is_enum() const {
+  return type() == FieldDescriptor::Type::TYPE_ENUM;
+}
+
+const EnumDescriptor* FieldPart::enum_descriptor() const {
+  ASSERT(is_enum());
+  return descriptor->enum_type();
+}
+
+
+string FieldPart::code_type() const {
+  if (is_message()) {
+    return message_descriptor()->name();
+  } else if (is_enum()) {
+    return "string";
+  } else {
+    return cpp_type_name();
+  }
+}
+
+string FieldPart::accessor() const {
+  switch (part_type) {
+  case NORMAL : return descriptor->name() + "()";
+  case SIZE : return descriptor->name() + "_size()";
+  case HAS : return "has_" + descriptor->name() + "()";
+  default : THROW("Unhandled type");
+  }
+}
+
+bool FieldPart::needs_has_check() const {
+  return part_type == NORMAL;
+}
+
+string FieldPart::has_accessor() const {
+  ASSERT(needs_has_check());
+  return "has_" + descriptor->name() + "()";
+}
 
 bool Field::operator<(const Field& other) const {
   return fieldParts < other.fieldParts;
@@ -15,39 +143,37 @@ bool Field::operator==(const Field& other) const {
   return fieldParts == other.fieldParts;
 }
 
-string Field::type() const {
+string Field::code_type() const {
   ASSERT(!fieldParts.empty(), "Can't determine type of empty field");
-  const FieldDescriptor* lastPart = fieldParts.back();
-  if (lastPart->type() == FieldDescriptor::Type::TYPE_MESSAGE) {
-    const Descriptor* msgType = lastPart->message_type();
-    return msgType->name();
-  } else if (lastPart->type() == FieldDescriptor::Type::TYPE_ENUM) {
-    return "string";
-  } else {
-    return lastPart->cpp_type_name();
-  }
+  return fieldParts.back().code_type();
 }
 
 string Field::accessor(const string& objName) const {
   string str = objName;
-  str += joinVec<const FieldDescriptor*>(
-      ".", fieldParts,
-      [] (const FieldDescriptor* part) {return part->name() + "()";});
-  if (!fieldParts.empty() &&
-      (fieldParts.back()->type() == FieldDescriptor::Type::TYPE_ENUM)) {
-    const EnumDescriptor* enumType = fieldParts.back()->enum_type();
-    str = enumType->name() + "_Name(" + str + ")";
+  str += joinVec<FieldPart>(".", fieldParts,
+      [] (const FieldPart& part) {return part.accessor();});
+  if (!fieldParts.empty() && fieldParts.back().is_enum()) {
+    str = fieldParts.back().enum_descriptor()->name() + "_Name(" + str + ")";
   }
   return str;
 }
 
-string Field::hasAccessor(const string& objName, uint32_t end) const {
-  string str = objName;
-  for (uint32_t i=0; i<end; i++) {
-    str += string(i==0 ? "" : ".") + ((i==(end-1)) ? "has_" : "") +
-           fieldParts[i]->name() + "()";
+string Field::has_check(const string& objName) const {
+  vector<string> checks;
+  for (uint32_t i=0; i<fieldParts.size(); i++) {
+    if (!fieldParts[i].needs_has_check()) {
+      continue;
+    }
+    string check = objName;
+    for (uint32_t j=0; j<i; j++) {
+      if (j != 0) check += ".";
+      check += fieldParts[j].accessor();
+    }
+    if (i != 0) check += ".";
+    check += fieldParts[i].has_accessor();
+    checks.push_back(check);
   }
-  return str;
+  return joinVec(" && ", checks, string2str);
 }
 
 void Node::walkNode(Node* parent,
@@ -102,28 +228,27 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
   Field field;
   vector<string> selectFieldParts = splitString(identifier, '.');
   for (size_t j=0; j<selectFieldParts.size(); j++) {
-    const FieldDescriptor* fieldPart =
-        parentDescriptor->FindFieldByName(selectFieldParts[j]);
-    ASSERT(fieldPart != nullptr, "No fieldPart by name", selectFieldParts[j]);
+    FieldPart fieldPart;
+    fieldPart.parseFrom(*parentDescriptor, selectFieldParts[j]);
     field.fieldParts.push_back(fieldPart);
     if (j != (selectFieldParts.size()-1)) {
-      ASSERT(fieldPart->type() == FieldDescriptor::Type::TYPE_MESSAGE,
+      ASSERT(fieldPart.is_message(),
              "FieldPart", selectFieldParts[j], "expected to be message but is",
-             fieldPart->type_name());
-      if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
+             fieldPart.type_name());
+      if (fieldPart.is_repeated()) {
         Node& child = parent->children[field];
         child.type = REPEATED_MESSAGE;
-        child.objName = makeSingular(fieldPart->name());
+        child.objName = makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
         field.fieldParts.clear();
       }
-      parentDescriptor = fieldPart->message_type();
+      parentDescriptor = fieldPart.message_descriptor();
     } else {
-      if (fieldPart->label() == FieldDescriptor::LABEL_REPEATED) {
+      if (fieldPart.is_repeated()) {
         Node& child = parent->children[field];
-        child.type = REPEATED_PRIMITIVE;
-        child.objName = makeSingular(fieldPart->name());
+        child.type = fieldPart.is_message() ? REPEATED_MESSAGE : REPEATED_PRIMITIVE;
+        child.objName = makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
       }
@@ -297,7 +422,7 @@ void QueryEngine::printCode() {
     fieldTypeMap[field] = "S" + to_string(varIdx);
     fieldDefaultMap[field] = "S" + to_string(varIdx) + "()";
     varIdx++;
-    string type = "optional<" + field.type() + ">";
+    string type = "optional<" + field.code_type() + ">";
     string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
     out << "using " << fieldTypeMap[field] << " = " << type << ";"
         << spaces << " /*" << field.accessor(".") << "*/" << endl;
@@ -368,7 +493,7 @@ void QueryEngine::printCode() {
           << "* " << node.objName << " : Iterators::mk_iterator(&"
           << QueryGraph::makePlural(queryGraph.root.objName) << ")) {" << endl;
     } else {
-      out << ind << "for (const " << node.repeatedField.type() << "* "
+      out << ind << "for (const " << node.repeatedField.code_type() << "* "
           << node.objName << " : Iterators::mk_iterator(" << parent->objName
           << " ? &" << node.repeatedField.accessor(parent->objName + "->")
           << " : nullptr)) {" << endl;
@@ -383,12 +508,9 @@ void QueryEngine::printCode() {
             << node.objName << ";" << endl;
         out << ind << "}" << endl;
       } else {
-        vector<string> checks = {node.objName};
-        for (uint32_t i=0; i<field.fieldParts.size(); i++) {
-          checks.push_back(field.hasAccessor(node.objName + "->", i+1));
-        }
-        out << ind << "if (" << joinVec<string>(" && ", checks, string2str)
-            << ") {" << endl;
+        string checks = field.has_check(node.objName + "->");
+        out << ind << "if (" << node.objName
+            << (checks.empty() ? "" : " && " + checks) << ") {" << endl;
         out << ind << "  " << fieldVarMap[field] << " = "
             << field.accessor(node.objName + "->") << ";" << endl;
         out << ind << "}" << endl;

@@ -21,14 +21,40 @@ struct Proto {
   static void initProto(const string& protoName, Proto& proto);
 };
 
+struct FieldPart {
+  enum Type { NORMAL, SIZE, HAS};
+  Type part_type;
+  const FieldDescriptor* descriptor;
+
+  void parseFrom(const Descriptor& parentDescriptor, const string& partName);
+
+  bool operator<(const FieldPart& other) const;
+  bool operator==(const FieldPart& other) const;
+
+  string name() const;
+  FieldDescriptor::Type type() const;
+  string type_name() const;
+  FieldDescriptor::CppType cpp_type() const;
+  string cpp_type_name() const;
+  bool is_message() const;
+  const Descriptor* message_descriptor() const;
+  bool is_repeated() const;
+  bool is_enum() const;
+  const EnumDescriptor* enum_descriptor() const;
+  string code_type() const;
+  string accessor() const;
+  bool needs_has_check() const;
+  string has_accessor() const;
+};
+
 struct Field {
-  vector<const FieldDescriptor*> fieldParts;
+  vector<FieldPart> fieldParts;
 
   bool operator<(const Field& other) const;
   bool operator==(const Field& other) const;
-  string type() const;
+  string code_type() const;
   string accessor(const string& objName) const;
-  string hasAccessor(const string& objName, uint32_t end) const;
+  string has_check(const string& objName) const;
 };
 
 enum NodeType {
