@@ -29,41 +29,22 @@ using S1 = optional<string>; /*.name()*/
 using TupleType = tuple<S1, S0>;
 
 void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-for (int _=0; _<1; _++) { // dummy loop
-  if (companies.size() > 0) {
-    for (const Company& company: companies) {
-      if (company.all_employees_size() > 0) {
-        for (const Employee& all_employee : company.all_employees()) {
-          S1 s1 = S1();
-          if(all_employee.has_name()) {
-            s1 = all_employee.name();
-          }
-          if (all_employee.active_direct_reports_size() > 0) {
-            for (const int32& active_direct_report : all_employee.active_direct_reports()) {
-              S0 s0 = active_direct_report;
-              if (!IsNotNull(s0)) { continue; }
-              tuples.emplace_back(s1, s0);
-            }
-          } else { // no active_direct_report
-            S0 s0 = S0();
-            if (!IsNotNull(s0)) { continue; }
-            tuples.emplace_back(s1, s0);
-          }
-        }
-      } else { // no all_employee
-        S1 s1 = S1();
+  for (const Company* company : Iterators::mk_iterator(&companies)) {
+    for (const Employee* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+      S1 s1 = S1();
+      if (all_employee && all_employee->has_name()) {
+        s1 = all_employee->name();
+      }
+      for (const int32* active_direct_report : Iterators::mk_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
         S0 s0 = S0();
+        if (active_direct_report) {
+          s0 = *active_direct_report;
+        }
         if (!IsNotNull(s0)) { continue; }
         tuples.emplace_back(s1, s0);
       }
     }
-  } else { // no company
-    S1 s1 = S1();
-    S0 s0 = S0();
-    if (!IsNotNull(s0)) { continue; }
-    tuples.emplace_back(s1, s0);
   }
-}
 }
 
 void printTuples(const vector<TupleType>& tuples) {

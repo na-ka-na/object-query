@@ -33,53 +33,30 @@ using TupleType = tuple<S4, S5>;
 std::regex r6(".*true.*", std::regex::optimize);
 
 void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-for (int _=0; _<1; _++) { // dummy loop
-  if (companies.size() > 0) {
-    for (const Company& company: companies) {
-      S3 s3 = S3();
-      if(company.has_founded()) {
-        s3 = company.founded();
-      }
-      if (company.all_employees_size() > 0) {
-        for (const Employee& all_employee : company.all_employees()) {
-          S1 s1 = S1();
-          if(all_employee.has_id()) {
-            s1 = all_employee.id();
-          }
-          S2 s2 = S2();
-          if(all_employee.has_name()) {
-            s2 = all_employee.name();
-          }
-          S0 s0 = S0();
-          if(all_employee.has_active()) {
-            s0 = all_employee.active();
-          }
-          if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), r6)) { continue; }
-          S4 s4 = Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"));
-          S5 s5 = Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3));
-          tuples.emplace_back(s4, s5);
-        }
-      } else { // no all_employee
-        S1 s1 = S1();
-        S2 s2 = S2();
-        S0 s0 = S0();
-        S4 s4 = S4();
-        S5 s5 = S5();
-        if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), r6)) { continue; }
-        tuples.emplace_back(s4, s5);
-      }
-    }
-  } else { // no company
+  for (const Company* company : Iterators::mk_iterator(&companies)) {
     S3 s3 = S3();
-    S1 s1 = S1();
-    S2 s2 = S2();
-    S0 s0 = S0();
-    S4 s4 = S4();
-    S5 s5 = S5();
-    if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), r6)) { continue; }
-    tuples.emplace_back(s4, s5);
+    if (company && company->has_founded()) {
+      s3 = company->founded();
+    }
+    for (const Employee* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+      S1 s1 = S1();
+      if (all_employee && all_employee->has_id()) {
+        s1 = all_employee->id();
+      }
+      S2 s2 = S2();
+      if (all_employee && all_employee->has_name()) {
+        s2 = all_employee->name();
+      }
+      S0 s0 = S0();
+      if (all_employee && all_employee->has_active()) {
+        s0 = all_employee->active();
+      }
+      if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), r6)) { continue; }
+      S4 s4 = Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"));
+      S5 s5 = Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3));
+      tuples.emplace_back(s4, s5);
+    }
   }
-}
 }
 
 void printTuples(const vector<TupleType>& tuples) {

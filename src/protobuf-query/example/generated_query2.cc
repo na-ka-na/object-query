@@ -33,62 +33,32 @@ using S3 = optional<float>;  /*.financial().quarterly_profits()*/
 using TupleType = tuple<S1, S2>;
 
 void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-for (int _=0; _<1; _++) { // dummy loop
-  if (companies.size() > 0) {
-    for (const Company& company: companies) {
-      if (company.financial().quarterly_profits_size() > 0) {
-        for (const float& quarterly_profit : company.financial().quarterly_profits()) {
-          S3 s3 = quarterly_profit;
-          if (!Gt(s3, optional<int64>(0))) { continue; }
-          if (company.all_employees_size() > 0) {
-            for (const Employee& all_employee : company.all_employees()) {
-              S1 s1 = S1();
-              if(all_employee.has_id()) {
-                s1 = all_employee.id();
-              }
-              S2 s2 = S2();
-              if(all_employee.has_name()) {
-                s2 = all_employee.name();
-              }
-              S0 s0 = S0();
-              if(all_employee.has_active()) {
-                s0 = all_employee.active();
-              }
-              if (!IsNotNull(s1)) { continue; }
-              if (!((Eq(s2, optional<string>("def")) && Eq(s0, optional<bool>(true))) || Eq(s2, optional<string>("abc")))) { continue; }
-              tuples.emplace_back(s1, s2);
-            }
-          } else { // no all_employee
-            S1 s1 = S1();
-            S2 s2 = S2();
-            S0 s0 = S0();
-            if (!IsNotNull(s1)) { continue; }
-            if (!((Eq(s2, optional<string>("def")) && Eq(s0, optional<bool>(true))) || Eq(s2, optional<string>("abc")))) { continue; }
-            tuples.emplace_back(s1, s2);
-          }
-        }
-      } else { // no quarterly_profit
-        S3 s3 = S3();
+  for (const Company* company : Iterators::mk_iterator(&companies)) {
+    for (const float* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
+      S3 s3 = S3();
+      if (quarterly_profit) {
+        s3 = *quarterly_profit;
+      }
+      if (!Gt(s3, optional<int64>(0))) { continue; }
+      for (const Employee* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
         S1 s1 = S1();
+        if (all_employee && all_employee->has_id()) {
+          s1 = all_employee->id();
+        }
         S2 s2 = S2();
+        if (all_employee && all_employee->has_name()) {
+          s2 = all_employee->name();
+        }
         S0 s0 = S0();
+        if (all_employee && all_employee->has_active()) {
+          s0 = all_employee->active();
+        }
         if (!IsNotNull(s1)) { continue; }
         if (!((Eq(s2, optional<string>("def")) && Eq(s0, optional<bool>(true))) || Eq(s2, optional<string>("abc")))) { continue; }
-        if (!Gt(s3, optional<int64>(0))) { continue; }
         tuples.emplace_back(s1, s2);
       }
     }
-  } else { // no company
-    S3 s3 = S3();
-    S1 s1 = S1();
-    S2 s2 = S2();
-    S0 s0 = S0();
-    if (!IsNotNull(s1)) { continue; }
-    if (!((Eq(s2, optional<string>("def")) && Eq(s0, optional<bool>(true))) || Eq(s2, optional<string>("abc")))) { continue; }
-    if (!Gt(s3, optional<int64>(0))) { continue; }
-    tuples.emplace_back(s1, s2);
   }
-}
 }
 
 void printTuples(const vector<TupleType>& tuples) {

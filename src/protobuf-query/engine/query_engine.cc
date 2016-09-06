@@ -30,9 +30,9 @@ string Field::type() const {
 
 string Field::accessor(const string& objName) const {
   string str = objName;
-  for (const FieldDescriptor* part : fieldParts) {
-    str += "." + part->name() + "()";
-  }
+  str += joinVec<const FieldDescriptor*>(
+      ".", fieldParts,
+      [] (const FieldDescriptor* part) {return part->name() + "()";});
   if (!fieldParts.empty() &&
       (fieldParts.back()->type() == FieldDescriptor::Type::TYPE_ENUM)) {
     const EnumDescriptor* enumType = fieldParts.back()->enum_type();
@@ -44,17 +44,8 @@ string Field::accessor(const string& objName) const {
 string Field::hasAccessor(const string& objName, uint32_t end) const {
   string str = objName;
   for (uint32_t i=0; i<end; i++) {
-    str += string(".") + ((i==(end-1)) ? "has_" : "") +
+    str += string(i==0 ? "" : ".") + ((i==(end-1)) ? "has_" : "") +
            fieldParts[i]->name() + "()";
-  }
-  return str;
-}
-
-string Field::sizeAccessor(const string& objName) const {
-  string str = objName;
-  for (uint32_t i=0; i<fieldParts.size(); i++) {
-    str += string(".") + fieldParts[i]->name() +
-           ((i==(fieldParts.size()-1)) ? "_size" : "") + "()";
   }
   return str;
 }
@@ -235,7 +226,7 @@ void QueryEngine::printPlan() {
           << " = parseFromFile()" << endl;
     } else {
       out << string(indent, ' ') << "for each " << node.objName << " in "
-          << node.repeatedField.accessor(parent->objName) << " {" << endl;
+          << node.repeatedField.accessor(parent->objName + ".") << " {" << endl;
     }
     indent+=2;
     for (const BooleanExpr* expr : node.whereClauses) {
@@ -309,7 +300,7 @@ void QueryEngine::printCode() {
     string type = "optional<" + field.type() + ">";
     string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
     out << "using " << fieldTypeMap[field] << " = " << type << ";"
-        << spaces << " /*" << field.accessor("") << "*/" << endl;
+        << spaces << " /*" << field.accessor(".") << "*/" << endl;
     cgr.idVarMap[id] = fieldVarMap[field];
     cgr.idDefaultMap[id] = fieldDefaultMap[field];
   }
@@ -367,41 +358,39 @@ void QueryEngine::printCode() {
       << queryGraph.proto.defaultInstance->GetDescriptor()->name() << ">& "
       << QueryGraph::makePlural(queryGraph.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
-  out << "for (int _=0; _<1; _++) { // dummy loop" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
   bool allSelectAndOrderByFieldsProcessed = false;
   StartNodeFn startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     string ind = string(indent+2, ' ');
     if (!parent) { //root
-      out << ind << "if (" << QueryGraph::makePlural(queryGraph.root.objName)
-          << ".size() > 0) {" << endl;
-      out << ind << "  for (const "
+      out << ind << "for (const "
           << queryGraph.proto.defaultInstance->GetDescriptor()->name()
-          << "& " << node.objName << ": "
-          << QueryGraph::makePlural(queryGraph.root.objName)  << ") {" << endl;
+          << "* " << node.objName << " : Iterators::mk_iterator(&"
+          << QueryGraph::makePlural(queryGraph.root.objName) << ")) {" << endl;
     } else {
-      out << ind << "if (" << node.repeatedField.sizeAccessor(parent->objName)
-          << " > 0) {" << endl;
-      out << ind << "  for (const " << node.repeatedField.type() << "& "
-          << node.objName << " : " << node.repeatedField.accessor(parent->objName)
-          << ") {" << endl;
+      out << ind << "for (const " << node.repeatedField.type() << "* "
+          << node.objName << " : Iterators::mk_iterator(" << parent->objName
+          << " ? &" << node.repeatedField.accessor(parent->objName + "->")
+          << " : nullptr)) {" << endl;
     }
-    indent+=4;
-    ind = string(indent+2, ' ');
+    ind += "  ";
     for (const Field& field : node.allFields) {
-      out << ind << fieldTypeMap[field] << " "
-          << fieldVarMap[field] << " = "
-          << ((node.type == REPEATED_PRIMITIVE) ? node.objName :
-              fieldDefaultMap[field]) << ";" << endl;
-      if (node.type != REPEATED_PRIMITIVE) {
-        vector<string> checks;
+      out << ind << fieldTypeMap[field] << " " << fieldVarMap[field] << " = "
+          << fieldDefaultMap[field] << ";" << endl;
+      if (node.type == REPEATED_PRIMITIVE) {
+        out << ind << "if (" << node.objName << ") {" << endl;
+        out << ind << "  " << fieldVarMap[field] << " = *"
+            << node.objName << ";" << endl;
+        out << ind << "}" << endl;
+      } else {
+        vector<string> checks = {node.objName};
         for (uint32_t i=0; i<field.fieldParts.size(); i++) {
-          checks.push_back(field.hasAccessor(node.objName, i+1));
+          checks.push_back(field.hasAccessor(node.objName + "->", i+1));
         }
-        out << ind << "if(" << joinVec<string>(" && ", checks, string2str)
+        out << ind << "if (" << joinVec<string>(" && ", checks, string2str)
             << ") {" << endl;
         out << ind << "  " << fieldVarMap[field] << " = "
-            << field.accessor(node.objName) << ";" << endl;
+            << field.accessor(node.objName + "->") << ";" << endl;
         out << ind << "}" << endl;
       }
     }
@@ -427,45 +416,11 @@ void QueryEngine::printCode() {
       allSelectAndOrderByFieldsProcessed = true;
     }
   };
-  set<Field> endedFieldSet;
-  vector<const Expr*> endedSelectAndOrderByFieldSet;
-  vector<const BooleanExpr*> endedWhereClauses;
   EndNodeFn endNodeFn = [&](int indent, const Node& node) {
     string ind = string(indent+2, ' ');
-    out << ind << "  }" << endl;
-    out << ind << "} else { // no " << node.objName << endl;
-    for (const Field& field : node.allFields) {
-      endedFieldSet.insert(field);
-    }
-    for (const Expr* expr : node.selectAndOrderByExprs) {
-      endedSelectAndOrderByFieldSet.push_back(expr);
-    }
-    for (const BooleanExpr* whereClause : node.whereClauses) {
-      endedWhereClauses.push_back(whereClause);
-    }
-    for (const Field& field : endedFieldSet) {
-      out << ind << "  " << fieldTypeMap[field] << " " << fieldVarMap[field]
-          << " = " << fieldDefaultMap[field] << ";" << endl;
-    }
-    for (const Expr* expr : endedSelectAndOrderByFieldSet) {
-      if (expr->type != IDENTIFIER) {
-        out << ind << "  " << exprTypeMap[expr->str()] << " "
-            << exprVarMap[expr->str()] << " = " << exprDefaultMap[expr->str()]
-            << ";" << endl;
-      }
-    }
-    for (const BooleanExpr* whereClause : endedWhereClauses) {
-      out << ind << "  if (!" << whereClause->code(cgr)
-          << ") { continue; }" << endl;
-    }
-    string tuplesList = joinVec<const Expr*>(
-        ", ", selectAndOrderByExprs,
-        [&](const Expr* expr) {return exprVarMap[expr->str()];});
-    out << ind << "  tuples.emplace_back(" + tuplesList + ");" << endl;
     out << ind << "}" << endl;
   };
-  Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 4);
-  out << "}" << endl;
+  Node::walkNode(queryGraph.root, startNodeFn, endNodeFn);
   out << "}" << endl;
 
   if (!query.orderByStmt.orderByFields.empty()) {

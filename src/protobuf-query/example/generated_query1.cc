@@ -52,96 +52,51 @@ using S7 = optional<int32>;  /*.founded()*/
 using TupleType = tuple<S5, S6, S2, S3, S0, S1, S7, S4>;
 
 void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-for (int _=0; _<1; _++) { // dummy loop
-  if (companies.size() > 0) {
-    for (const Company& company: companies) {
-      S7 s7 = S7();
-      if(company.has_founded()) {
-        s7 = company.founded();
+  for (const Company* company : Iterators::mk_iterator(&companies)) {
+    S7 s7 = S7();
+    if (company && company->has_founded()) {
+      s7 = company->founded();
+    }
+    for (const int32* board_of_director : Iterators::mk_iterator(company ? &company->board_of_directors() : nullptr)) {
+      S4 s4 = S4();
+      if (board_of_director) {
+        s4 = *board_of_director;
       }
-      if (company.board_of_directors_size() > 0) {
-        for (const int32& board_of_director : company.board_of_directors()) {
-          S4 s4 = board_of_director;
-          if (company.financial().quarterly_profits_size() > 0) {
-            for (const float& quarterly_profit : company.financial().quarterly_profits()) {
-              S5 s5 = quarterly_profit;
-              if (company.financial().quarterly_revenues_size() > 0) {
-                for (const float& quarterly_revenue : company.financial().quarterly_revenues()) {
-                  S6 s6 = quarterly_revenue;
-                  if (company.all_employees_size() > 0) {
-                    for (const Employee& all_employee : company.all_employees()) {
-                      S2 s2 = S2();
-                      if(all_employee.has_id()) {
-                        s2 = all_employee.id();
-                      }
-                      S3 s3 = S3();
-                      if(all_employee.has_name()) {
-                        s3 = all_employee.name();
-                      }
-                      S0 s0 = S0();
-                      if(all_employee.has_active()) {
-                        s0 = all_employee.active();
-                      }
-                      if (all_employee.active_direct_reports_size() > 0) {
-                        for (const int32& active_direct_report : all_employee.active_direct_reports()) {
-                          S1 s1 = active_direct_report;
-                          tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
-                        }
-                      } else { // no active_direct_report
-                        S1 s1 = S1();
-                        tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
-                      }
-                    }
-                  } else { // no all_employee
-                    S2 s2 = S2();
-                    S3 s3 = S3();
-                    S0 s0 = S0();
-                    S1 s1 = S1();
-                    tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
-                  }
-                }
-              } else { // no quarterly_revenue
-                S2 s2 = S2();
-                S3 s3 = S3();
-                S0 s0 = S0();
-                S1 s1 = S1();
-                S6 s6 = S6();
-                tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
-              }
-            }
-          } else { // no quarterly_profit
+      for (const float* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
+        S5 s5 = S5();
+        if (quarterly_profit) {
+          s5 = *quarterly_profit;
+        }
+        for (const float* quarterly_revenue : Iterators::mk_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
+          S6 s6 = S6();
+          if (quarterly_revenue) {
+            s6 = *quarterly_revenue;
+          }
+          for (const Employee* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
             S2 s2 = S2();
+            if (all_employee && all_employee->has_id()) {
+              s2 = all_employee->id();
+            }
             S3 s3 = S3();
+            if (all_employee && all_employee->has_name()) {
+              s3 = all_employee->name();
+            }
             S0 s0 = S0();
-            S1 s1 = S1();
-            S5 s5 = S5();
-            S6 s6 = S6();
-            tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
+            if (all_employee && all_employee->has_active()) {
+              s0 = all_employee->active();
+            }
+            for (const int32* active_direct_report : Iterators::mk_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
+              S1 s1 = S1();
+              if (active_direct_report) {
+                s1 = *active_direct_report;
+              }
+              tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
+            }
           }
         }
-      } else { // no board_of_director
-        S2 s2 = S2();
-        S3 s3 = S3();
-        S0 s0 = S0();
-        S1 s1 = S1();
-        S4 s4 = S4();
-        S5 s5 = S5();
-        S6 s6 = S6();
-        tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
       }
     }
-  } else { // no company
-    S2 s2 = S2();
-    S3 s3 = S3();
-    S0 s0 = S0();
-    S1 s1 = S1();
-    S7 s7 = S7();
-    S4 s4 = S4();
-    S5 s5 = S5();
-    S6 s6 = S6();
-    tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
   }
-}
 }
 
 void printTuples(const vector<TupleType>& tuples) {

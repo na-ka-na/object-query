@@ -29,7 +29,6 @@ struct Field {
   string type() const;
   string accessor(const string& objName) const;
   string hasAccessor(const string& objName, uint32_t end) const;
-  string sizeAccessor(const string& objName) const;
 };
 
 enum NodeType {

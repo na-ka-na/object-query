@@ -11,6 +11,7 @@
 #include <regex>
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/message.h>
+#include <google/protobuf/repeated_field.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/gzip_stream.h>
 #include "global_include.h"
@@ -172,3 +173,125 @@ inline int Compare(const optional<T>& t1, const optional<T>& t2) {
     return Compare(*t1, *t2);
   }
 }
+
+template<typename T, typename It>
+class MyRangeIterator {
+public:
+  class ConstIterator {
+  public:
+    static ConstIterator mk_normal(It* curr) {
+      ConstIterator it;
+      it.curr = curr;
+      return it;
+    }
+
+    static ConstIterator mk_singular(bool begin) {
+      ConstIterator it;
+      it.singular = begin ? 1 : 2;
+      return it;
+    }
+
+    inline ConstIterator& operator++() {
+      if (singular == 0) {
+        ++(*curr);
+      } else {
+        singular = 2;
+      }
+      return *this;
+    }
+
+    inline bool operator==(const ConstIterator& other) const {
+      if (singular == 0) {
+        return (other.singular == 0) && (*curr == *(other.curr));
+      } else {
+        return singular == other.singular;
+      }
+    }
+
+    inline bool operator!=(const ConstIterator& other) const {
+      return !(*this == other);
+    }
+
+    inline const T* operator*() const {
+      if (singular == 0) {
+        return &**curr;
+      } else {
+        return nullptr;
+      }
+    }
+
+    friend std::ostream& operator<< (std::ostream& stream, const ConstIterator& it) {
+      if (it.singular == 0) {
+        stream << *it;
+      } else {
+        stream << ((it.singular == 1) ? "singular_begin" : "singular_end");
+      }
+      return stream;
+    }
+
+  private:
+    It* curr = nullptr;
+    int singular = 0; // 0 for normal case, 1 for begin, 2 for end
+  };
+
+  MyRangeIterator() {}
+
+  MyRangeIterator(It&& orig_begin, It&& orig_end) :
+      orig_begin(orig_begin), orig_end(orig_end) {}
+
+  ConstIterator begin() const {
+    return (orig_begin != orig_end)
+        ? ConstIterator::mk_normal((It*) &orig_begin)
+        : ConstIterator::mk_singular(true);
+  }
+
+  ConstIterator end() const {
+    return (orig_begin != orig_end)
+        ? ConstIterator::mk_normal((It*) &orig_end)
+        : ConstIterator::mk_singular(false);
+  }
+
+private:
+  It orig_begin;
+  It orig_end;
+};
+
+class Iterators {
+public:
+  template<typename T>
+  static
+  MyRangeIterator<T, typename ::google::protobuf::RepeatedField<T>::const_iterator>
+  mk_iterator(const ::google::protobuf::RepeatedField<T>* rf) {
+    if (rf) {
+      return MyRangeIterator<T, typename ::google::protobuf::RepeatedField<T>::const_iterator>(
+          rf->begin(), rf->end());
+    } else {
+      return MyRangeIterator<T, typename ::google::protobuf::RepeatedField<T>::const_iterator>();
+    }
+  }
+
+  template<typename T>
+  static
+  MyRangeIterator<T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>
+  mk_iterator(const ::google::protobuf::RepeatedPtrField<T>* rpf) {
+    if (rpf) {
+      return MyRangeIterator<T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>(
+          rpf->begin(), rpf->end());
+    } else {
+      return MyRangeIterator<T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>();
+    }
+  }
+
+  template<typename T>
+  static
+  MyRangeIterator<T, typename vector<T>::const_iterator>
+  mk_iterator(const vector<T>* v) {
+    if (v) {
+      return MyRangeIterator<T, typename vector<T>::const_iterator>(
+          v->begin(), v->end());
+    } else {
+      return MyRangeIterator<T, typename vector<T>::const_iterator>();
+    }
+  }
+};
+
