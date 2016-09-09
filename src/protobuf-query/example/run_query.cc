@@ -6,13 +6,14 @@
 using namespace std;
 
 void Proto::initProto(const string& protoName, Proto& proto) {
-  if (protoName == "Example1.Company") {
-    static Example1::Company defaultInstance;
-    proto.defaultInstance = &defaultInstance;
+  const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
+  proto.protoDescriptor = pool->FindMessageTypeByName(protoName);
+  ASSERT(proto.protoDescriptor != nullptr, "No proto by name", protoName);
+  if (protoName == "Example1.Person") {
     proto.protoNamespace = "Example1";
     proto.protoHeaderInclude = "example1.pb.h";
   } else {
-    ASSERT(false, "No mapping defined for protoName:", protoName);
+    THROW("No mapping defined for protoName:", protoName);
   }
 }
 

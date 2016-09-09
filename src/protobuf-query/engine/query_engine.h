@@ -6,14 +6,14 @@
 #include <vector>
 #include <functional>
 #include <iostream>
-#include <google/protobuf/message.h>
+#include <google/protobuf/descriptor.h>
 #include "select_query.h"
 
 using namespace std;
 using namespace google::protobuf;
 
 struct Proto {
-  const Message* defaultInstance;
+  const Descriptor* protoDescriptor;
   string protoNamespace;
   string protoHeaderInclude;
   string extraInclude;

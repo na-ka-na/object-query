@@ -223,7 +223,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
   if (idFieldMap.find(identifier) != idFieldMap.end()) {
     return;
   }
-  const Descriptor* parentDescriptor = proto.defaultInstance->GetDescriptor();
+  const Descriptor* parentDescriptor = proto.protoDescriptor;
   Node* parent = &root;
   Field field;
   vector<string> selectFieldParts = splitString(identifier, '.');
@@ -321,7 +321,7 @@ void QueryGraph::processExpr(
 
 void QueryGraph::calculateGraph(const SelectQuery& query) {
   Proto::initProto(query.fromStmt.fromRootProto, proto);
-  const Descriptor* rootDescriptor = proto.defaultInstance->GetDescriptor();
+  const Descriptor* rootDescriptor = proto.protoDescriptor;
   root.type = ROOT;
   root.objName = rootDescriptor->name();
   std::transform(root.objName.begin(), root.objName.end(),
@@ -479,7 +479,7 @@ void QueryEngine::printCode() {
   }
 
   out << "void runSelect(const vector<"
-      << queryGraph.proto.defaultInstance->GetDescriptor()->name() << ">& "
+      << queryGraph.proto.protoDescriptor->name() << ">& "
       << QueryGraph::makePlural(queryGraph.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
@@ -488,7 +488,7 @@ void QueryEngine::printCode() {
     string ind = string(indent+2, ' ');
     if (!parent) { //root
       out << ind << "for (const "
-          << queryGraph.proto.defaultInstance->GetDescriptor()->name()
+          << queryGraph.proto.protoDescriptor->name()
           << "* " << node.objName << " : Iterators::mk_iterator(&"
           << QueryGraph::makePlural(queryGraph.root.objName) << ")) {" << endl;
     } else {
@@ -602,7 +602,7 @@ void printTuples(const vector<TupleType>& tuples) {
 
   // main
   out << "int main(int argc, char** argv) {" << endl;
-  out << "  " << queryGraph.proto.defaultInstance->GetDescriptor()->name()
+  out << "  " << queryGraph.proto.protoDescriptor->name()
       << " " << queryGraph.root.objName << ";" << endl;
   string fromFile = (query.fromStmt.fromFile.find("argv") == 0) ?
       query.fromStmt.fromFile : ("\"" + query.fromStmt.fromFile + "\"");
