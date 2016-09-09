@@ -1,8 +1,7 @@
 /*
 SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') AS employee, ((((STR(all_employees.id)+' ')+employee)+' ')+STR(founded)) AS employee2 FROM ('argv[1]', 'Example1.Company') WHERE (employee2 LIKE '.*true.*')
 
-for (1..1) {
-  company = parseFromFile()
+with (company = parseFromFile()) {
   for each all_employee in company.all_employees() {
     if (!(((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded)) LIKE '.*true.*')) { continue; }
     tuples.add((((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))
@@ -32,8 +31,8 @@ using TupleType = tuple<S4, S5>;
 
 std::regex r6(".*true.*", std::regex::optimize);
 
-void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companies)) {
+void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
+  for (const Company* company : Iterators::mk_iterator(&companys)) {
     S3 s3 = S3();
     if (company && company->has_founded()) {
       s3 = company->founded();

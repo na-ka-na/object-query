@@ -1,8 +1,7 @@
 /*
 SELECT all_employees.name, all_employees.active_direct_reports FROM ('argv[1]', 'Example1.Company') WHERE all_employees.active_direct_reports IS NOT NULL
 
-for (1..1) {
-  company = parseFromFile()
+with (company = parseFromFile()) {
   for each all_employee in company.all_employees() {
     tuples.add(all_employees.name)
     for each active_direct_report in all_employee.active_direct_reports() {
@@ -28,8 +27,8 @@ using S0 = optional<int32>;  /*.active_direct_reports()*/
 using S1 = optional<string>; /*.name()*/
 using TupleType = tuple<S1, S0>;
 
-void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companies)) {
+void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
+  for (const Company* company : Iterators::mk_iterator(&companys)) {
     for (const Employee* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
       S1 s1 = S1();
       if (all_employee && all_employee->has_name()) {

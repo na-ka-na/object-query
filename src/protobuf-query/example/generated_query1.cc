@@ -1,8 +1,7 @@
 /*
 SELECT financial.quarterly_profits, financial.quarterly_revenues, all_employees.id, all_employees.name, all_employees.active, all_employees.active_direct_reports, founded, board_of_directors FROM ('argv[1]', 'Example1.Company')
 
-for (1..1) {
-  company = parseFromFile()
+with (company = parseFromFile()) {
   tuples.add(founded)
   for each board_of_director in company.board_of_directors() {
     tuples.add(board_of_directors)
@@ -51,8 +50,8 @@ using S6 = optional<float>;  /*.financial().quarterly_revenues()*/
 using S7 = optional<int32>;  /*.founded()*/
 using TupleType = tuple<S5, S6, S2, S3, S0, S1, S7, S4>;
 
-void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companies)) {
+void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
+  for (const Company* company : Iterators::mk_iterator(&companys)) {
     S7 s7 = S7();
     if (company && company->has_founded()) {
       s7 = company->founded();

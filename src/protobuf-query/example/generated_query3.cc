@@ -1,8 +1,7 @@
 /*
 SELECT all_employees.id, (financial.quarterly_revenues/all_employees.active_direct_reports) FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.active_direct_reports > 0) AND ((financial.quarterly_revenues*2) > 1))
 
-for (1..1) {
-  company = parseFromFile()
+with (company = parseFromFile()) {
   for each quarterly_revenue in company.financial().quarterly_revenues() {
     if (!((financial.quarterly_revenues*2) > 1)) { continue; }
     for each all_employee in company.all_employees() {
@@ -33,8 +32,8 @@ using S2 = optional<float>;  /*.financial().quarterly_revenues()*/
 using S3 = decltype(Divide(S2(), S0())); /*(financial.quarterly_revenues/all_employees.active_direct_reports)*/
 using TupleType = tuple<S1, S3>;
 
-void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companies)) {
+void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
+  for (const Company* company : Iterators::mk_iterator(&companys)) {
     for (const float* quarterly_revenue : Iterators::mk_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
       S2 s2 = S2();
       if (quarterly_revenue) {

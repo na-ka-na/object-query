@@ -207,16 +207,16 @@ void Node::walkNode(Node& root,
 
 string QueryGraph::makePlural(const string& name) {
   ASSERT(!name.empty());
-  return (name.back() == 'y')
-      ? (name.substr(0, name.size()-1) + "ies")
-      : (name + "s");
+  return name + "s";
 }
 
 string QueryGraph::makeSingular(const string& name) {
   ASSERT(!name.empty());
-  return ((name.size() > 3) && (name.substr(name.size()-3, 3) == "ies"))
-      ? (name.substr(0, name.size()-3) + "y")
-      : name.substr(0, name.size()-1);
+  if ((name.size() > 1) && (name.substr(name.size()-1, 1) == "s")) {
+    return name.substr(0, name.size()-1);
+  } else {
+    return "each_" + name;
+  }
 }
 
 void QueryGraph::addReadIdentifier(const string& identifier) {
@@ -346,9 +346,8 @@ QueryEngine::QueryEngine(const string& rawSql, ostream& out) :
 void QueryEngine::printPlan() {
   StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node* parent) {
     if (!parent) { //root
-      out << string(indent, ' ') << "for (1..1) {" << endl;
-      out << string(indent, ' ') << "  " << queryGraph.root.objName
-          << " = parseFromFile()" << endl;
+      out << string(indent, ' ') << "with (" << queryGraph.root.objName
+          << " = parseFromFile()) {" << endl;
     } else {
       out << string(indent, ' ') << "for each " << node.objName << " in "
           << node.repeatedField.accessor(parent->objName + ".") << " {" << endl;

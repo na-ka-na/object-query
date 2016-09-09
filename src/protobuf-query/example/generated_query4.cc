@@ -1,8 +1,7 @@
 /*
 SELECT financial.quarterly_profits, all_employees.name, all_employees.active FROM ('argv[1]', 'Example1.Company') ORDER BY all_employees.active, financial.quarterly_profits DESC, all_employees.id
 
-for (1..1) {
-  company = parseFromFile()
+with (company = parseFromFile()) {
   for each quarterly_profit in company.financial().quarterly_profits() {
     tuples.add(financial.quarterly_profits)
     for each all_employee in company.all_employees() {
@@ -33,8 +32,8 @@ using S2 = optional<string>; /*.name()*/
 using S3 = optional<float>;  /*.financial().quarterly_profits()*/
 using TupleType = tuple<S3, S2, S0, S1>;
 
-void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companies)) {
+void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
+  for (const Company* company : Iterators::mk_iterator(&companys)) {
     for (const float* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
       S3 s3 = S3();
       if (quarterly_profit) {

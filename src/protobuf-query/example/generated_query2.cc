@@ -1,8 +1,7 @@
 /*
 SELECT all_employees.id, all_employees.name FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.id IS NOT NULL AND (((all_employees.name = 'def') AND (all_employees.active = TRUE)) OR (all_employees.name = 'abc'))) AND (financial.quarterly_profits > 0))
 
-for (1..1) {
-  company = parseFromFile()
+with (company = parseFromFile()) {
   for each quarterly_profit in company.financial().quarterly_profits() {
     if (!(financial.quarterly_profits > 0)) { continue; }
     for each all_employee in company.all_employees() {
@@ -32,8 +31,8 @@ using S2 = optional<string>; /*.name()*/
 using S3 = optional<float>;  /*.financial().quarterly_profits()*/
 using TupleType = tuple<S1, S2>;
 
-void runSelect(const vector<Company>& companies, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companies)) {
+void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
+  for (const Company* company : Iterators::mk_iterator(&companys)) {
     for (const float* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
       S3 s3 = S3();
       if (quarterly_profit) {
