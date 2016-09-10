@@ -1,7 +1,6 @@
 #include <fstream>
 #include <stdio.h>
 #include "query_engine.h"
-#include "example1.pb.h"
 
 using namespace std;
 
@@ -9,7 +8,7 @@ void Proto::initProto(const string& protoName, Proto& proto) {
   const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
   proto.protoDescriptor = pool->FindMessageTypeByName(protoName);
   ASSERT(proto.protoDescriptor != nullptr, "No proto by name", protoName);
-  if (protoName == "Example1.Person") {
+  if (protoName == "Example1.Company") {
     proto.protoNamespace = "Example1";
     proto.protoHeaderInclude = "example1.pb.h";
   } else {

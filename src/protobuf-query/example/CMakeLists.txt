@@ -1,8 +1,15 @@
 include_directories(
-    SYSTEM ${CMAKE_BINARY_DIR}/protobuf-query/example_protos
+    SYSTEM ${PROTOBUF_INCLUDE_DIRS}
+    ${CMAKE_BINARY_DIR}/protobuf-query/example
     ${CMAKE_SOURCE_DIR}/protobuf-query
     ${CMAKE_SOURCE_DIR}/protobuf-query/engine
 )
+
+file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
+PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+
+add_library(ExampleProtos SHARED ${ProtoSources} ${ProtoHeaders})
+target_link_libraries(ExampleProtos ${PROTOBUF_LIBRARIES})
 
 add_executable(RunQuery run_query.cc)
 target_link_libraries(RunQuery ExampleProtos QueryEngine)
