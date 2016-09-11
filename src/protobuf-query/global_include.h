@@ -38,7 +38,7 @@ private:
   static void FormatMsg(std::ostream& oss, Type inst) {
     oss << " " << inst;
   }
-  static void FormatMsg(std::ostream& oss) {}
+  static void FormatMsg(std::ostream&) {}
 };
 
 #ifndef ASSERT

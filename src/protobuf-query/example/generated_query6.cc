@@ -71,7 +71,7 @@ void printTuples(const vector<TupleType>& tuples) {
   }
 }
 
-int main(int argc, char** argv) {
+int main(int, char** argv) {
   Company company;
   ParsePbFromFile(argv[1], company);
   vector<TupleType> tuples;

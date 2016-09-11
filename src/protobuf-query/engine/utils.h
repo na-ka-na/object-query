@@ -32,20 +32,3 @@ const function<string(const string&)> string2str = [](const string& str) {return
 template<typename T>
 static function<string(const T&)> strfn() {return [](const T& t) {return t.str();};}
 
-static vector<string> splitString(string str, char delim) {
-  vector<string> parts;
-  if (str.length() == 0) {
-    return parts;
-  }
-  string::size_type i = 0;
-  string::size_type j = str.find(delim);
-  while (j != string::npos) {
-    parts.push_back(str.substr(i, j-i));
-    i = ++j;
-    j = str.find(delim, j);
-  }
-  if (j == string::npos) {
-    parts.push_back(str.substr(i, str.length()));
-  }
-  return parts;
-}

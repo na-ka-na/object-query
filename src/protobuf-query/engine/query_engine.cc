@@ -226,7 +226,12 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
   const Descriptor* parentDescriptor = protoDescriptor;
   Node* parent = &root;
   Field field;
-  vector<string> selectFieldParts = splitString(identifier, '.');
+  static regex notdot("([^.]+)");
+  auto partsBegin = sregex_iterator(identifier.begin(), identifier.end(), notdot);
+  vector<string> selectFieldParts;
+  for (sregex_iterator it = partsBegin; it != sregex_iterator(); ++it) {
+    selectFieldParts.push_back(it->str());
+  }
   for (size_t j=0; j<selectFieldParts.size(); j++) {
     FieldPart fieldPart;
     fieldPart.parseFrom(*parentDescriptor, selectFieldParts[j]);
@@ -300,7 +305,7 @@ void QueryGraph::processExpr(
     addReadIdentifier(identifier);
     fields.insert(idFieldMap[identifier]);
   }
-  StartNodeFn startNodeFn = [&](int indent, Node& node, Node* parent){
+  StartNodeFn startNodeFn = [&](int, Node& node, Node*){
     if (fields.empty()) {
       return;
     }
@@ -315,7 +320,7 @@ void QueryGraph::processExpr(
       callback(node);
     }
   };
-  EndNodeFn endNodeFn = [](int indent, Node& node) {};
+  EndNodeFn endNodeFn = [](int, Node&) {};
   Node::walkNode(root, startNodeFn, endNodeFn);
 }
 
@@ -547,7 +552,7 @@ void QueryEngine::printCode() {
       allSelectAndOrderByFieldsProcessed = true;
     }
   };
-  EndNodeFn endNodeFn = [&](int indent, const Node& node) {
+  EndNodeFn endNodeFn = [&](int indent, const Node&) {
     string ind = string(indent+2, ' ');
     out << ind << "}" << endl;
   };
@@ -611,7 +616,7 @@ void printTuples(const vector<TupleType>& tuples) {
   out << "}" << endl << endl;
 
   // main
-  out << "int main(int argc, char** argv) {" << endl;
+  out << "int main(int, char** argv) {" << endl;
   out << "  " << queryGraph.protoDescriptor->name()
       << " " << queryGraph.root.objName << ";" << endl;
   string fromFile = (query.fromStmt.fromFile.find("argv") == 0) ?
