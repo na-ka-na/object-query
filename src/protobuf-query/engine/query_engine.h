@@ -12,13 +12,11 @@
 using namespace std;
 using namespace google::protobuf;
 
-struct Proto {
-  const Descriptor* protoDescriptor;
-  string protoNamespace;
-  string protoHeaderInclude;
-  string extraInclude;
-
-  static void initProto(const string& protoName, Proto& proto);
+struct ProtoSpec {
+  string protoName;
+  string cppProtoNamespace;
+  string cppProtoInclude;
+  string cppExtraInclude;
 };
 
 struct FieldPart {
@@ -100,9 +98,11 @@ struct Node {
 };
 
 struct QueryGraph {
-  Proto proto;
+  ProtoSpec proto;
+  const Descriptor* protoDescriptor;
   Node root;
   map<string, Field> idFieldMap;
+  void initGraph(const vector<ProtoSpec>& protos, const SelectQuery& query);
 
   static string makePlural(const string& name);
   static string makeSingular(const string& name);
@@ -111,16 +111,16 @@ struct QueryGraph {
   void processWhere(const WhereStmt& whereStmt);
   void processOrderBy(const OrderByStmt& orderByStmt);
   void processExpr(const set<string>& identifiers, function<void(Node& node)>);
-  void calculateGraph(const SelectQuery& query);
   static void addExpr(vector<const Expr*>& exprs, const Expr* expr);
 };
 
 class QueryEngine {
 public:
-  QueryEngine(const string& rawSql, ostream& out);
+  QueryEngine(const vector<ProtoSpec>& protos, const string& rawSql, ostream& out);
   void process();
 
 private:
+  vector<ProtoSpec> protos;
   SelectQuery query;
   QueryGraph queryGraph;
   ostream& out;

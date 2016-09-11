@@ -223,7 +223,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
   if (idFieldMap.find(identifier) != idFieldMap.end()) {
     return;
   }
-  const Descriptor* parentDescriptor = proto.protoDescriptor;
+  const Descriptor* parentDescriptor = protoDescriptor;
   Node* parent = &root;
   Field field;
   vector<string> selectFieldParts = splitString(identifier, '.');
@@ -319,11 +319,21 @@ void QueryGraph::processExpr(
   Node::walkNode(root, startNodeFn, endNodeFn);
 }
 
-void QueryGraph::calculateGraph(const SelectQuery& query) {
-  Proto::initProto(query.fromStmt.fromRootProto, proto);
-  const Descriptor* rootDescriptor = proto.protoDescriptor;
+void QueryGraph::initGraph(const vector<ProtoSpec>& protos, const SelectQuery& query) {
+  auto f = std::find_if(
+      protos.begin(), protos.end(),
+      [&] (const ProtoSpec& proto) {
+        return proto.protoName == query.fromStmt.fromRootProto;
+      });
+  ASSERT(f != protos.end(), "Unable to find proto spec for",
+         query.fromStmt.fromRootProto);
+  proto = *f;
+  const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
+  protoDescriptor = pool->FindMessageTypeByName(proto.protoName);
+  ASSERT(protoDescriptor != nullptr, "Unable to find proto descriptor for",
+         proto.protoName);
   root.type = ROOT;
-  root.objName = rootDescriptor->name();
+  root.objName = protoDescriptor->name();
   std::transform(root.objName.begin(), root.objName.end(),
                  root.objName.begin(), ::tolower);
   processSelect(query.selectStmt);
@@ -340,8 +350,8 @@ void QueryGraph::addExpr(vector<const Expr*>& exprs, const Expr* expr) {
   }
 }
 
-QueryEngine::QueryEngine(const string& rawSql, ostream& out) :
-    query(SelectQuery(rawSql)), out(out) {}
+QueryEngine::QueryEngine(const vector<ProtoSpec>& protos, const string& rawSql, ostream& out) :
+    protos(protos), query(SelectQuery(rawSql)), out(out) {}
 
 void QueryEngine::printPlan() {
   StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node* parent) {
@@ -389,13 +399,13 @@ void QueryEngine::printPlan() {
 }
 
 void QueryEngine::printCode() {
-  out << "#include \"" << queryGraph.proto.protoHeaderInclude << "\"" << endl;
-  if (!queryGraph.proto.extraInclude.empty()) {
-    out << "#include \"" << queryGraph.proto.extraInclude << "\"" << endl;
+  out << "#include \"" << queryGraph.proto.cppProtoInclude << "\"" << endl;
+  if (!queryGraph.proto.cppExtraInclude.empty()) {
+    out << "#include \"" << queryGraph.proto.cppExtraInclude << "\"" << endl;
   }
   out << "#include \"generated_common.h\"" << endl << endl;
   out << "using namespace std;" << endl;
-  out << "using namespace " << queryGraph.proto.protoNamespace << ";" << endl << endl;
+  out << "using namespace " << queryGraph.proto.cppProtoNamespace << ";" << endl << endl;
 
   // select fields header
   string header = "vector<string> header = {\n";
@@ -479,7 +489,7 @@ void QueryEngine::printCode() {
   }
 
   out << "void runSelect(const vector<"
-      << queryGraph.proto.protoDescriptor->name() << ">& "
+      << queryGraph.protoDescriptor->name() << ">& "
       << QueryGraph::makePlural(queryGraph.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
@@ -488,7 +498,7 @@ void QueryEngine::printCode() {
     string ind = string(indent+2, ' ');
     if (!parent) { //root
       out << ind << "for (const "
-          << queryGraph.proto.protoDescriptor->name()
+          << queryGraph.protoDescriptor->name()
           << "* " << node.objName << " : Iterators::mk_iterator(&"
           << QueryGraph::makePlural(queryGraph.root.objName) << ")) {" << endl;
     } else {
@@ -602,7 +612,7 @@ void printTuples(const vector<TupleType>& tuples) {
 
   // main
   out << "int main(int argc, char** argv) {" << endl;
-  out << "  " << queryGraph.proto.protoDescriptor->name()
+  out << "  " << queryGraph.protoDescriptor->name()
       << " " << queryGraph.root.objName << ";" << endl;
   string fromFile = (query.fromStmt.fromFile.find("argv") == 0) ?
       query.fromStmt.fromFile : ("\"" + query.fromStmt.fromFile + "\"");
@@ -622,7 +632,7 @@ void QueryEngine::process() {
   out << "/*" << endl;
   out << query.str() << endl << endl;
   query.preProcess();
-  queryGraph.calculateGraph(query);
+  queryGraph.initGraph(protos, query);
   printPlan();
   out << "*/" << endl;
   printCode();

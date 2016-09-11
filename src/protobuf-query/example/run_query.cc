@@ -1,19 +1,41 @@
 #include <fstream>
 #include <stdio.h>
+#include <regex>
 #include "query_engine.h"
 
 using namespace std;
 
-void Proto::initProto(const string& protoName, Proto& proto) {
-  const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
-  proto.protoDescriptor = pool->FindMessageTypeByName(protoName);
-  ASSERT(proto.protoDescriptor != nullptr, "No proto by name", protoName);
-  if (protoName == "Example1.Company") {
-    proto.protoNamespace = "Example1";
-    proto.protoHeaderInclude = "example1.pb.h";
-  } else {
-    THROW("No mapping defined for protoName:", protoName);
+vector<ProtoSpec> parseProtoSpecFile(const string& protoSpecFile) {
+  vector<ProtoSpec> protos;
+  ProtoSpec proto;
+  ifstream file(protoSpecFile);
+  string line;
+  while (std::getline(file, line)) {
+    if (line.empty() || line[0] == '#') {
+      continue;
+    }
+    if (line.find("----------") == 0) {
+      protos.push_back(proto);
+      continue;
+    }
+    static regex kvRegex("(\\w+)\\s+(\\S+)");
+    smatch match;
+    ASSERT(regex_match(line, match, kvRegex), "Invalid line", line);
+    string key = match[1].str();
+    string value = match[2].str();
+    if (key == "protoName") {
+      proto.protoName = value;
+    } else if (key == "cppProtoNamespace") {
+      proto.cppProtoNamespace = value;
+    } else if (key == "cppProtoInclude") {
+      proto.cppProtoInclude = value;
+    } else if (key == "cppExtraInclude") {
+      proto.cppExtraInclude = value;
+    } else {
+      THROW("Invalid key", key, "in line", line);
+    }
   }
+  return protos;
 }
 
 void runMake() {
@@ -27,9 +49,9 @@ void runMake() {
   ASSERT(pclose(fp)==0, "Make failed:\n", output);
 }
 
-void runQuery(int argc, char** argv) {
-  string cmd = string("./") + argv[2];
-  for (int i=3; i<argc; i++) {
+void runQuery(string generatedFileName, int argc, char** argv) {
+  string cmd = "./" + generatedFileName;
+  for (int i=0; i<argc; i++) {
     cmd += string(" ") + argv[i];
   }
   FILE* fp = popen(cmd.c_str(), "r");
@@ -42,17 +64,22 @@ void runQuery(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
-  if (argc < 3) {
-    cerr << "Usage: ./RunQuery <sql-query> <generated-query-file>"
-         << " [arguments for generated query ...]" << endl;
+  if (argc < 4) {
+    cerr << "Usage: ./RunQuery <proto-spec-file> <sql-query> "
+         << "<generated-query-file-name> [arguments for generated query ...]"
+         << endl;
     exit(1);
   }
+  vector<ProtoSpec> protos = parseProtoSpecFile(argv[1]);
+  string rawSql = argv[2];
+  string generatedFileName = argv[3];
   string thisFile = __FILE__;
   auto idx = thisFile.rfind("/");
-  string generatedFile = thisFile.substr(0, idx) + "/" + argv[2] + ".cc";
+  string currentDir = thisFile.substr(0, idx);
+  string generatedFile = currentDir + "/" + generatedFileName + ".cc";
   ofstream generated(generatedFile, ios::out | ios::trunc);
-  QueryEngine engine(argv[1], generated);
+  QueryEngine engine(protos, rawSql, generated);
   engine.process();
   runMake();
-  runQuery(argc, argv);
+  runQuery(generatedFileName, argc-4, argv+4);
 }

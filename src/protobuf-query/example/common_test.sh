@@ -1,11 +1,12 @@
 
 function run_test() {
-    sql="$1"
-    generated_file="$2"
-    proto_file="$3"
-    golden_out="$4"
-    actual_out="$5"
-    ./RunQuery "$sql" "$generated_file" "$proto_file" > "$actual_out"
+    proto_spec="$1"
+    sql="$2"
+    generated_file="$3"
+    proto_file="$4"
+    golden_out="$5"
+    actual_out="$6"
+    ./RunQuery "$proto_spec" "$sql" "$generated_file" "$proto_file" > "$actual_out"
     run_query_exit=$?
     if [[ $run_query_exit == 0 ]]
     then

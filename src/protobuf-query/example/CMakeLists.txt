@@ -14,9 +14,6 @@ target_link_libraries(ExampleProtos ${PROTOBUF_LIBRARIES})
 add_executable(RunQuery run_query.cc)
 target_link_libraries(RunQuery ExampleProtos QueryEngine)
 
-add_executable(generated_query generated_query.cc)
-target_link_libraries(generated_query ExampleProtos)
-
 add_executable(generated_query1 generated_query1.cc)
 target_link_libraries(generated_query1 ExampleProtos)
 
