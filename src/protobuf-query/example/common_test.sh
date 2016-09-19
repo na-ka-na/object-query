@@ -1,12 +1,15 @@
 
 function run_test() {
-    proto_spec="$1"
+    testnum="$1"
     sql="$2"
-    generated_file="$3"
-    proto_file="$4"
-    golden_out="$5"
-    actual_out="$6"
-    ./RunQuery "$proto_spec" "$sql" "$generated_file" "$proto_file" > "$actual_out"
+    proto_file="../../../src/protobuf-query/example/example1.proto.gz"
+    golden_out="golden${testnum}.out"
+    actual_out="actual${testnum}.out"
+    ../main/RunQuery --codeGenDir=../../../src/protobuf-query/example \
+               --codeGenPrefix="generated_query${testnum}" --codeCompileDir=. \
+               --protoName=Example1.Company --cppProtoNamespace=Example1 \
+               --cppProtoHeader=example1.pb.h --cppProtoLib=libExampleProtos.dylib \
+               "$sql" "$proto_file"  > "$actual_out"
     run_query_exit=$?
     if [[ $run_query_exit == 0 ]]
     then

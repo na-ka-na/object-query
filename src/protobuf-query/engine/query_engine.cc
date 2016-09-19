@@ -324,15 +324,7 @@ void QueryGraph::processExpr(
   Node::walkNode(root, startNodeFn, endNodeFn);
 }
 
-void QueryGraph::initGraph(const vector<ProtoSpec>& protos, const SelectQuery& query) {
-  auto f = std::find_if(
-      protos.begin(), protos.end(),
-      [&] (const ProtoSpec& proto) {
-        return proto.protoName == query.fromStmt.fromRootProto;
-      });
-  ASSERT(f != protos.end(), "Unable to find proto spec for",
-         query.fromStmt.fromRootProto);
-  proto = *f;
+void QueryGraph::initGraph(const ProtoSpec& proto, const SelectQuery& query) {
   const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
   protoDescriptor = pool->FindMessageTypeByName(proto.protoName);
   ASSERT(protoDescriptor != nullptr, "Unable to find proto descriptor for",
@@ -355,8 +347,8 @@ void QueryGraph::addExpr(vector<const Expr*>& exprs, const Expr* expr) {
   }
 }
 
-QueryEngine::QueryEngine(const vector<ProtoSpec>& protos, const string& rawSql, ostream& out) :
-    protos(protos), query(SelectQuery(rawSql)), out(out) {}
+QueryEngine::QueryEngine(const ProtoSpec& proto, const string& rawSql, ostream& out) :
+    proto(proto), query(SelectQuery(rawSql)), out(out) {}
 
 void QueryEngine::printPlan() {
   StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node* parent) {
@@ -404,13 +396,12 @@ void QueryEngine::printPlan() {
 }
 
 void QueryEngine::printCode() {
-  out << "#include \"" << queryGraph.proto.cppProtoInclude << "\"" << endl;
-  if (!queryGraph.proto.cppExtraInclude.empty()) {
-    out << "#include \"" << queryGraph.proto.cppExtraInclude << "\"" << endl;
+  for (const string& headerInclude : proto.headerIncludes) {
+    out << "#include \"" << headerInclude << "\"" << endl;
   }
   out << "#include \"generated_common.h\"" << endl << endl;
   out << "using namespace std;" << endl;
-  out << "using namespace " << queryGraph.proto.cppProtoNamespace << ";" << endl << endl;
+  out << "using namespace " << proto.cppProtoNamespace << ";" << endl << endl;
 
   // select fields header
   string header = "vector<string> header = {\n";
@@ -637,7 +628,7 @@ void QueryEngine::process() {
   out << "/*" << endl;
   out << query.str() << endl << endl;
   query.preProcess();
-  queryGraph.initGraph(protos, query);
+  queryGraph.initGraph(proto, query);
   printPlan();
   out << "*/" << endl;
   printCode();

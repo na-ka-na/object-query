@@ -1,11 +1,6 @@
 #!/bin/bash
 source common_test.sh
 
-proto_spec="../../../src/protobuf-query/example/proto_spec.txt"
 sql="SELECT all_employees.name, all_employees.active_direct_reports FROM ('argv[1]', 'Example1.Company') WHERE all_employees.active_direct_reports IS NOT NULL"
-generated_file="generated_query6"
-proto_file="../../../src/protobuf-query/example/example1.proto.gz"
-golden_out="golden6.out"
-actual_out="actual6.out"
-run_test "$proto_spec" "$sql" "$generated_file" "$proto_file" "$golden_out" "$actual_out"
+run_test 6 "$sql"
 exit $?

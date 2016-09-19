@@ -11,33 +11,23 @@ PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 add_library(ExampleProtos SHARED ${ProtoSources} ${ProtoHeaders})
 target_link_libraries(ExampleProtos ${PROTOBUF_LIBRARIES})
 
-add_executable(RunQuery run_query.cc)
-target_link_libraries(RunQuery ExampleProtos QueryEngine)
+set(common_test_sh "common_test.sh")
+add_custom_command(OUTPUT ${common_test_sh}
+                   COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${common_test_sh} ${CMAKE_CURRENT_BINARY_DIR}
+                   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${common_test_sh})
 
-add_executable(generated_query1 generated_query1.cc)
-target_link_libraries(generated_query1 ExampleProtos)
-
-add_executable(generated_query2 generated_query2.cc)
-target_link_libraries(generated_query2 ExampleProtos)
-
-add_executable(generated_query3 generated_query3.cc)
-target_link_libraries(generated_query3 ExampleProtos)
-
-add_executable(generated_query4 generated_query4.cc)
-target_link_libraries(generated_query4 ExampleProtos)
-
-add_executable(generated_query5 generated_query5.cc)
-target_link_libraries(generated_query5 ExampleProtos)
-
-add_executable(generated_query6 generated_query6.cc)
-target_link_libraries(generated_query6 ExampleProtos)
-
-add_custom_target(CpTestingScripts ALL COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/*test*sh ${CMAKE_CURRENT_BINARY_DIR})
-add_custom_target(CpTestingGoldens ALL COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/golden*out ${CMAKE_CURRENT_BINARY_DIR})
-
-add_test(Test1 ${CMAKE_CURRENT_BINARY_DIR}/test1.sh)
-add_test(Test2 ${CMAKE_CURRENT_BINARY_DIR}/test2.sh)
-add_test(Test3 ${CMAKE_CURRENT_BINARY_DIR}/test3.sh)
-add_test(Test4 ${CMAKE_CURRENT_BINARY_DIR}/test4.sh)
-add_test(Test5 ${CMAKE_CURRENT_BINARY_DIR}/test5.sh)
-add_test(Test6 ${CMAKE_CURRENT_BINARY_DIR}/test6.sh)
+foreach(testnum RANGE 1 6)
+  set(test_sh "test${testnum}.sh")
+  add_custom_command(OUTPUT ${test_sh}
+                     COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${test_sh} ${CMAKE_CURRENT_BINARY_DIR}
+                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${test_sh})
+  set(golden_out "golden${testnum}.out")
+  add_custom_command(OUTPUT ${golden_out}
+                     COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${golden_out} ${CMAKE_CURRENT_BINARY_DIR}
+                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${golden_out})
+  add_custom_target(Test${testnum} ALL DEPENDS ${common_test_sh} ${test_sh} ${golden_out} RunQuery)
+  add_test(Test${testnum} ${test_sh})
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "actual${testnum}.out")
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "generated_query${testnum}")
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "generated_query${testnum}.dSYM")
+endforeach(testnum)

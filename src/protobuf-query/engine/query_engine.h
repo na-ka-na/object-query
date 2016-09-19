@@ -15,8 +15,7 @@ using namespace google::protobuf;
 struct ProtoSpec {
   string protoName;
   string cppProtoNamespace;
-  string cppProtoInclude;
-  string cppExtraInclude;
+  vector<string> headerIncludes;
 };
 
 struct FieldPart {
@@ -98,11 +97,10 @@ struct Node {
 };
 
 struct QueryGraph {
-  ProtoSpec proto;
   const Descriptor* protoDescriptor;
   Node root;
   map<string, Field> idFieldMap;
-  void initGraph(const vector<ProtoSpec>& protos, const SelectQuery& query);
+  void initGraph(const ProtoSpec& proto, const SelectQuery& query);
 
   static string makePlural(const string& name);
   static string makeSingular(const string& name);
@@ -116,11 +114,11 @@ struct QueryGraph {
 
 class QueryEngine {
 public:
-  QueryEngine(const vector<ProtoSpec>& protos, const string& rawSql, ostream& out);
+  QueryEngine(const ProtoSpec& proto, const string& rawSql, ostream& out);
   void process();
 
 private:
-  vector<ProtoSpec> protos;
+  ProtoSpec proto;
   SelectQuery query;
   QueryGraph queryGraph;
   ostream& out;
