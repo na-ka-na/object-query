@@ -50,6 +50,13 @@ void ParsePbFromFile(const string& file, google::protobuf::Message& proto) {
   ASSERT(ret, "Unable to parse", file);
 }
 
+#ifndef FROM
+#define FROM(argc, argv, protos) \
+ASSERT(argc > 1, "Proto binary file not provided");\
+protos.emplace_back();\
+ParsePbFromFile(argv[1], protos.back());
+#endif
+
 template<typename T>
 inline string Stringify(const T& t) {
   return to_string(t);

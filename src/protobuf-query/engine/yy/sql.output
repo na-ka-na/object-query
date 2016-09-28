@@ -20,7 +20,7 @@ Grammar
    11 select_field: expr
    12             | expr "AS" "identifier"
 
-   13 from_stmt: "FROM" "(" "string" "," "string" ")"
+   13 from_stmt: "FROM" "identifier"
 
    14 where_stmt: %empty
    15           | "WHERE" boolean_expr
@@ -86,7 +86,7 @@ error (256)
 "ORDER" (263) 49
 "BY" (264) 42 49
 "AS" (265) 12
-"," (266) 10 13 35 44 51
+"," (266) 10 35 44 51
 "+" (267) 29
 "-" (268) 30 33
 "*" (269) 31
@@ -103,13 +103,13 @@ error (256)
 "NULL" (280) 26 27
 "AND" (281) 17
 "OR" (282) 18
-"(" (283) 13 16 28 34 35
-")" (284) 13 16 28 34 35
+"(" (283) 16 28 34 35
+")" (284) 16 28 34 35
 "DISTINCT" (285) 8
 "ASC" (286) 53
 "DESC" (287) 54
-"identifier" (288) 12 26 27 36 45
-"string" (289) 13 37
+"identifier" (288) 12 13 26 27 36 45
+"string" (289) 37
 "long" (290) 38
 "double" (291) 39
 "bool" (292) 40
@@ -234,7 +234,7 @@ State 2
 State 3
 
     1 query: select_stmt . from_stmt where_stmt group_by_stmt having_stmt order_by_stmt
-   13 from_stmt: . "FROM" "(" "string" "," "string" ")"
+   13 from_stmt: . "FROM" "identifier"
 
     "FROM"  shift, and go to state 23
 
@@ -495,9 +495,9 @@ State 22
 
 State 23
 
-   13 from_stmt: "FROM" . "(" "string" "," "string" ")"
+   13 from_stmt: "FROM" . "identifier"
 
-    "("  shift, and go to state 36
+    "identifier"  shift, and go to state 36
 
 
 State 24
@@ -846,9 +846,9 @@ State 35
 
 State 36
 
-   13 from_stmt: "FROM" "(" . "string" "," "string" ")"
+   13 from_stmt: "FROM" "identifier" .
 
-    "string"  shift, and go to state 48
+    $default  reduce using rule 13 (from_stmt)
 
 
 State 37
@@ -886,8 +886,8 @@ State 37
    40     | . "bool"
 
     "-"           shift, and go to state 4
-    "("           shift, and go to state 49
-    "identifier"  shift, and go to state 50
+    "("           shift, and go to state 48
+    "identifier"  shift, and go to state 49
     "string"      shift, and go to state 8
     "long"        shift, and go to state 9
     "double"      shift, and go to state 10
@@ -900,8 +900,8 @@ State 37
 
     fn1           go to state 17
     fn3           go to state 18
-    boolean_expr  go to state 51
-    expr          go to state 52
+    boolean_expr  go to state 50
+    expr          go to state 51
 
 
 State 38
@@ -910,11 +910,11 @@ State 38
    41 group_by_stmt: . %empty  ["end of file", "HAVING", "ORDER"]
    42              | . "GROUP" "BY" group_by_fields
 
-    "GROUP"  shift, and go to state 53
+    "GROUP"  shift, and go to state 52
 
     $default  reduce using rule 41 (group_by_stmt)
 
-    group_by_stmt  go to state 54
+    group_by_stmt  go to state 53
 
 
 State 39
@@ -936,7 +936,7 @@ State 40
     "-"  shift, and go to state 33
     "*"  shift, and go to state 34
     "/"  shift, and go to state 35
-    ")"  shift, and go to state 55
+    ")"  shift, and go to state 54
 
 
 State 41
@@ -947,7 +947,7 @@ State 41
    32     | expr . "/" expr
    35     | fn3 "(" expr . "," expr "," expr ")"
 
-    ","  shift, and go to state 56
+    ","  shift, and go to state 55
     "+"  shift, and go to state 32
     "-"  shift, and go to state 33
     "*"  shift, and go to state 34
@@ -1040,13 +1040,6 @@ State 47
 
 State 48
 
-   13 from_stmt: "FROM" "(" "string" . "," "string" ")"
-
-    ","  shift, and go to state 57
-
-
-State 49
-
     2 fn1: . "STR"
     3    | . "INT"
     4    | . "SUM"
@@ -1081,8 +1074,8 @@ State 49
    40     | . "bool"
 
     "-"           shift, and go to state 4
-    "("           shift, and go to state 49
-    "identifier"  shift, and go to state 50
+    "("           shift, and go to state 48
+    "identifier"  shift, and go to state 49
     "string"      shift, and go to state 8
     "long"        shift, and go to state 9
     "double"      shift, and go to state 10
@@ -1095,34 +1088,34 @@ State 49
 
     fn1           go to state 17
     fn3           go to state 18
-    boolean_expr  go to state 58
-    expr          go to state 59
+    boolean_expr  go to state 56
+    expr          go to state 57
 
 
-State 50
+State 49
 
    26 boolean_expr: "identifier" . "IS" "NULL"
    27             | "identifier" . "IS" "NOT" "NULL"
    36 expr: "identifier" .  ["+", "-", "*", "/", "=", "!=", "<", ">", "<=", ">=", "LIKE", ")"]
 
-    "IS"  shift, and go to state 60
+    "IS"  shift, and go to state 58
 
     $default  reduce using rule 36 (expr)
 
 
-State 51
+State 50
 
    15 where_stmt: "WHERE" boolean_expr .  ["end of file", "GROUP", "HAVING", "ORDER"]
    17 boolean_expr: boolean_expr . "AND" boolean_expr
    18             | boolean_expr . "OR" boolean_expr
 
-    "AND"  shift, and go to state 61
-    "OR"   shift, and go to state 62
+    "AND"  shift, and go to state 59
+    "OR"   shift, and go to state 60
 
     $default  reduce using rule 15 (where_stmt)
 
 
-State 52
+State 51
 
    19 boolean_expr: expr . "=" expr
    20             | expr . "!=" expr
@@ -1140,43 +1133,43 @@ State 52
     "-"     shift, and go to state 33
     "*"     shift, and go to state 34
     "/"     shift, and go to state 35
-    "="     shift, and go to state 63
-    "!="    shift, and go to state 64
-    "<"     shift, and go to state 65
-    ">"     shift, and go to state 66
-    "<="    shift, and go to state 67
-    ">="    shift, and go to state 68
-    "LIKE"  shift, and go to state 69
+    "="     shift, and go to state 61
+    "!="    shift, and go to state 62
+    "<"     shift, and go to state 63
+    ">"     shift, and go to state 64
+    "<="    shift, and go to state 65
+    ">="    shift, and go to state 66
+    "LIKE"  shift, and go to state 67
 
 
-State 53
+State 52
 
    42 group_by_stmt: "GROUP" . "BY" group_by_fields
 
-    "BY"  shift, and go to state 70
+    "BY"  shift, and go to state 68
 
 
-State 54
+State 53
 
     1 query: select_stmt from_stmt where_stmt group_by_stmt . having_stmt order_by_stmt
    46 having_stmt: . %empty  ["end of file", "ORDER"]
    47            | . "HAVING" boolean_expr
 
-    "HAVING"  shift, and go to state 71
+    "HAVING"  shift, and go to state 69
 
     $default  reduce using rule 46 (having_stmt)
 
-    having_stmt  go to state 72
+    having_stmt  go to state 70
 
 
-State 55
+State 54
 
    34 expr: fn1 "(" expr ")" .
 
     $default  reduce using rule 34 (expr)
 
 
-State 56
+State 55
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1213,28 +1206,21 @@ State 56
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 73
+    expr  go to state 71
 
 
-State 57
-
-   13 from_stmt: "FROM" "(" "string" "," . "string" ")"
-
-    "string"  shift, and go to state 74
-
-
-State 58
+State 56
 
    16 boolean_expr: "(" boolean_expr . ")"
    17             | boolean_expr . "AND" boolean_expr
    18             | boolean_expr . "OR" boolean_expr
 
-    "AND"  shift, and go to state 61
-    "OR"   shift, and go to state 62
-    ")"    shift, and go to state 75
+    "AND"  shift, and go to state 59
+    "OR"   shift, and go to state 60
+    ")"    shift, and go to state 72
 
 
-State 59
+State 57
 
    19 boolean_expr: expr . "=" expr
    20             | expr . "!=" expr
@@ -1253,26 +1239,26 @@ State 59
     "-"     shift, and go to state 33
     "*"     shift, and go to state 34
     "/"     shift, and go to state 35
-    "="     shift, and go to state 63
-    "!="    shift, and go to state 64
-    "<"     shift, and go to state 65
-    ">"     shift, and go to state 66
-    "<="    shift, and go to state 67
-    ">="    shift, and go to state 68
-    "LIKE"  shift, and go to state 69
+    "="     shift, and go to state 61
+    "!="    shift, and go to state 62
+    "<"     shift, and go to state 63
+    ">"     shift, and go to state 64
+    "<="    shift, and go to state 65
+    ">="    shift, and go to state 66
+    "LIKE"  shift, and go to state 67
     ")"     shift, and go to state 39
 
 
-State 60
+State 58
 
    26 boolean_expr: "identifier" "IS" . "NULL"
    27             | "identifier" "IS" . "NOT" "NULL"
 
-    "NOT"   shift, and go to state 76
-    "NULL"  shift, and go to state 77
+    "NOT"   shift, and go to state 73
+    "NULL"  shift, and go to state 74
 
 
-State 61
+State 59
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1307,8 +1293,8 @@ State 61
    40     | . "bool"
 
     "-"           shift, and go to state 4
-    "("           shift, and go to state 49
-    "identifier"  shift, and go to state 50
+    "("           shift, and go to state 48
+    "identifier"  shift, and go to state 49
     "string"      shift, and go to state 8
     "long"        shift, and go to state 9
     "double"      shift, and go to state 10
@@ -1321,11 +1307,11 @@ State 61
 
     fn1           go to state 17
     fn3           go to state 18
-    boolean_expr  go to state 78
-    expr          go to state 52
+    boolean_expr  go to state 75
+    expr          go to state 51
 
 
-State 62
+State 60
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1360,8 +1346,8 @@ State 62
    40     | . "bool"
 
     "-"           shift, and go to state 4
-    "("           shift, and go to state 49
-    "identifier"  shift, and go to state 50
+    "("           shift, and go to state 48
+    "identifier"  shift, and go to state 49
     "string"      shift, and go to state 8
     "long"        shift, and go to state 9
     "double"      shift, and go to state 10
@@ -1374,11 +1360,11 @@ State 62
 
     fn1           go to state 17
     fn3           go to state 18
-    boolean_expr  go to state 79
-    expr          go to state 52
+    boolean_expr  go to state 76
+    expr          go to state 51
 
 
-State 63
+State 61
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1415,10 +1401,10 @@ State 63
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 80
+    expr  go to state 77
 
 
-State 64
+State 62
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1455,10 +1441,10 @@ State 64
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 81
+    expr  go to state 78
 
 
-State 65
+State 63
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1495,10 +1481,10 @@ State 65
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 82
+    expr  go to state 79
 
 
-State 66
+State 64
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1535,10 +1521,10 @@ State 66
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 83
+    expr  go to state 80
 
 
-State 67
+State 65
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1575,10 +1561,10 @@ State 67
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 84
+    expr  go to state 81
 
 
-State 68
+State 66
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1615,10 +1601,10 @@ State 68
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 85
+    expr  go to state 82
 
 
-State 69
+State 67
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1655,23 +1641,23 @@ State 69
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 86
+    expr  go to state 83
 
 
-State 70
+State 68
 
    42 group_by_stmt: "GROUP" "BY" . group_by_fields
    43 group_by_fields: . group_by_field
    44                | . group_by_fields "," group_by_field
    45 group_by_field: . "identifier"
 
-    "identifier"  shift, and go to state 87
+    "identifier"  shift, and go to state 84
 
-    group_by_fields  go to state 88
-    group_by_field   go to state 89
+    group_by_fields  go to state 85
+    group_by_field   go to state 86
 
 
-State 71
+State 69
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -1706,8 +1692,8 @@ State 71
    47 having_stmt: "HAVING" . boolean_expr
 
     "-"           shift, and go to state 4
-    "("           shift, and go to state 49
-    "identifier"  shift, and go to state 50
+    "("           shift, and go to state 48
+    "identifier"  shift, and go to state 49
     "string"      shift, and go to state 8
     "long"        shift, and go to state 9
     "double"      shift, and go to state 10
@@ -1720,24 +1706,24 @@ State 71
 
     fn1           go to state 17
     fn3           go to state 18
-    boolean_expr  go to state 90
-    expr          go to state 52
+    boolean_expr  go to state 87
+    expr          go to state 51
 
 
-State 72
+State 70
 
     1 query: select_stmt from_stmt where_stmt group_by_stmt having_stmt . order_by_stmt
    48 order_by_stmt: . %empty  ["end of file"]
    49              | . "ORDER" "BY" order_by_fields
 
-    "ORDER"  shift, and go to state 91
+    "ORDER"  shift, and go to state 88
 
     $default  reduce using rule 48 (order_by_stmt)
 
-    order_by_stmt  go to state 92
+    order_by_stmt  go to state 89
 
 
-State 73
+State 71
 
    29 expr: expr . "+" expr
    30     | expr . "-" expr
@@ -1745,48 +1731,41 @@ State 73
    32     | expr . "/" expr
    35     | fn3 "(" expr "," expr . "," expr ")"
 
-    ","  shift, and go to state 93
+    ","  shift, and go to state 90
     "+"  shift, and go to state 32
     "-"  shift, and go to state 33
     "*"  shift, and go to state 34
     "/"  shift, and go to state 35
 
 
-State 74
-
-   13 from_stmt: "FROM" "(" "string" "," "string" . ")"
-
-    ")"  shift, and go to state 94
-
-
-State 75
+State 72
 
    16 boolean_expr: "(" boolean_expr ")" .
 
     $default  reduce using rule 16 (boolean_expr)
 
 
-State 76
+State 73
 
    27 boolean_expr: "identifier" "IS" "NOT" . "NULL"
 
-    "NULL"  shift, and go to state 95
+    "NULL"  shift, and go to state 91
 
 
-State 77
+State 74
 
    26 boolean_expr: "identifier" "IS" "NULL" .
 
     $default  reduce using rule 26 (boolean_expr)
 
 
-State 78
+State 75
 
    17 boolean_expr: boolean_expr . "AND" boolean_expr
    17             | boolean_expr "AND" boolean_expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", ")"]
    18             | boolean_expr . "OR" boolean_expr
 
-    "OR"  shift, and go to state 62
+    "OR"  shift, and go to state 60
 
     $default  reduce using rule 17 (boolean_expr)
 
@@ -1794,7 +1773,7 @@ State 78
     Conflict between rule 17 and token "OR" resolved as shift ("AND" < "OR").
 
 
-State 79
+State 76
 
    17 boolean_expr: boolean_expr . "AND" boolean_expr
    18             | boolean_expr . "OR" boolean_expr
@@ -1806,7 +1785,7 @@ State 79
     Conflict between rule 18 and token "OR" resolved as reduce (%left "OR").
 
 
-State 80
+State 77
 
    19 boolean_expr: expr "=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    29 expr: expr . "+" expr
@@ -1822,7 +1801,7 @@ State 80
     $default  reduce using rule 19 (boolean_expr)
 
 
-State 81
+State 78
 
    20 boolean_expr: expr "!=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    29 expr: expr . "+" expr
@@ -1838,7 +1817,7 @@ State 81
     $default  reduce using rule 20 (boolean_expr)
 
 
-State 82
+State 79
 
    22 boolean_expr: expr "<" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    29 expr: expr . "+" expr
@@ -1854,7 +1833,7 @@ State 82
     $default  reduce using rule 22 (boolean_expr)
 
 
-State 83
+State 80
 
    21 boolean_expr: expr ">" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    29 expr: expr . "+" expr
@@ -1870,7 +1849,7 @@ State 83
     $default  reduce using rule 21 (boolean_expr)
 
 
-State 84
+State 81
 
    24 boolean_expr: expr "<=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    29 expr: expr . "+" expr
@@ -1886,7 +1865,7 @@ State 84
     $default  reduce using rule 24 (boolean_expr)
 
 
-State 85
+State 82
 
    23 boolean_expr: expr ">=" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    29 expr: expr . "+" expr
@@ -1902,7 +1881,7 @@ State 85
     $default  reduce using rule 23 (boolean_expr)
 
 
-State 86
+State 83
 
    25 boolean_expr: expr "LIKE" expr .  ["end of file", "GROUP", "HAVING", "ORDER", "AND", "OR", ")"]
    29 expr: expr . "+" expr
@@ -1918,57 +1897,57 @@ State 86
     $default  reduce using rule 25 (boolean_expr)
 
 
-State 87
+State 84
 
    45 group_by_field: "identifier" .
 
     $default  reduce using rule 45 (group_by_field)
 
 
-State 88
+State 85
 
    42 group_by_stmt: "GROUP" "BY" group_by_fields .  ["end of file", "HAVING", "ORDER"]
    44 group_by_fields: group_by_fields . "," group_by_field
 
-    ","  shift, and go to state 96
+    ","  shift, and go to state 92
 
     $default  reduce using rule 42 (group_by_stmt)
 
 
-State 89
+State 86
 
    43 group_by_fields: group_by_field .
 
     $default  reduce using rule 43 (group_by_fields)
 
 
-State 90
+State 87
 
    17 boolean_expr: boolean_expr . "AND" boolean_expr
    18             | boolean_expr . "OR" boolean_expr
    47 having_stmt: "HAVING" boolean_expr .  ["end of file", "ORDER"]
 
-    "AND"  shift, and go to state 61
-    "OR"   shift, and go to state 62
+    "AND"  shift, and go to state 59
+    "OR"   shift, and go to state 60
 
     $default  reduce using rule 47 (having_stmt)
 
 
-State 91
+State 88
 
    49 order_by_stmt: "ORDER" . "BY" order_by_fields
 
-    "BY"  shift, and go to state 97
+    "BY"  shift, and go to state 93
 
 
-State 92
+State 89
 
     1 query: select_stmt from_stmt where_stmt group_by_stmt having_stmt order_by_stmt .
 
     $default  reduce using rule 1 (query)
 
 
-State 93
+State 90
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -2005,34 +1984,27 @@ State 93
 
     fn1   go to state 17
     fn3   go to state 18
-    expr  go to state 98
+    expr  go to state 94
 
 
-State 94
-
-   13 from_stmt: "FROM" "(" "string" "," "string" ")" .
-
-    $default  reduce using rule 13 (from_stmt)
-
-
-State 95
+State 91
 
    27 boolean_expr: "identifier" "IS" "NOT" "NULL" .
 
     $default  reduce using rule 27 (boolean_expr)
 
 
-State 96
+State 92
 
    44 group_by_fields: group_by_fields "," . group_by_field
    45 group_by_field: . "identifier"
 
-    "identifier"  shift, and go to state 87
+    "identifier"  shift, and go to state 84
 
-    group_by_field  go to state 99
+    group_by_field  go to state 95
 
 
-State 97
+State 93
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -2074,12 +2046,12 @@ State 97
 
     fn1              go to state 17
     fn3              go to state 18
-    expr             go to state 100
-    order_by_fields  go to state 101
-    order_by_field   go to state 102
+    expr             go to state 96
+    order_by_fields  go to state 97
+    order_by_field   go to state 98
 
 
-State 98
+State 94
 
    29 expr: expr . "+" expr
    30     | expr . "-" expr
@@ -2091,17 +2063,17 @@ State 98
     "-"  shift, and go to state 33
     "*"  shift, and go to state 34
     "/"  shift, and go to state 35
-    ")"  shift, and go to state 103
+    ")"  shift, and go to state 99
 
 
-State 99
+State 95
 
    44 group_by_fields: group_by_fields "," group_by_field .
 
     $default  reduce using rule 44 (group_by_fields)
 
 
-State 100
+State 96
 
    29 expr: expr . "+" expr
    30     | expr . "-" expr
@@ -2115,51 +2087,51 @@ State 100
     "-"     shift, and go to state 33
     "*"     shift, and go to state 34
     "/"     shift, and go to state 35
-    "ASC"   shift, and go to state 104
-    "DESC"  shift, and go to state 105
+    "ASC"   shift, and go to state 100
+    "DESC"  shift, and go to state 101
 
     $default  reduce using rule 52 (order_by_field)
 
 
-State 101
+State 97
 
    49 order_by_stmt: "ORDER" "BY" order_by_fields .  ["end of file"]
    51 order_by_fields: order_by_fields . "," order_by_field
 
-    ","  shift, and go to state 106
+    ","  shift, and go to state 102
 
     $default  reduce using rule 49 (order_by_stmt)
 
 
-State 102
+State 98
 
    50 order_by_fields: order_by_field .
 
     $default  reduce using rule 50 (order_by_fields)
 
 
-State 103
+State 99
 
    35 expr: fn3 "(" expr "," expr "," expr ")" .
 
     $default  reduce using rule 35 (expr)
 
 
-State 104
+State 100
 
    53 order_by_field: expr "ASC" .
 
     $default  reduce using rule 53 (order_by_field)
 
 
-State 105
+State 101
 
    54 order_by_field: expr "DESC" .
 
     $default  reduce using rule 54 (order_by_field)
 
 
-State 106
+State 102
 
     2 fn1: . "STR"
     3    | . "INT"
@@ -2199,11 +2171,11 @@ State 106
 
     fn1             go to state 17
     fn3             go to state 18
-    expr            go to state 100
-    order_by_field  go to state 107
+    expr            go to state 96
+    order_by_field  go to state 103
 
 
-State 107
+State 103
 
    51 order_by_fields: order_by_fields "," order_by_field .
 

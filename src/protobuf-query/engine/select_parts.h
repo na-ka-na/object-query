@@ -221,8 +221,7 @@ struct OrderByStmt {
 };
 
 struct FromStmt {
-  string fromFile;
-  string fromRootProto;
+  string protoName;
   string str() const;
 };
 

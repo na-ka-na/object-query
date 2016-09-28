@@ -21,8 +21,6 @@ DEFINE_string(codeCompileDir, ".", "optional, directory where generated code "
 DEFINE_string(codeGenPrefix, "generated_query", "optional, prefix for "
                                                 "generated code files");
 
-DEFINE_string(protoName, "", "\033[1mrequired\033[0m, "
-                             "namespace in .proto + message name");
 DEFINE_string(cppProtoNamespace, "", "\033[1mrequired\033[0m, "
                                      "c++ namespace of proto");
 DEFINE_string(cppProtoHeader, "", "\033[1mrequired\033[0m, "
@@ -44,20 +42,18 @@ using namespace std;
 
 bool validateFlags() {
   return !FLAGS_codeGenDir.empty() && !FLAGS_codeCompileDir.empty() &&
-      !FLAGS_codeGenPrefix.empty() && !FLAGS_protoName.empty() &&
-      !FLAGS_cppProtoNamespace.empty() && !FLAGS_cppProtoHeader.empty() &&
-      !FLAGS_cppProtoLib.empty();
+      !FLAGS_codeGenPrefix.empty() && !FLAGS_cppProtoNamespace.empty() &&
+      !FLAGS_cppProtoHeader.empty() && !FLAGS_cppProtoLib.empty();
 }
 
 static regex notCommaRegex("[^,]+");
 
-ProtoSpec mkProtoSpec() {
-  ProtoSpec proto;
-  proto.protoName = FLAGS_protoName;
-  proto.cppProtoNamespace = FLAGS_cppProtoNamespace;
+CodeGenSpec mkCodeGenSpec() {
+  CodeGenSpec spec;
+  spec.cppProtoNamespace = FLAGS_cppProtoNamespace;
 
   auto idx = FLAGS_cppProtoHeader.rfind("/");
-  proto.headerIncludes.push_back(
+  spec.headerIncludes.push_back(
       FLAGS_cppProtoHeader.substr((idx == string::npos) ? 0 : (idx+1)));
 
   auto extraIncludesBegin = sregex_iterator(
@@ -65,9 +61,9 @@ ProtoSpec mkProtoSpec() {
       notCommaRegex);
   auto extraIncludesEnd = sregex_iterator();
   for (auto it=extraIncludesBegin; it!=extraIncludesEnd; ++it) {
-    proto.headerIncludes.push_back(it->str());
+    spec.headerIncludes.push_back(it->str());
   }
-  return proto;
+  return spec;
 }
 
 // construct -I
@@ -188,7 +184,7 @@ int main(int argc, char** argv) {
 
   cerr << "Generating code..." << endl;
 
-  ProtoSpec proto = mkProtoSpec();
+  CodeGenSpec spec = mkCodeGenSpec();
   string rawSql = argv[1];
   string generatedFile = FLAGS_codeGenDir + "/" + FLAGS_codeGenPrefix + ".cc";
   ofstream generated(generatedFile, ios::out | ios::trunc);
@@ -203,7 +199,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  QueryEngine engine(proto, rawSql, generated);
+  QueryEngine engine(spec, rawSql, generated);
   engine.process();
 
   int result = dlclose(libHandle);

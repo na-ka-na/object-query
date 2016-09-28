@@ -1,5 +1,5 @@
 /*
-SELECT all_employees.id, (financial.quarterly_revenues/all_employees.active_direct_reports) FROM ('argv[1]', 'Example1.Company') WHERE ((all_employees.active_direct_reports > 0) AND ((financial.quarterly_revenues*2) > 1))
+SELECT all_employees.id, (financial.quarterly_revenues/all_employees.active_direct_reports) FROM Example1.Company WHERE ((all_employees.active_direct_reports > 0) AND ((financial.quarterly_revenues*2) > 1))
 
 with (company = parseFromFile()) {
   for each quarterly_revenue in company.financial().quarterly_revenues() {
@@ -84,10 +84,10 @@ void printTuples(const vector<TupleType>& tuples) {
   }
 }
 
-int main(int, char** argv) {
-  Company company;
-  ParsePbFromFile(argv[1], company);
+int main(int argc, char** argv) {
+  vector<Company> companys;
+  FROM(argc, argv, companys);
   vector<TupleType> tuples;
-  runSelect({company}, tuples);
+  runSelect(companys, tuples);
   printTuples(tuples);
 }

@@ -1,5 +1,5 @@
 /*
-SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') AS employee, ((((STR(all_employees.id)+' ')+employee)+' ')+STR(founded)) AS employee2 FROM ('argv[1]', 'Example1.Company') WHERE (employee2 LIKE '.*true.*')
+SELECT (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') AS employee, ((((STR(all_employees.id)+' ')+employee)+' ')+STR(founded)) AS employee2 FROM Example1.Company WHERE (employee2 LIKE '.*true.*')
 
 with (company = parseFromFile()) {
   for each all_employee in company.all_employees() {
@@ -83,10 +83,10 @@ void printTuples(const vector<TupleType>& tuples) {
   }
 }
 
-int main(int, char** argv) {
-  Company company;
-  ParsePbFromFile(argv[1], company);
+int main(int argc, char** argv) {
+  vector<Company> companys;
+  FROM(argc, argv, companys);
   vector<TupleType> tuples;
-  runSelect({company}, tuples);
+  runSelect(companys, tuples);
   printTuples(tuples);
 }

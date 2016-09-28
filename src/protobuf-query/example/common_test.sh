@@ -7,8 +7,8 @@ function run_test() {
     actual_out="actual${testnum}.out"
     ../main/RunQuery --codeGenDir=../../../src/protobuf-query/example \
                --codeGenPrefix="generated_query${testnum}" --codeCompileDir=. \
-               --protoName=Example1.Company --cppProtoNamespace=Example1 \
-               --cppProtoHeader=example1.pb.h --cppProtoLib=libExampleProtos.dylib \
+               --cppProtoNamespace=Example1 --cppProtoHeader=example1.pb.h \
+               --cppProtoLib=libExampleProtos.dylib \
                "$sql" "$proto_file"  > "$actual_out"
     run_query_exit=$?
     if [[ $run_query_exit == 0 ]]

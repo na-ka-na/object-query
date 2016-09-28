@@ -331,11 +331,11 @@ void QueryGraph::processExpr(
   Node::walkNode(root, startNodeFn, endNodeFn);
 }
 
-void QueryGraph::initGraph(const ProtoSpec& proto, const SelectQuery& query) {
+void QueryGraph::initGraph(const SelectQuery& query) {
   const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
-  protoDescriptor = pool->FindMessageTypeByName(proto.protoName);
+  protoDescriptor = pool->FindMessageTypeByName(query.fromStmt.protoName);
   ASSERT(protoDescriptor != nullptr, "Unable to find proto descriptor for",
-         proto.protoName);
+         query.fromStmt.protoName);
   root.type = ROOT;
   root.objName = protoDescriptor->name();
   std::transform(root.objName.begin(), root.objName.end(),
@@ -354,8 +354,8 @@ void QueryGraph::addExpr(vector<const Expr*>& exprs, const Expr* expr) {
   }
 }
 
-QueryEngine::QueryEngine(const ProtoSpec& proto, const string& rawSql, ostream& out) :
-    proto(proto), query(SelectQuery(rawSql)), out(out) {}
+QueryEngine::QueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out) :
+    spec(spec), query(SelectQuery(rawSql)), out(out) {}
 
 void QueryEngine::printPlan() {
   StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node* parent) {
@@ -403,12 +403,12 @@ void QueryEngine::printPlan() {
 }
 
 void QueryEngine::printCode() {
-  for (const string& headerInclude : proto.headerIncludes) {
+  for (const string& headerInclude : spec.headerIncludes) {
     out << "#include \"" << headerInclude << "\"" << endl;
   }
   out << "#include \"generated_common.h\"" << endl << endl;
   out << "using namespace std;" << endl;
-  out << "using namespace " << proto.cppProtoNamespace << ";" << endl << endl;
+  out << "using namespace " << spec.cppProtoNamespace << ";" << endl << endl;
 
   // select fields header
   string header = "vector<string> header = {\n";
@@ -614,15 +614,13 @@ void printTuples(const vector<TupleType>& tuples) {
   out << "}" << endl << endl;
 
   // main
-  out << "int main(int, char** argv) {" << endl;
-  out << "  " << queryGraph.protoDescriptor->name()
-      << " " << queryGraph.root.objName << ";" << endl;
-  string fromFile = (query.fromStmt.fromFile.find("argv") == 0) ?
-      query.fromStmt.fromFile : ("\"" + query.fromStmt.fromFile + "\"");
-  out << "  ParsePbFromFile(" << fromFile << ", " << queryGraph.root.objName
-      << ");" << endl;
+  out << "int main(int argc, char** argv) {" << endl;
+  string protosVecIden = QueryGraph::makePlural(queryGraph.root.objName);
+  out << "  vector<" << queryGraph.protoDescriptor->name()
+      << "> " << protosVecIden << ";" << endl;
+  out << "  FROM(argc, argv, " << protosVecIden << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;
-  out << "  runSelect({" << queryGraph.root.objName << "}, tuples);" << endl;
+  out << "  runSelect(" << protosVecIden << ", tuples);" << endl;
   if (!query.orderByStmt.orderByFields.empty()) {
     out << "  std::sort(tuples.begin(), tuples.end(), compareTuples);" << endl;
   }
@@ -635,7 +633,7 @@ void QueryEngine::process() {
   out << "/*" << endl;
   out << query.str() << endl << endl;
   query.preProcess();
-  queryGraph.initGraph(proto, query);
+  queryGraph.initGraph(query);
   printPlan();
   out << "*/" << endl;
   printCode();

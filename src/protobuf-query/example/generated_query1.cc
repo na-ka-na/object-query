@@ -1,5 +1,5 @@
 /*
-SELECT financial.quarterly_profits, financial.quarterly_revenues, all_employees.id, all_employees.name, all_employees.active, all_employees.active_direct_reports, founded, board_of_directors FROM ('argv[1]', 'Example1.Company')
+SELECT financial.quarterly_profits, financial.quarterly_revenues, all_employees.id, all_employees.name, all_employees.active, all_employees.active_direct_reports, founded, board_of_directors FROM Example1.Company
 
 with (company = parseFromFile()) {
   tuples.add(founded)
@@ -135,10 +135,10 @@ void printTuples(const vector<TupleType>& tuples) {
   }
 }
 
-int main(int, char** argv) {
-  Company company;
-  ParsePbFromFile(argv[1], company);
+int main(int argc, char** argv) {
+  vector<Company> companys;
+  FROM(argc, argv, companys);
   vector<TupleType> tuples;
-  runSelect({company}, tuples);
+  runSelect(companys, tuples);
   printTuples(tuples);
 }

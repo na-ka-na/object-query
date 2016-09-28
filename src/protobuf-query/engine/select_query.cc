@@ -363,7 +363,7 @@ string OrderByStmt::str() const {
 }
 
 string FromStmt::str() const {
-  return "FROM ('" + fromFile + "', '" + fromRootProto + "')";
+  return "FROM " + protoName;
 }
 
 string WhereStmt::str() const {

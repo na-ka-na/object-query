@@ -35,7 +35,7 @@ With the following data:
 
 We can run SQL queries:
 
-    SELECT persons.name FROM (<data>, 'com.ka.Persons')
+    SELECT persons.name FROM com.ka.Persons
     persons.name
     ------------
     p1
@@ -44,7 +44,7 @@ We can run SQL queries:
     p4
     p5
 
-    SELECT persons.name, persons.emails FROM (<data>, 'com.ka.Persons')
+    SELECT persons.name, persons.emails FROM com.ka.Persons
     persons.name | persons.emails
     ------------ | --------------
     p1           | NULL
@@ -54,7 +54,7 @@ We can run SQL queries:
     p5           | e5
     p5           | e55
 
-    SELECT persons.name, persons.emails, persons.addresses.zip FROM (<data>, 'com.ka.Persons')
+    SELECT persons.name, persons.emails, persons.addresses.zip FROM com.ka.Persons
     persons.name | persons.emails | persons.addresses.zip
     ------------ | -------------- | ---------------------
     p1           | NULL           | NULL
@@ -66,26 +66,26 @@ We can run SQL queries:
     p5           | e55            | 123
     p5           | e55            | 456
 
-    SELECT persons.name, persons.emails FROM (<data>, 'com.ka.Persons') WHERE persons.emails LIKE '^.*[1-4]$'
+    SELECT persons.name, persons.emails FROM com.ka.Persons WHERE persons.emails LIKE '^.*[1-4]$'
     persons.name | persons.emails
     ------------ | --------------
     p2           | e2
     p4           | e4
 
-    SELECT persons.name, persons.emails FROM (<data>, 'com.ka.Persons') WHERE persons.emails LIKE '^.*[1-4]$' OR persons.name = 'p1'
+    SELECT persons.name, persons.emails FROM com.ka.Persons WHERE persons.emails LIKE '^.*[1-4]$' OR persons.name = 'p1'
     persons.name | persons.emails
     ------------ | --------------
     p1           | NULL
     p2           | e2
     p4           | e4
 
-    SELECT persons.name FROM (<data>, 'com.ka.Persons') WHERE persons.emails IS NULL
+    SELECT persons.name FROM com.ka.Persons WHERE persons.emails IS NULL
     persons.name
     ------------
     p1
     p3
 
-    SELECT persons.name, persons.has_ssn, persons.emails_size FROM (<data>, 'com.ka.Persons') ORDER BY persons.emails_size DESC
+    SELECT persons.name, persons.has_ssn, persons.emails_size FROM com.ka.Persons ORDER BY persons.emails_size DESC
     persons.name | persons.has_ssn | persons.emails_size
     ------------ | --------------- | -------------------
     p5           | true            | 2
@@ -131,7 +131,7 @@ We can run SQL queries:
 
 - Alias support with AS:
     
-        SELECT person.addresses.zip % 10 AS z0 FROM <> WHERE z0=3 ORDER BY z0
+        SELECT persons.addresses.zip % 10 AS z0 FROM com.ka.Persons WHERE z0=3 ORDER BY z0
 
 
 ## Usage
@@ -157,12 +157,17 @@ We can run SQL queries:
 
 - Minimal usage
         
-        $ ./RunQuery --protoName=com.ka.Persons \
+        $ ./RunQuery \
             --cppProtoHeader=/path/to/persons.pb.h \
             --cppProtoLib=/path/to/persons.so \
             --cppProtoNamespace=com::ka \
-            "SELECT persons.name FROM ('/path/to/persons.bin', 'com.ka.Persons')"
+            "SELECT persons.name FROM com.ka.Persons" \
+            /path/to/proto.bin
 
+- A special C++ macro `FROM` reads the proto from the binary file provided after the SQL query.
+  It may be overriden by employing `--cppExtraIncludes`. Any extra includes are included before the
+  `FROM` macro which is wrapped around `ifdef`. `FROM` macro should take argc, argv, vector<Proto>&
+  as parameters and read in the protos in the vector reference.
 
 #### Under the hood
 RunQuery is performing the following steps
@@ -172,7 +177,6 @@ RunQuery is performing the following steps
 * Step (4) Invokes the generated binary to actually run the query.
 
 #### Required flags
-* --protoName: namespace in .proto + message name
 * --cppProtoHeader: path to compiled proto header file. See src/protobuf-query/example/CMakeLists.txt
   for an example of how proto is compiled, you may add your proto here to build it.
 * --cppProtoLib: path to built proto library which contains defintion of the proto, either .so or .dylib.

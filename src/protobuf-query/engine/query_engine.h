@@ -19,8 +19,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 using namespace std;
 using namespace google::protobuf;
 
-struct ProtoSpec {
-  string protoName;
+struct CodeGenSpec {
   string cppProtoNamespace;
   vector<string> headerIncludes;
 };
@@ -107,7 +106,7 @@ struct QueryGraph {
   const Descriptor* protoDescriptor;
   Node root;
   map<string, Field> idFieldMap;
-  void initGraph(const ProtoSpec& proto, const SelectQuery& query);
+  void initGraph(const SelectQuery& query);
 
   static string makePlural(const string& name);
   static string makeSingular(const string& name);
@@ -121,11 +120,11 @@ struct QueryGraph {
 
 class QueryEngine {
 public:
-  QueryEngine(const ProtoSpec& proto, const string& rawSql, ostream& out);
+  QueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out);
   void process();
 
 private:
-  ProtoSpec proto;
+  CodeGenSpec spec;
   SelectQuery query;
   QueryGraph queryGraph;
   ostream& out;

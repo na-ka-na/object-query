@@ -1,5 +1,5 @@
 /*
-SELECT financial.quarterly_profits, all_employees.name, all_employees.active FROM ('argv[1]', 'Example1.Company') ORDER BY all_employees.active, financial.quarterly_profits DESC, all_employees.id
+SELECT financial.quarterly_profits, all_employees.name, all_employees.active FROM Example1.Company ORDER BY all_employees.active, financial.quarterly_profits DESC, all_employees.id
 
 with (company = parseFromFile()) {
   for each quarterly_profit in company.financial().quarterly_profits() {
@@ -96,11 +96,11 @@ void printTuples(const vector<TupleType>& tuples) {
   }
 }
 
-int main(int, char** argv) {
-  Company company;
-  ParsePbFromFile(argv[1], company);
+int main(int argc, char** argv) {
+  vector<Company> companys;
+  FROM(argc, argv, companys);
   vector<TupleType> tuples;
-  runSelect({company}, tuples);
+  runSelect(companys, tuples);
   std::sort(tuples.begin(), tuples.end(), compareTuples);
   printTuples(tuples);
 }

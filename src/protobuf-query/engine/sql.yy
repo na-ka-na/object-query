@@ -124,9 +124,7 @@ select_field: expr        {$$=SelectField(); $$.expr=$1;}
  | expr "AS" "identifier" {$$=SelectField(); $$.expr=$1; $$.alias=$3;}
  ;
 
-from_stmt: "FROM" "(" "string" "," "string" ")"
- {$$=FromStmt(); $$.fromFile=$3; $$.fromRootProto=$5;}
- ;
+from_stmt: "FROM" "identifier" {$$=FromStmt(); $$.protoName=$2;};
 
 where_stmt: %empty      {$$=WhereStmt();}
  | "WHERE" boolean_expr {$$=WhereStmt(); $$.booleanExpr=$2;};

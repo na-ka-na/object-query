@@ -1,5 +1,5 @@
 /*
-SELECT all_employees.name, all_employees.active_direct_reports FROM ('argv[1]', 'Example1.Company') WHERE all_employees.active_direct_reports IS NOT NULL
+SELECT all_employees.name, all_employees.active_direct_reports FROM Example1.Company WHERE all_employees.active_direct_reports IS NOT NULL
 
 with (company = parseFromFile()) {
   for each all_employee in company.all_employees() {
@@ -71,10 +71,10 @@ void printTuples(const vector<TupleType>& tuples) {
   }
 }
 
-int main(int, char** argv) {
-  Company company;
-  ParsePbFromFile(argv[1], company);
+int main(int argc, char** argv) {
+  vector<Company> companys;
+  FROM(argc, argv, companys);
   vector<TupleType> tuples;
-  runSelect({company}, tuples);
+  runSelect(companys, tuples);
   printTuples(tuples);
 }
