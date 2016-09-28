@@ -104,11 +104,11 @@ We can run SQL queries:
 
 - Selecting multiple repeated fields will result in a cartesian product across them.
 
-- For non repeated fields, one may query has\_xxx. For repeated fields, one may query xxx\_size.
+- For non repeated fields, one may query `has_xxx`. For repeated fields, one may query `xxx_size`.
 
 - Enums are printed as name and may be filtered by name in where clause.
 
-- No assumption on the presence of values is made, missing values come as NULL.
+- No assumption on the presence of values is made, missing values come as `NULL`.
 
 #### SQL
 - Following SQL statements are supported right now: `SELECT`, `FROM`, `WHERE`, `ORDER BY`.
@@ -116,20 +116,20 @@ We can run SQL queries:
 - Following SQL keywords are supported right now: `AS`, `LIKE`, `IS`, `NOT`, `NULL`, `AND`, `OR`, `ASC`, `DESC`,
   `TRUE`, `FALSE`, `,`, `+`, `-`, `*`, `/`, `=`, `!=`, `<`, `<=`, `>`, `>=`, `(`, `)`
 
-- Where clause allows full expression support.
+- `WHERE` clause allows full expression support.
 
 - Arithmetic operators behave per C++14 standard.
 
 - String concatenation is supported with `+`.
 
-- LIKE is different: it takes [default C++](http://en.cppreference.com/w/cpp/regex/ecmascript) regular expressions instead of supporting SQL standard (with the %).
+- `LIKE` is different: it takes [default C++](http://en.cppreference.com/w/cpp/regex/ecmascript) regular expressions instead of supporting SQL standard (with the `%`).
 
 - Additionally following custom SQL functions are supported right now: `STR`, `INT`. You may define
-  your own overrides for these functions, for e.g.
+  your own overrides for these functions, for e.g `STR` may be overriden for message types:
     
         SELECT STR(persons.addresses)
 
-- Alias support with AS:
+- Alias support with `AS`:
     
         SELECT persons.addresses.zip % 10 AS z0 FROM com.ka.Persons WHERE z0=3 ORDER BY z0
 
@@ -165,28 +165,35 @@ We can run SQL queries:
             /path/to/proto.bin
 
 - A special C++ macro `FROM` reads the proto from the binary file provided after the SQL query.
-  It may be overriden by employing `--cppExtraIncludes`. Any extra includes are included before the
-  `FROM` macro which is wrapped around `ifdef`. `FROM` macro should take argc, argv, vector<Proto>&
-  as parameters and read in the protos in the vector reference.
+  It may be overriden by employing `--cppExtraIncludes` (see below for all available flags).
+  Any extra includes are included before the `FROM` macro which is wrapped around `ifndef`.
+  `FROM` macro should take `argc`, `argv`, `vector<Proto>&` as parameters and read in the protos
+  in the provided vector reference.
 
 #### Under the hood
 RunQuery is performing the following steps
 * Step (1) Loads the proto lib to understand the structure of proto (using proto reflection).
 * Step (2) Parses the SQL query and generated C++14 source code for it.
-* Step (3) Compiles the generated code with the --cppProtoHeader and links it with --cppProtoLib.
+* Step (3) Compiles the generated code with the `--cppProtoHeader` and links it with `--cppProtoLib`.
 * Step (4) Invokes the generated binary to actually run the query.
+* Step (5) The generated binary reads in the protos using the `FROM` macro.
+* Step (6) The actual query is executed against the protos.
 
 #### Required flags
-* --cppProtoHeader: path to compiled proto header file. See src/protobuf-query/example/CMakeLists.txt
-  for an example of how proto is compiled, you may add your proto here to build it.
-* --cppProtoLib: path to built proto library which contains defintion of the proto, either .so or .dylib.
-* --cppProtoNamespace: namespace of proto in C++ generated code.
+* `--cppProtoHeader`: path/to/compiled/proto/header.pb.h. See src/protobuf-query/example/CMakeLists.txt
+  for an example of how proto is compiled, you may add your proto there to build it.
+* `--cppProtoLib`: path/to/built/proto/library.so which contains the proto defintion, either .so or .dylib.
+* `--cppProtoNamespace`: namespace of proto in C++ generated code.
 
 #### Optional flags
-* --codeGenDir: directory where generated code files are emitted (default '.').
-* --codeCompileDir: directory where generated code files are compiled (default '.').
-* --codeGenPrefix: prefix for generated code files (default 'generated_query').
-* --cppExtraIncludes: comma separated extra headers to include in generated code (default '').
-* --cppExtraIncludeDirs: comma separated directories to satisfy cppExtraIncludes (default '').
-* --cppExtraLinkLibs: comma separated extra lib names to link with generated code (default '').
-* --cppExtraLinkLibDirs: comma separated directories to satisfy cppExtraLinkLibs (default '').
+* `--codeGenDir`: directory where generated code files are emitted (default '.').
+* `--codeCompileDir`: directory where compiled binary is emitted (default '.').
+* `--codeGenPrefix`: prefix for generated code files and binary (default 'generated_query').
+* `--cppExtraIncludes`: comma separated extra headers to include in generated code,
+                        e.g. with `FROM` macro overriden, or custom function definitions (default '').
+* `--cppExtraLinkLibs`: comma separated extra lib names to link with generated code,
+                        used for the `-l` argument (default '').
+* `--cppExtraIncludeDirs`: comma separated directories to satisfy `--cppExtraIncludes`,
+                           used for the `-I` argument (default '').
+* `--cppExtraLinkLibDirs`: comma separated directories to satisfy `--cppExtraLinkLibs`,
+                           used for the `-L` argument (default '').

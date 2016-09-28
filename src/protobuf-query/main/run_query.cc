@@ -13,30 +13,38 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <gflags/gflags.h>
 #include "query_engine.h"
 
-DEFINE_string(codeGenDir, ".", "optional, directory where generated code files "
-                               "are emitted, e.g. /tmp, directory must exist");
-DEFINE_string(codeCompileDir, ".", "optional, directory where generated code "
-                                   "files are compiled, e.g. /tmp, directory "
-                                   "must exist");
-DEFINE_string(codeGenPrefix, "generated_query", "optional, prefix for "
-                                                "generated code files");
+DEFINE_string(codeGenDir, ".",
+              "optional, directory where generated code files are emitted, "
+              "e.g. /tmp, directory must exist");
+DEFINE_string(codeCompileDir, ".",
+              "optional, directory where compiled binary is emitted, "
+              "e.g. /tmp, directory must exist");
+DEFINE_string(codeGenPrefix, "generated_query",
+              "optional, prefix for generated code files and binary");
 
-DEFINE_string(cppProtoNamespace, "", "\033[1mrequired\033[0m, "
-                                     "c++ namespace of proto");
-DEFINE_string(cppProtoHeader, "", "\033[1mrequired\033[0m, "
-                                  "path of proto header file");
-DEFINE_string(cppProtoLib, "", "\033[1mrequired\033[0m, "
-                               "path of built proto library");
+DEFINE_string(cppProtoNamespace, "",
+             "\033[1mrequired\033[0m, namespace of proto in C++ generated code");
+DEFINE_string(cppProtoHeader, "",
+              "\033[1mrequired\033[0m, path/to/compiled/proto/header.pb.h. See "
+              "src/protobuf-query/example/CMakeLists.txt for an example of how "
+              "proto is compiled, you may add your proto there to build it.");
+DEFINE_string(cppProtoLib, "",
+              "\033[1mrequired\033[0m, path/to/built/proto/library.so which "
+              "contains the proto defintion, either .so or .dylib");
 
-DEFINE_string(cppExtraIncludes, "", "optional, comma separated extra headers "
-                                    "to include in generated code, e.g. with "
-                                    "your custom functions");
-DEFINE_string(cppExtraLinkLibs, "", "optional, comma separated extra lib names "
-                                    "to link with generated code");
-DEFINE_string(cppExtraIncludeDirs, "", "optional, comma separated directories "
-                                       "to satisfy cppExtraIncludes");
-DEFINE_string(cppExtraLinkLibDirs, "", "optional, comma separated directories "
-                                       "to satisfy cppExtraLinkLibs");
+DEFINE_string(cppExtraIncludes, "",
+              "optional, comma separated extra headers to include in generated "
+              "code, e.g. with FROM macro overriden, or custom function "
+              "definitions.");
+DEFINE_string(cppExtraLinkLibs, "",
+              "optional, comma separated extra lib names to link with generated "
+              "code, used for the -l argument.");
+DEFINE_string(cppExtraIncludeDirs, "",
+              "optional, comma separated directories to satisfy "
+              "cppExtraIncludes, used for the -I argument.");
+DEFINE_string(cppExtraLinkLibDirs, "",
+              "optional, comma separated directories to satisfy "
+              "cppExtraLinkLibs, used for the -L argument.");
 
 using namespace std;
 
@@ -178,6 +186,7 @@ int main(int argc, char** argv) {
                           "<sql-query> [sql-args...]");
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   if (!validateFlags() || (argc < 2)) {
+    cerr << "Invalid arguments ..." << endl;
     gflags::ShowUsageWithFlagsRestrict(argv[0], __FILE__);
     exit(1);
   }
