@@ -15,7 +15,6 @@ tuples.print('(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all
 #include "generated_common.h"
 
 using namespace std;
-using namespace Example1;
 
 vector<string> header = {
   "employee",
@@ -31,13 +30,13 @@ using TupleType = tuple<S4, S5>;
 
 std::regex r6(".*true.*", std::regex::optimize);
 
-void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companys)) {
+void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
+  for (const auto* company : Iterators::mk_iterator(&companys)) {
     S3 s3 = S3();
     if (company && company->has_founded()) {
       s3 = company->founded();
     }
-    for (const Employee* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+    for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
       S1 s1 = S1();
       if (all_employee && all_employee->has_id()) {
         s1 = all_employee->id();
@@ -84,7 +83,7 @@ void printTuples(const vector<TupleType>& tuples) {
 }
 
 int main(int argc, char** argv) {
-  vector<Company> companys;
+  vector<Example1::Company> companys;
   FROM(argc, argv, companys);
   vector<TupleType> tuples;
   runSelect(companys, tuples);

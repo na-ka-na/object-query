@@ -19,7 +19,6 @@ tuples.print('financial.quarterly_profits', 'all_employees.name', 'all_employees
 #include "generated_common.h"
 
 using namespace std;
-using namespace Example1;
 
 vector<string> header = {
   "financial.quarterly_profits",
@@ -32,14 +31,14 @@ using S2 = optional<string>; /*.name()*/
 using S3 = optional<float>;  /*.financial().quarterly_profits()*/
 using TupleType = tuple<S3, S2, S0, S1>;
 
-void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companys)) {
-    for (const float* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
+void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
+  for (const auto* company : Iterators::mk_iterator(&companys)) {
+    for (const auto* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
       S3 s3 = S3();
       if (quarterly_profit) {
         s3 = *quarterly_profit;
       }
-      for (const Employee* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+      for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
         S1 s1 = S1();
         if (all_employee && all_employee->has_id()) {
           s1 = all_employee->id();
@@ -97,7 +96,7 @@ void printTuples(const vector<TupleType>& tuples) {
 }
 
 int main(int argc, char** argv) {
-  vector<Company> companys;
+  vector<Example1::Company> companys;
   FROM(argc, argv, companys);
   vector<TupleType> tuples;
   runSelect(companys, tuples);

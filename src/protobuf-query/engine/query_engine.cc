@@ -408,7 +408,7 @@ void QueryEngine::printCode() {
   }
   out << "#include \"generated_common.h\"" << endl << endl;
   out << "using namespace std;" << endl;
-  out << "using namespace " << spec.cppProtoNamespace << ";" << endl << endl;
+  out << endl;
 
   // select fields header
   string header = "vector<string> header = {\n";
@@ -492,20 +492,19 @@ void QueryEngine::printCode() {
   }
 
   out << "void runSelect(const vector<"
-      << queryGraph.protoDescriptor->name() << ">& "
-      << QueryGraph::makePlural(queryGraph.root.objName)
+      << spec.cppProtoNamespace << "::" << queryGraph.protoDescriptor->name()
+      << ">& " << QueryGraph::makePlural(queryGraph.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
   bool allSelectAndOrderByFieldsProcessed = false;
   StartNodeFn startNodeFn = [&](int indent, const Node& node, const Node* parent) {
     string ind = string(indent+2, ' ');
     if (!parent) { //root
-      out << ind << "for (const "
-          << queryGraph.protoDescriptor->name()
-          << "* " << node.objName << " : Iterators::mk_iterator(&"
+      out << ind << "for (const auto* " << node.objName
+          << " : Iterators::mk_iterator(&"
           << QueryGraph::makePlural(queryGraph.root.objName) << ")) {" << endl;
     } else {
-      out << ind << "for (const " << node.repeatedField.code_type() << "* "
+      out << ind << "for (const auto* "
           << node.objName << " : Iterators::mk_iterator(" << parent->objName
           << " ? &" << node.repeatedField.accessor(parent->objName + "->")
           << " : nullptr)) {" << endl;
@@ -616,7 +615,8 @@ void printTuples(const vector<TupleType>& tuples) {
   // main
   out << "int main(int argc, char** argv) {" << endl;
   string protosVecIden = QueryGraph::makePlural(queryGraph.root.objName);
-  out << "  vector<" << queryGraph.protoDescriptor->name()
+  out << "  vector<"
+      << spec.cppProtoNamespace << "::" << queryGraph.protoDescriptor->name()
       << "> " << protosVecIden << ";" << endl;
   out << "  FROM(argc, argv, " << protosVecIden << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;

@@ -79,6 +79,23 @@ inline optional<string> ToStr(const optional<T>& t) {
   return s;
 }
 
+template<typename T>
+inline int Intify(const T& t) {
+  return (int) t;
+}
+
+template<> inline int Intify(const string& t) {
+  return stoi(t);
+}
+
+template<typename T>
+inline optional<int> ToInt(const optional<T>& t) {
+  optional<int> i;
+  if (t) {
+    i = Intify(*t);
+  }
+  return i;
+}
 
 template<typename T>
 inline bool IsNull(const optional<T>& t) {
@@ -161,11 +178,6 @@ inline auto Divide(const optional<L>& l, const optional<R>& r) {
   optional<decltype(*l / *r)> o;
   if (l && r) o = *l / *r;
   return o;
-}
-
-template<typename T>
-inline int ToInt(const optional<T>& t) {
-  return (int) t;
 }
 
 template<typename T>

@@ -28,7 +28,6 @@ tuples.print('financial.quarterly_profits', 'financial.quarterly_revenues', 'all
 #include "generated_common.h"
 
 using namespace std;
-using namespace Example1;
 
 vector<string> header = {
   "financial.quarterly_profits",
@@ -50,28 +49,28 @@ using S6 = optional<float>;  /*.financial().quarterly_revenues()*/
 using S7 = optional<int32>;  /*.founded()*/
 using TupleType = tuple<S5, S6, S2, S3, S0, S1, S7, S4>;
 
-void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
-  for (const Company* company : Iterators::mk_iterator(&companys)) {
+void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
+  for (const auto* company : Iterators::mk_iterator(&companys)) {
     S7 s7 = S7();
     if (company && company->has_founded()) {
       s7 = company->founded();
     }
-    for (const int32* board_of_director : Iterators::mk_iterator(company ? &company->board_of_directors() : nullptr)) {
+    for (const auto* board_of_director : Iterators::mk_iterator(company ? &company->board_of_directors() : nullptr)) {
       S4 s4 = S4();
       if (board_of_director) {
         s4 = *board_of_director;
       }
-      for (const float* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
+      for (const auto* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
         S5 s5 = S5();
         if (quarterly_profit) {
           s5 = *quarterly_profit;
         }
-        for (const float* quarterly_revenue : Iterators::mk_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
+        for (const auto* quarterly_revenue : Iterators::mk_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
           S6 s6 = S6();
           if (quarterly_revenue) {
             s6 = *quarterly_revenue;
           }
-          for (const Employee* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+          for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
             S2 s2 = S2();
             if (all_employee && all_employee->has_id()) {
               s2 = all_employee->id();
@@ -84,7 +83,7 @@ void runSelect(const vector<Company>& companys, vector<TupleType>& tuples) {
             if (all_employee && all_employee->has_active()) {
               s0 = all_employee->active();
             }
-            for (const int32* active_direct_report : Iterators::mk_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
+            for (const auto* active_direct_report : Iterators::mk_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
               S1 s1 = S1();
               if (active_direct_report) {
                 s1 = *active_direct_report;
@@ -136,7 +135,7 @@ void printTuples(const vector<TupleType>& tuples) {
 }
 
 int main(int argc, char** argv) {
-  vector<Company> companys;
+  vector<Example1::Company> companys;
   FROM(argc, argv, companys);
   vector<TupleType> tuples;
   runSelect(companys, tuples);
