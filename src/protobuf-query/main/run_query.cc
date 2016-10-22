@@ -22,8 +22,6 @@ DEFINE_string(codeCompileDir, ".",
 DEFINE_string(codeGenPrefix, "generated_query",
               "optional, prefix for generated code files and binary");
 
-DEFINE_string(cppProtoNamespace, "",
-             "\033[1mrequired\033[0m, namespace of proto in C++ generated code");
 DEFINE_string(cppProtoHeader, "",
               "\033[1mrequired\033[0m, path/to/compiled/proto/header.pb.h. See "
               "src/protobuf-query/example/CMakeLists.txt for an example of how "
@@ -50,16 +48,14 @@ using namespace std;
 
 bool validateFlags() {
   return !FLAGS_codeGenDir.empty() && !FLAGS_codeCompileDir.empty() &&
-      !FLAGS_codeGenPrefix.empty() && !FLAGS_cppProtoNamespace.empty() &&
-      !FLAGS_cppProtoHeader.empty() && !FLAGS_cppProtoLib.empty();
+      !FLAGS_codeGenPrefix.empty() && !FLAGS_cppProtoHeader.empty() &&
+      !FLAGS_cppProtoLib.empty();
 }
 
 static regex notCommaRegex("[^,]+");
 
 CodeGenSpec mkCodeGenSpec() {
   CodeGenSpec spec;
-  spec.cppProtoNamespace = FLAGS_cppProtoNamespace;
-
   auto idx = FLAGS_cppProtoHeader.rfind("/");
   spec.headerIncludes.push_back(
       FLAGS_cppProtoHeader.substr((idx == string::npos) ? 0 : (idx+1)));

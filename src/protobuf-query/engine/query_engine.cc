@@ -60,6 +60,11 @@ bool FieldPart::operator==(const FieldPart& other) const {
   return (part_type == other.part_type) && (descriptor == other.descriptor);
 }
 
+string FieldPart::full_name_to_cpp_type(const string& full_name) {
+  static regex dot("\\.");
+  return regex_replace(full_name, dot, "::");
+}
+
 string FieldPart::name() const {
   switch (part_type) {
   case NORMAL : return descriptor->name();
@@ -116,9 +121,7 @@ const EnumDescriptor* FieldPart::enum_descriptor() const {
 
 string FieldPart::code_type() const {
   if (is_message()) {
-    static regex dot("\\.");
-    string full_name = message_descriptor()->full_name();
-    return regex_replace(full_name, dot, "::");
+    return full_name_to_cpp_type(message_descriptor()->full_name());
   } else if (is_enum()) {
     return "string";
   } else {
@@ -226,6 +229,10 @@ string QueryGraph::makeSingular(const string& name) {
   } else {
     return "each_" + name;
   }
+}
+
+string QueryGraph::getProtoCppType() const {
+  return FieldPart::full_name_to_cpp_type(protoDescriptor->full_name());
 }
 
 void QueryGraph::addReadIdentifier(const string& identifier) {
@@ -493,9 +500,8 @@ void QueryEngine::printCode() {
     out << endl;
   }
 
-  out << "void runSelect(const vector<"
-      << spec.cppProtoNamespace << "::" << queryGraph.protoDescriptor->name()
-      << ">& " << QueryGraph::makePlural(queryGraph.root.objName)
+  out << "void runSelect(const vector<" << queryGraph.getProtoCppType() << ">& "
+      << QueryGraph::makePlural(queryGraph.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
   bool allSelectAndOrderByFieldsProcessed = false;
@@ -617,9 +623,8 @@ void printTuples(const vector<TupleType>& tuples) {
   // main
   out << "int main(int argc, char** argv) {" << endl;
   string protosVecIden = QueryGraph::makePlural(queryGraph.root.objName);
-  out << "  vector<"
-      << spec.cppProtoNamespace << "::" << queryGraph.protoDescriptor->name()
-      << "> " << protosVecIden << ";" << endl;
+  out << "  vector<" << queryGraph.getProtoCppType() << "> "
+      << protosVecIden << ";" << endl;
   out << "  FROM(argc, argv, " << protosVecIden << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;
   out << "  runSelect(" << protosVecIden << ", tuples);" << endl;

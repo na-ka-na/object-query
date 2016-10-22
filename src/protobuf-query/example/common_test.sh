@@ -9,7 +9,6 @@ function run_test() {
                --codeGenDir=../../../src/protobuf-query/example \
                --codeGenPrefix="generated_query${testnum}" \
                --codeCompileDir=. \
-               --cppProtoNamespace=Example1 \
                --cppProtoHeader=example1.pb.h \
                --cppProtoLib=libExampleProtos.dylib \
                --cppExtraIncludes=example1_utils.h \

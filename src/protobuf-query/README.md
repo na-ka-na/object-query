@@ -160,7 +160,6 @@ We can run SQL queries:
         $ ./RunQuery \
             --cppProtoHeader=/path/to/persons.pb.h \
             --cppProtoLib=/path/to/persons.so \
-            --cppProtoNamespace=com::ka \
             "SELECT persons.name FROM com.ka.Persons" \
             /path/to/proto.bin
 
@@ -183,7 +182,6 @@ RunQuery is performing the following steps
 * `--cppProtoHeader`: path/to/compiled/proto/header.pb.h. See src/protobuf-query/example/CMakeLists.txt
   for an example of how proto is compiled, you may add your proto there to build it.
 * `--cppProtoLib`: path/to/built/proto/library.so which contains the proto defintion, either .so or .dylib.
-* `--cppProtoNamespace`: namespace of proto in C++ generated code.
 
 #### Optional flags
 * `--codeGenDir`: directory where generated code files are emitted (default '.').

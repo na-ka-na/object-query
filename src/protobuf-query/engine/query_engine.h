@@ -20,7 +20,6 @@ using namespace std;
 using namespace google::protobuf;
 
 struct CodeGenSpec {
-  string cppProtoNamespace;
   vector<string> headerIncludes;
 };
 
@@ -33,6 +32,8 @@ struct FieldPart {
 
   bool operator<(const FieldPart& other) const;
   bool operator==(const FieldPart& other) const;
+
+  static string full_name_to_cpp_type(const string& full_name);
 
   string name() const;
   FieldDescriptor::Type type() const;
@@ -110,6 +111,7 @@ struct QueryGraph {
 
   static string makePlural(const string& name);
   static string makeSingular(const string& name);
+  string getProtoCppType() const;
   void addReadIdentifier(const string& identifier);
   void processSelect(const SelectStmt& selectStmt);
   void processWhere(const WhereStmt& whereStmt);
