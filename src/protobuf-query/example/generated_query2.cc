@@ -16,6 +16,7 @@ with (company = parseFromFile()) {
 tuples.print('all_employees.id', 'all_employees.name')
 */
 #include "example1.pb.h"
+#include "example1_utils.h"
 #include "generated_common.h"
 
 using namespace std;

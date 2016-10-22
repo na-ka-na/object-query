@@ -16,7 +16,7 @@ add_custom_command(OUTPUT ${common_test_sh}
                    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${common_test_sh} ${CMAKE_CURRENT_BINARY_DIR}
                    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${common_test_sh})
 
-foreach(testnum RANGE 1 6)
+foreach(testnum RANGE 1 7)
   set(test_sh "test${testnum}.sh")
   add_custom_command(OUTPUT ${test_sh}
                      COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${test_sh} ${CMAKE_CURRENT_BINARY_DIR}

@@ -5,10 +5,14 @@ function run_test() {
     proto_file="../../../src/protobuf-query/example/example1.proto.gz"
     golden_out="golden${testnum}.out"
     actual_out="actual${testnum}.out"
-    ../main/RunQuery --codeGenDir=../../../src/protobuf-query/example \
-               --codeGenPrefix="generated_query${testnum}" --codeCompileDir=. \
-               --cppProtoNamespace=Example1 --cppProtoHeader=example1.pb.h \
+    ../main/RunQuery \
+               --codeGenDir=../../../src/protobuf-query/example \
+               --codeGenPrefix="generated_query${testnum}" \
+               --codeCompileDir=. \
+               --cppProtoNamespace=Example1 \
+               --cppProtoHeader=example1.pb.h \
                --cppProtoLib=libExampleProtos.dylib \
+               --cppExtraIncludes=example1_utils.h \
                "$sql" "$proto_file"  > "$actual_out"
     run_query_exit=$?
     if [[ $run_query_exit == 0 ]]

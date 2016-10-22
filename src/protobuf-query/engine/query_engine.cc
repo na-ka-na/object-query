@@ -116,7 +116,9 @@ const EnumDescriptor* FieldPart::enum_descriptor() const {
 
 string FieldPart::code_type() const {
   if (is_message()) {
-    return message_descriptor()->name();
+    static regex dot("\\.");
+    string full_name = message_descriptor()->full_name();
+    return regex_replace(full_name, dot, "::");
   } else if (is_enum()) {
     return "string";
   } else {
@@ -259,7 +261,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
     } else {
       if (fieldPart.is_repeated()) {
         Node& child = parent->children[field];
-        child.type = fieldPart.is_message() ? REPEATED_MESSAGE : REPEATED_PRIMITIVE;
+        child.type = REPEATED_LEAF;
         child.objName = makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
@@ -513,7 +515,7 @@ void QueryEngine::printCode() {
     for (const Field& field : node.allFields) {
       out << ind << fieldTypeMap[field] << " " << fieldVarMap[field] << " = "
           << fieldDefaultMap[field] << ";" << endl;
-      if (node.type == REPEATED_PRIMITIVE) {
+      if (node.type == REPEATED_LEAF) {
         out << ind << "if (" << node.objName << ") {" << endl;
         out << ind << "  " << fieldVarMap[field] << " = *"
             << node.objName << ";" << endl;

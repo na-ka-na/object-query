@@ -25,6 +25,7 @@ with (company = parseFromFile()) {
 tuples.print('financial.quarterly_profits', 'financial.quarterly_revenues', 'all_employees.id', 'all_employees.name', 'all_employees.active', 'all_employees.active_direct_reports', 'founded', 'board_of_directors')
 */
 #include "example1.pb.h"
+#include "example1_utils.h"
 #include "generated_common.h"
 
 using namespace std;

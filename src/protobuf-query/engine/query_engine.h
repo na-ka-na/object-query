@@ -61,7 +61,7 @@ struct Field {
 };
 
 enum NodeType {
-  ROOT, REPEATED_MESSAGE, REPEATED_PRIMITIVE
+  ROOT, REPEATED_MESSAGE, REPEATED_LEAF
 };
 
 struct Node;
