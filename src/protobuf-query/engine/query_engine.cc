@@ -165,7 +165,9 @@ string Field::accessor(const string& objName) const {
   str += joinVec<FieldPart>(".", fieldParts,
       [] (const FieldPart& part) {return part.accessor();});
   if (!fieldParts.empty() && fieldParts.back().is_enum()) {
-    str = fieldParts.back().enum_descriptor()->name() + "_Name(" + str + ")";
+    str = FieldPart::full_name_to_cpp_type(
+            fieldParts.back().enum_descriptor()->full_name())
+          + "_Name(" + str + ")";
   }
   return str;
 }
