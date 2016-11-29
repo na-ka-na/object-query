@@ -160,14 +160,23 @@ string Field::code_type() const {
   return fieldParts.back().code_type();
 }
 
-string Field::accessor(const string& objName) const {
+bool Field::is_enum() const {
+  return !fieldParts.empty() && fieldParts.back().is_enum();
+}
+
+string Field::wrap_enum_with_name_accessor(const string& accessor) const {
+  ASSERT(is_enum());
+  string type = FieldPart::full_name_to_cpp_type(
+      fieldParts.back().enum_descriptor()->full_name());
+  return type + "_Name(static_cast<" + type + ">(" + accessor + "))";
+}
+
+string Field::accessor(const string& objName, bool useNameForEnum) const {
   string str = objName;
   str += joinVec<FieldPart>(".", fieldParts,
       [] (const FieldPart& part) {return part.accessor();});
-  if (!fieldParts.empty() && fieldParts.back().is_enum()) {
-    str = FieldPart::full_name_to_cpp_type(
-            fieldParts.back().enum_descriptor()->full_name())
-          + "_Name(" + str + ")";
+  if (is_enum() && useNameForEnum) {
+    return wrap_enum_with_name_accessor(str);
   }
   return str;
 }
@@ -375,7 +384,8 @@ void QueryEngine::printPlan() {
           << " = parseFromFile()) {" << endl;
     } else {
       out << string(indent, ' ') << "for each " << node.objName << " in "
-          << node.repeatedField.accessor(parent->objName + ".") << " {" << endl;
+          << node.repeatedField.accessor(parent->objName + ".", false)
+          << " {" << endl;
     }
     indent+=2;
     for (const BooleanExpr* expr : node.whereClauses) {
@@ -448,7 +458,7 @@ void QueryEngine::printCode() {
     string type = "optional<" + field.code_type() + ">";
     string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
     out << "using " << fieldTypeMap[field] << " = " << type << ";"
-        << spaces << " /*" << field.accessor(".") << "*/" << endl;
+        << spaces << " /*" << field.accessor(".", false) << "*/" << endl;
     cgr.idVarMap[id] = fieldVarMap[field];
     cgr.idDefaultMap[id] = fieldDefaultMap[field];
   }
@@ -516,7 +526,7 @@ void QueryEngine::printCode() {
     } else {
       out << ind << "for (const auto* "
           << node.objName << " : Iterators::mk_iterator(" << parent->objName
-          << " ? &" << node.repeatedField.accessor(parent->objName + "->")
+          << " ? &" << node.repeatedField.accessor(parent->objName + "->", false)
           << " : nullptr)) {" << endl;
     }
     ind += "  ";
@@ -525,15 +535,18 @@ void QueryEngine::printCode() {
           << fieldDefaultMap[field] << ";" << endl;
       if (node.type == REPEATED_LEAF) {
         out << ind << "if (" << node.objName << ") {" << endl;
-        out << ind << "  " << fieldVarMap[field] << " = *"
-            << node.objName << ";" << endl;
+        out << ind << "  " << fieldVarMap[field] << " = "
+            << (field.is_enum()
+                ? field.wrap_enum_with_name_accessor("*" + node.objName)
+                : "*" + node.objName)
+            << ";" << endl;
         out << ind << "}" << endl;
       } else {
         string checks = field.has_check(node.objName + "->");
         out << ind << "if (" << node.objName
             << (checks.empty() ? "" : " && " + checks) << ") {" << endl;
         out << ind << "  " << fieldVarMap[field] << " = "
-            << field.accessor(node.objName + "->") << ";" << endl;
+            << field.accessor(node.objName + "->", true) << ";" << endl;
         out << ind << "}" << endl;
       }
     }

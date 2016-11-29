@@ -57,7 +57,9 @@ struct Field {
   bool operator<(const Field& other) const;
   bool operator==(const Field& other) const;
   string code_type() const;
-  string accessor(const string& objName) const;
+  bool is_enum() const;
+  string wrap_enum_with_name_accessor(const string& accessor) const;
+  string accessor(const string& objName, bool useNameForEnum) const;
   string has_check(const string& objName) const;
 };
 
