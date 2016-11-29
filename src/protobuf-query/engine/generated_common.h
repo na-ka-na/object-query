@@ -261,24 +261,25 @@ public:
     int singular = 0; // 0 for normal case, 1 for begin, 2 for end
   };
 
-  MyRangeIterator() {}
+  MyRangeIterator() : singular(true) {}
 
   MyRangeIterator(It&& orig_begin, It&& orig_end) :
-      orig_begin(orig_begin), orig_end(orig_end) {}
+      singular(false), orig_begin(orig_begin), orig_end(orig_end) {}
 
   ConstIterator begin() const {
-    return (orig_begin != orig_end)
+    return (!singular && (orig_begin != orig_end))
         ? ConstIterator::mk_normal((It*) &orig_begin)
         : ConstIterator::mk_singular(true);
   }
 
   ConstIterator end() const {
-    return (orig_begin != orig_end)
+    return (!singular && (orig_begin != orig_end))
         ? ConstIterator::mk_normal((It*) &orig_end)
         : ConstIterator::mk_singular(false);
   }
 
 private:
+  bool singular;
   It orig_begin;
   It orig_end;
 };
