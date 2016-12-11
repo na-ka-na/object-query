@@ -73,9 +73,9 @@ public:
   string str() const;
 private:
   friend Expr;
-  BinaryExprOp op;
-  shared_ptr<Expr> lhs;
-  shared_ptr<Expr> rhs;
+  BinaryExprOp op_;
+  shared_ptr<Expr> lhs_;
+  shared_ptr<Expr> rhs_;
 };
 
 class UnaryExpr {
@@ -86,8 +86,8 @@ public:
   string str() const;
 private:
   friend Expr;
-  UnaryExprOp op;
-  shared_ptr<Expr> expr;
+  UnaryExprOp op_;
+  shared_ptr<Expr> expr_;
 };
 
 class Fn1CallExpr {
@@ -98,8 +98,8 @@ public:
   string str() const;
 private:
   friend Expr;
-  Fn1 fn1;
-  shared_ptr<Expr> expr;
+  Fn1 fn1_;
+  shared_ptr<Expr> expr_;
 };
 
 class Fn3CallExpr {
@@ -110,8 +110,8 @@ public:
   string str() const;
 private:
   friend Expr;
-  Fn3 fn3;
-  shared_ptr<Expr> expr1, expr2, expr3;
+  Fn3 fn3_;
+  shared_ptr<Expr> expr1_, expr2_, expr3_;
 };
 
 class Expr {
@@ -139,15 +139,15 @@ private:
   ExprType type_;
   // TODO(sanchay): figure out how to use variant.
   // union doesn't work nicely, we get complaints about destructor.
-  BinaryExpr binaryExpr;
-  UnaryExpr unaryExpr;
-  Fn1CallExpr fn1CallExpr;
-  Fn3CallExpr fn3CallExpr;
-  string identifier;
-  string stringValue;
-  long longValue;
-  double doubleValue;
-  bool boolValue;
+  BinaryExpr binary_expr_;
+  UnaryExpr unary_expr_;
+  Fn1CallExpr fn1_call_expr_;
+  Fn3CallExpr fn3_call_expr_;
+  string identifier_;
+  string string_value_;
+  long long_value_;
+  double double_value_;
+  bool bool_value_;
 };
 
 // note: update BooleanExpr::str() on mod
@@ -174,9 +174,9 @@ public:
   string str() const;
 private:
   friend BooleanExpr;
-  CompoundBooleanOp op;
-  shared_ptr<BooleanExpr> lhs;
-  shared_ptr<BooleanExpr> rhs;
+  CompoundBooleanOp op_;
+  shared_ptr<BooleanExpr> lhs_;
+  shared_ptr<BooleanExpr> rhs_;
 };
 
 class SimpleBooleanExpr {
@@ -188,9 +188,9 @@ public:
   string str() const;
 private:
   friend BooleanExpr;
-  SimpleBooleanOp op;
-  Expr lhs;
-  Expr rhs;
+  SimpleBooleanOp op_;
+  Expr lhs_;
+  Expr rhs_;
 };
 
 class NullaryBooleanExpr {
@@ -201,8 +201,8 @@ public:
   string str() const;
 private:
   friend BooleanExpr;
-  bool isNull;
-  string identifier;
+  bool is_null_;
+  string identifier_;
 };
 
 class BooleanExpr {
@@ -214,16 +214,16 @@ public:
   static BooleanExpr createNullary(bool isNull, const string& identifier);
   void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
-  void canoncialize(vector<const BooleanExpr*>& andClauses) const;
+  void canoncialize(vector<const BooleanExpr*>& and_clauses) const;
   void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
 private:
   BooleanExprType type_;
   // TODO(sanchay): figure out how to use variant.
-  CompoundBooleanExpr compoundBooleanExpr;
-  SimpleBooleanExpr simpleBooleanExpr;
-  NullaryBooleanExpr nullaryBooleanExpr;
+  CompoundBooleanExpr compound_boolean_expr_;
+  SimpleBooleanExpr simple_boolean_expr_;
+  NullaryBooleanExpr nullary_boolean_expr_;
 };
 
 class SelectField {
@@ -237,8 +237,8 @@ public:
   const Expr& getExpr() const;
   string getHeader() const;
 private:
-  Expr expr;
-  string alias;
+  Expr expr_;
+  string alias_;
 };
 
 class SelectStmt {
@@ -249,8 +249,8 @@ public:
   string str() const;
   const vector<SelectField>& getSelectFields() const;
 private:
-  bool distinct;
-  vector<SelectField> selectFields;
+  bool distinct_;
+  vector<SelectField> select_fields_;
 };
 
 class FromStmt {
@@ -259,7 +259,7 @@ public:
   string str() const;
   const string& getProtoName() const;
 private:
-  string protoName;
+  string proto_name_;
 };
 
 class WhereStmt {
@@ -269,10 +269,10 @@ public:
   void removeSelectAliases(const SelectAliases& aliases);
   void extractStatics(CodeGenReqs& cgr) const;
   void getAllIdentifiers(set<string>& identifiers) const;
-  void canoncialize(vector<const BooleanExpr*>& andClauses) const;
+  void canoncialize(vector<const BooleanExpr*>& and_clauses) const;
   string str() const;
 private:
-  optional<BooleanExpr> booleanExpr;
+  optional<BooleanExpr> boolean_expr_;
 };
 
 class OrderByField {
@@ -285,8 +285,8 @@ public:
   const Expr& getExpr() const;
   bool isDesc() const;
 private:
-  Expr expr;
-  bool desc;
+  Expr expr_;
+  bool desc_;
 };
 
 class OrderByStmt {
@@ -297,7 +297,7 @@ public:
   string str() const;
   const vector<OrderByField>& getOrderByFields() const;
 private:
-  vector<OrderByField> orderByFields;
+  vector<OrderByField> order_by_fields_;
 };
 
 class SelectQuery;
