@@ -291,11 +291,11 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
 }
 
 void QueryGraph::processSelect(const SelectStmt& selectStmt) {
-  for (const SelectField& selectField : selectStmt.selectFields) {
+  for (const SelectField& selectField : selectStmt.getSelectFields()) {
     set<string> identifiers;
-    selectField.expr.getAllIdentifiers(identifiers);
+    selectField.getAllIdentifiers(identifiers);
     auto callback = [&selectField](Node& node) {
-      QueryGraph::addExpr(node.selectAndOrderByExprs, &(selectField.expr));
+      QueryGraph::addExpr(node.selectAndOrderByExprs, &(selectField.getExpr()));
     };
     processExpr(identifiers, callback);
   }
@@ -315,11 +315,11 @@ void QueryGraph::processWhere(const WhereStmt& whereStmt) {
 }
 
 void QueryGraph::processOrderBy(const OrderByStmt& orderByStmt) {
-  for (const OrderByField& orderByField : orderByStmt.orderByFields) {
+  for (const OrderByField& orderByField : orderByStmt.getOrderByFields()) {
     set<string> identifiers;
-    orderByField.expr.getAllIdentifiers(identifiers);
+    orderByField.getAllIdentifiers(identifiers);
     auto callback = [&orderByField](Node& node) {
-      QueryGraph::addExpr(node.selectAndOrderByExprs, &(orderByField.expr));
+      QueryGraph::addExpr(node.selectAndOrderByExprs, &(orderByField.getExpr()));
     };
     processExpr(identifiers, callback);
   }
@@ -353,9 +353,9 @@ void QueryGraph::processExpr(
 
 void QueryGraph::initGraph(const SelectQuery& query) {
   const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
-  protoDescriptor = pool->FindMessageTypeByName(query.fromStmt.protoName);
+  protoDescriptor = pool->FindMessageTypeByName(query.fromStmt.getProtoName());
   ASSERT(protoDescriptor != nullptr, "Unable to find proto descriptor for",
-         query.fromStmt.protoName);
+         query.fromStmt.getProtoName());
   root.type = ROOT;
   root.objName = protoDescriptor->name();
   std::transform(root.objName.begin(), root.objName.end(),
@@ -405,20 +405,20 @@ void QueryEngine::printPlan() {
     out << string(indent, ' ') << "} //" << node.objName << endl;
   };
   Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
-  if (!query.orderByStmt.orderByFields.empty()) {
+  if (!query.orderByStmt.getOrderByFields().empty()) {
     out << "tuples.sortBy("
         << joinVec<OrderByField>(
-            ", ", query.orderByStmt.orderByFields,
+            ", ", query.orderByStmt.getOrderByFields(),
             [](const OrderByField& orderByField) {
-              return "'" + orderByField.expr.str() + "'";
+              return "'" + orderByField.getExpr().str() + "'";
             })
         << ")" << endl;
   }
   out << "tuples.print("
       << joinVec<SelectField>(
-          ", ", query.selectStmt.selectFields,
+          ", ", query.selectStmt.getSelectFields(),
           [](const SelectField& selectField) {
-            return "'" + selectField.expr.str() + "'";
+            return "'" + selectField.getExpr().str() + "'";
           })
       << ")" << endl;
 }
@@ -434,9 +434,9 @@ void QueryEngine::printCode() {
   // select fields header
   string header = "vector<string> header = {\n";
   header += joinVec<SelectField>(
-      "\n", query.selectStmt.selectFields,
+      "\n", query.selectStmt.getSelectFields(),
       [](const SelectField& sf) {
-        return "  \"" + (sf.alias.empty() ? sf.str() : sf.alias) + "\",";
+        return "  \"" + sf.getHeader() + "\",";
       });
   header += "\n};";
   out << header << endl;
@@ -464,11 +464,11 @@ void QueryEngine::printCode() {
   }
 
   vector<const Expr*> selectAndOrderByExprs;
-  for (const SelectField& selectField : query.selectStmt.selectFields) {
-    QueryGraph::addExpr(selectAndOrderByExprs, &(selectField.expr));
+  for (const SelectField& selectField : query.selectStmt.getSelectFields()) {
+    QueryGraph::addExpr(selectAndOrderByExprs, &(selectField.getExpr()));
   }
-  for (const OrderByField& orderByField : query.orderByStmt.orderByFields) {
-    QueryGraph::addExpr(selectAndOrderByExprs, &(orderByField.expr));
+  for (const OrderByField& orderByField : query.orderByStmt.getOrderByFields()) {
+    QueryGraph::addExpr(selectAndOrderByExprs, &(orderByField.getExpr()));
   }
 
   map<string, string> exprVarMap;
@@ -476,8 +476,8 @@ void QueryEngine::printCode() {
   map<string, string> exprDefaultMap;
   for (const Expr* expr : selectAndOrderByExprs) {
     string exprStr = expr->str();
-    if (expr->type == IDENTIFIER) {
-      Field f = queryGraph.idFieldMap[expr->identifier];
+    if (expr->isIdentifier()) {
+      Field f = queryGraph.idFieldMap[expr->getIdentifier()];
       exprVarMap[exprStr] = fieldVarMap[f];
       exprTypeMap[exprStr] = fieldTypeMap[f];
       exprDefaultMap[exprStr] = fieldDefaultMap[f];
@@ -556,7 +556,7 @@ void QueryEngine::printCode() {
           << ") { continue; }" << endl;
     }
     for (const Expr* expr : node.selectAndOrderByExprs) {
-      if (expr->type != IDENTIFIER) {
+      if (!expr->isIdentifier()) {
         out << ind << exprTypeMap[expr->str()] << " "
             << exprVarMap[expr->str()] << " = "
             << expr->code(cgr) << ";" << endl;
@@ -579,13 +579,13 @@ void QueryEngine::printCode() {
   Node::walkNode(queryGraph.root, startNodeFn, endNodeFn);
   out << "}" << endl;
 
-  if (!query.orderByStmt.orderByFields.empty()) {
+  if (!query.orderByStmt.getOrderByFields().empty()) {
     out << endl;
     out << "bool compareTuples(const TupleType& t1, const TupleType& t2) {" << endl;
     out << "  int c;" << endl;
-    for (const OrderByField& orderByField : query.orderByStmt.orderByFields) {
+    for (const OrderByField& orderByField : query.orderByStmt.getOrderByFields()) {
       int idx = -1;
-      string exprStr = orderByField.expr.str();
+      string exprStr = orderByField.getExpr().str();
       for (size_t j=0; j<selectAndOrderByExprs.size(); j++) {
         if (exprStr == selectAndOrderByExprs[j]->str()) {
           idx = j;
@@ -593,7 +593,7 @@ void QueryEngine::printCode() {
         }
       }
       ASSERT(idx != -1);
-      out << "  c = " << (orderByField.desc ? "-" : "")
+      out << "  c = " << (orderByField.isDesc() ? "-" : "")
           << "Compare(get<" << idx << ">(t1), get<" << idx << ">(t2));" << endl;
       out << "  if (c < 0) {return true;} else if (c > 0) {return false;}" << endl;
     }
@@ -609,7 +609,7 @@ void printTuples(const vector<TupleType>& tuples) {
   }
 )fff";
   out << "  for (const TupleType& t : tuples) {" << endl;
-  for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
+  for (size_t i=0; i<query.selectStmt.getSelectFields().size(); i++) {
     out << "    sizes[" << i << "] = max(sizes[" << i << "], Stringify(get<"
         << i << ">(t)).size());" << endl;
   }
@@ -626,7 +626,7 @@ void printTuples(const vector<TupleType>& tuples) {
   cout << endl;
 )fff";
   out << "  for(const TupleType& t : tuples) {" << endl;
-  for (size_t i=0; i<query.selectStmt.selectFields.size(); i++) {
+  for (size_t i=0; i<query.selectStmt.getSelectFields().size(); i++) {
     out << "    cout << " << ((i==0) ? "         " : "\" | \" << ")
         << "setw(sizes[" << i << "]) << "
         << "Stringify(get<" << i << ">(t));" << endl;
@@ -643,7 +643,7 @@ void printTuples(const vector<TupleType>& tuples) {
   out << "  FROM(argc, argv, " << protosVecIden << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;
   out << "  runSelect(" << protosVecIden << ", tuples);" << endl;
-  if (!query.orderByStmt.orderByFields.empty()) {
+  if (!query.orderByStmt.getOrderByFields().empty()) {
     out << "  std::sort(tuples.begin(), tuples.end(), compareTuples);" << endl;
   }
   out << "  printTuples(tuples);" << endl;

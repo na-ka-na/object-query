@@ -18,13 +18,19 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using namespace std;
 
+class Expr;
+class CompoundBooleanExpr;
+class SimpleBooleanExpr;
+class NullaryBooleanExpr;
+class BooleanExpr;
+class SelectField;
+using SelectAliases = map<string, const Expr*>;
+
 struct CodeGenReqs {
   map<string, string> idVarMap;
   map<string, string> idDefaultMap;
   map<string, string> regexMap;
 };
-
-struct Expr;
 
 // note: update Expr::str() on mod
 enum ExprType {
@@ -59,45 +65,78 @@ enum Fn3 {
   SUBSTR
 };
 
-struct BinaryExpr {
+class BinaryExpr {
+public:
+  void removeSelectAliases(const SelectAliases& aliases);
+  void getAllIdentifiers(set<string>& identifiers) const;
+  string code(const CodeGenReqs& cgr) const;
+  string str() const;
+private:
+  friend Expr;
   BinaryExprOp op;
   shared_ptr<Expr> lhs;
   shared_ptr<Expr> rhs;
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
+};
+
+class UnaryExpr {
+public:
+  void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
-};
-
-struct UnaryExpr {
+private:
+  friend Expr;
   UnaryExprOp op;
   shared_ptr<Expr> expr;
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
+};
+
+class Fn1CallExpr {
+public:
+  void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
-};
-
-struct Fn1CallExpr {
+private:
+  friend Expr;
   Fn1 fn1;
   shared_ptr<Expr> expr;
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
+};
+
+class Fn3CallExpr {
+public:
+  void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
-};
-
-struct Fn3CallExpr {
+private:
+  friend Expr;
   Fn3 fn3;
   shared_ptr<Expr> expr1, expr2, expr3;
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
-  void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const CodeGenReqs& cgr) const;
-  string str() const;
 };
 
-struct Expr {
-  ExprType type;
+class Expr {
+public:
+  static Expr create(BinaryExprOp op, const Expr& lhs, const Expr& rhs);
+  static Expr create(UnaryExprOp op, const Expr& expr);
+  static Expr create(Fn1 fn1, const Expr& expr);
+  static Expr create(Fn3 fn3, const Expr& expr1, const Expr& expr2,
+                     const Expr& expr3);
+  static Expr createIdentifier(const string& identifier);
+  static Expr createPrimitive(const string& value);
+  static Expr createPrimitive(long value);
+  static Expr createPrimitive(double value);
+  static Expr createPrimitive(bool value);
+  void removeSelectAliases(const SelectAliases& aliases);
+  void getAllIdentifiers(set<string>& identifiers) const;
+  string code(const CodeGenReqs& cgr) const;
+  string cppType(const CodeGenReqs& cgr) const;
+  string str() const;
+  bool isIdentifier() const;
+  bool isString() const;
+  const string& getIdentifier() const;
+  const string& getStringValue() const;
+private:
+  ExprType type_;
   // TODO(sanchay): figure out how to use variant.
   // union doesn't work nicely, we get complaints about destructor.
   BinaryExpr binaryExpr;
@@ -109,21 +148,6 @@ struct Expr {
   long longValue;
   double doubleValue;
   bool boolValue;
-  static Expr create(BinaryExprOp op, const Expr& lhs, const Expr& rhs);
-  static Expr create(UnaryExprOp op, const Expr& expr);
-  static Expr create(Fn1 fn1, const Expr& expr);
-  static Expr create(Fn3 fn3, const Expr& expr1, const Expr& expr2,
-                     const Expr& expr3);
-  static Expr createIdentifier(const string& identifier);
-  static Expr createPrimitive(const string& value);
-  static Expr createPrimitive(long value);
-  static Expr createPrimitive(double value);
-  static Expr createPrimitive(bool value);
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
-  void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const CodeGenReqs& cgr) const;
-  string cppType(const CodeGenReqs& cgr) const;
-  string str() const;
 };
 
 // note: update BooleanExpr::str() on mod
@@ -141,96 +165,139 @@ enum SimpleBooleanOp {
   EQ, NE, LT, GT, LE, GE, LIKE
 };
 
-struct BooleanExpr;
-
-struct CompoundBooleanExpr {
+class CompoundBooleanExpr {
+public:
+  void removeSelectAliases(const SelectAliases& aliases);
+  void getAllIdentifiers(set<string>& identifiers) const;
+  void extractStatics(CodeGenReqs& cgr) const;
+  string code(const CodeGenReqs& cgr) const;
+  string str() const;
+private:
+  friend BooleanExpr;
   CompoundBooleanOp op;
   shared_ptr<BooleanExpr> lhs;
   shared_ptr<BooleanExpr> rhs;
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
+};
+
+class SimpleBooleanExpr {
+public:
+  void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
-};
-
-struct SimpleBooleanExpr {
+private:
+  friend BooleanExpr;
   SimpleBooleanOp op;
   Expr lhs;
   Expr rhs;
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
-  void getAllIdentifiers(set<string>& identifiers) const;
-  void extractStatics(CodeGenReqs& cgr) const;
-  string code(const CodeGenReqs& cgr) const;
-  string str() const;
 };
 
-struct NullaryBooleanExpr {
+class NullaryBooleanExpr {
+public:
+  void removeSelectAliases(const SelectAliases& aliases);
+  void getAllIdentifiers(set<string>& identifiers) const;
+  string code(const CodeGenReqs& cgr) const;
+  string str() const;
+private:
+  friend BooleanExpr;
   bool isNull;
   string identifier;
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
-  void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const CodeGenReqs& cgr) const;
-  string str() const;
 };
 
-struct BooleanExpr {
-  BooleanExprType type;
-  // TODO(sanchay): figure out how to use variant.
-  CompoundBooleanExpr compoundBooleanExpr;
-  SimpleBooleanExpr simpleBooleanExpr;
-  NullaryBooleanExpr nullaryBooleanExpr;
+class BooleanExpr {
+public:
   static BooleanExpr create(
       CompoundBooleanOp op, const BooleanExpr& lhs, const BooleanExpr& rhs);
   static BooleanExpr create(
       SimpleBooleanOp op, const Expr& lhs, const Expr& rhs);
   static BooleanExpr createNullary(bool isNull, const string& identifier);
-  void removeSelectAliases(const map<string, const Expr*>& aliases);
+  void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
   void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
+private:
+  BooleanExprType type_;
+  // TODO(sanchay): figure out how to use variant.
+  CompoundBooleanExpr compoundBooleanExpr;
+  SimpleBooleanExpr simpleBooleanExpr;
+  NullaryBooleanExpr nullaryBooleanExpr;
 };
 
-struct SelectField {
+class SelectField {
+public:
+  static SelectField create(const Expr& expr, const string& alias);
+  void removeSelectAliases(const SelectAliases& aliases);
+  void getAllIdentifiers(set<string>& identifiers) const;
+  string code(const CodeGenReqs& cgr) const;
+  string str() const;
+  void populateAliasIfPresent(SelectAliases& aliases) const;
+  const Expr& getExpr() const;
+  string getHeader() const;
+private:
   Expr expr;
   string alias;
-  void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const CodeGenReqs& cgr) const;
-  string str() const;
 };
 
-struct SelectStmt {
-  bool distinct = false;
+class SelectStmt {
+public:
+  static SelectStmt create(const vector<SelectField>& select_fields,
+                           bool distinct);
+  void removeSelectAliases(SelectAliases& aliases);
+  string str() const;
+  const vector<SelectField>& getSelectFields() const;
+private:
+  bool distinct;
   vector<SelectField> selectFields;
-  string str() const;
 };
 
-struct OrderByField {
-  Expr expr;
-  bool desc = false;
-  void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const CodeGenReqs& cgr) const;
+class FromStmt {
+public:
+  static FromStmt create(const string& proto_name);
   string str() const;
-};
-
-struct OrderByStmt {
-  vector<OrderByField> orderByFields;
-  string str() const;
-};
-
-struct FromStmt {
+  const string& getProtoName() const;
+private:
   string protoName;
-  string str() const;
 };
 
-struct WhereStmt {
-  optional<BooleanExpr> booleanExpr;
+class WhereStmt {
+public:
+  static WhereStmt create();
+  static WhereStmt create(BooleanExpr boolean_expr);
+  void removeSelectAliases(const SelectAliases& aliases);
   void extractStatics(CodeGenReqs& cgr) const;
   void getAllIdentifiers(set<string>& identifiers) const;
   void canoncialize(vector<const BooleanExpr*>& andClauses) const;
   string str() const;
+private:
+  optional<BooleanExpr> booleanExpr;
+};
+
+class OrderByField {
+public:
+  static OrderByField create(const Expr& expr, bool desc);
+  void removeSelectAliases(const SelectAliases& aliases);
+  void getAllIdentifiers(set<string>& identifiers) const;
+  string code(const CodeGenReqs& cgr) const;
+  string str() const;
+  const Expr& getExpr() const;
+  bool isDesc() const;
+private:
+  Expr expr;
+  bool desc;
+};
+
+class OrderByStmt {
+public:
+  static OrderByStmt create();
+  static OrderByStmt create(const vector<OrderByField>& order_by_fields);
+  void removeSelectAliases(const SelectAliases& aliases);
+  string str() const;
+  const vector<OrderByField>& getOrderByFields() const;
+private:
+  vector<OrderByField> orderByFields;
 };
 
 class SelectQuery;

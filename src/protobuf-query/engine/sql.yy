@@ -114,20 +114,21 @@ fn1: "STR"  {$$=$1;}
  ;
 fn3: "SUBSTR" {$$=$1;};
 
-select_stmt: "SELECT" select_fields  {$$=SelectStmt(); $$.selectFields=$2;}
- | "SELECT" "DISTINCT" select_fields {$$=SelectStmt(); $$.distinct=true; $$.selectFields=$3;}
+select_stmt: "SELECT" select_fields  {$$=SelectStmt::create($2,false);}
+ | "SELECT" "DISTINCT" select_fields {$$=SelectStmt::create($3,true);}
  ;
 select_fields: select_field        {$$=vector<SelectField>{$1};}
  | select_fields "," select_field  {$$=$1; $$.push_back($3);}
  ;
-select_field: expr        {$$=SelectField(); $$.expr=$1;}
- | expr "AS" "identifier" {$$=SelectField(); $$.expr=$1; $$.alias=$3;}
+select_field: expr        {$$=SelectField::create($1,"");}
+ | expr "AS" "identifier" {$$=SelectField::create($1,$3);}
  ;
 
-from_stmt: "FROM" "identifier" {$$=FromStmt(); $$.protoName=$2;};
+from_stmt: "FROM" "identifier" {$$=FromStmt::create($2);};
 
-where_stmt: %empty      {$$=WhereStmt();}
- | "WHERE" boolean_expr {$$=WhereStmt(); $$.booleanExpr=$2;};
+where_stmt: %empty      {$$=WhereStmt::create();}
+ | "WHERE" boolean_expr {$$=WhereStmt::create($2);}
+ ;
 
 %left "AND";
 %left "OR";
@@ -171,15 +172,15 @@ group_by_field: "identifier";
 
 having_stmt: %empty | "HAVING" boolean_expr;
 
-order_by_stmt: %empty                  {$$=OrderByStmt();}
- | "ORDER" "BY" order_by_fields        {$$=OrderByStmt(); $$.orderByFields=$3;}
+order_by_stmt: %empty                  {$$=OrderByStmt::create();}
+ | "ORDER" "BY" order_by_fields        {$$=OrderByStmt::create($3);}
  ;
 order_by_fields: order_by_field        {$$=vector<OrderByField>{$1};}
  | order_by_fields "," order_by_field  {$$=$1; $$.push_back($3);}
  ;
-order_by_field: expr                   {$$=OrderByField(); $$.expr=$1;}
- | expr "ASC"                          {$$=OrderByField(); $$.expr=$1;}
- | expr "DESC"                         {$$=OrderByField(); $$.expr=$1; $$.desc=true;}
+order_by_field: expr                   {$$=OrderByField::create($1,false);}
+ | expr "ASC"                          {$$=OrderByField::create($1,false);}
+ | expr "DESC"                         {$$=OrderByField::create($1,true);}
  ;
 
 %%

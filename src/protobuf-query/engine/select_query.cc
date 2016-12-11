@@ -53,7 +53,7 @@ void SelectQuery::mark_parse_error(
 
 Expr Expr::create(BinaryExprOp op, const Expr& lhs, const Expr& rhs) {
   Expr expr;
-  expr.type = BINARY_EXPR;
+  expr.type_ = BINARY_EXPR;
   expr.binaryExpr.op = op;
   expr.binaryExpr.lhs.reset(new Expr());
   expr.binaryExpr.rhs.reset(new Expr());
@@ -64,7 +64,7 @@ Expr Expr::create(BinaryExprOp op, const Expr& lhs, const Expr& rhs) {
 
 Expr Expr::create(UnaryExprOp op, const Expr& uexpr) {
   Expr expr;
-  expr.type = UNARY_EXPR;
+  expr.type_ = UNARY_EXPR;
   expr.unaryExpr.op = op;
   expr.unaryExpr.expr.reset(new Expr());
   *(expr.unaryExpr.expr) = uexpr;
@@ -73,7 +73,7 @@ Expr Expr::create(UnaryExprOp op, const Expr& uexpr) {
 
 Expr Expr::create(Fn1 fn1, const Expr& fexpr) {
   Expr expr;
-  expr.type = FN1_CALL_EXPR;
+  expr.type_ = FN1_CALL_EXPR;
   expr.fn1CallExpr.fn1 = fn1;
   expr.fn1CallExpr.expr.reset(new Expr());
   *(expr.fn1CallExpr.expr) = fexpr;
@@ -83,7 +83,7 @@ Expr Expr::create(Fn1 fn1, const Expr& fexpr) {
 Expr Expr::create(Fn3 fn3, const Expr& expr1, const Expr& expr2,
                   const Expr& expr3) {
   Expr expr;
-  expr.type = FN3_CALL_EXPR;
+  expr.type_ = FN3_CALL_EXPR;
   expr.fn3CallExpr.fn3 = fn3;
   expr.fn3CallExpr.expr1.reset(new Expr());
   expr.fn3CallExpr.expr2.reset(new Expr());
@@ -96,35 +96,35 @@ Expr Expr::create(Fn3 fn3, const Expr& expr1, const Expr& expr2,
 
 Expr Expr::createIdentifier(const string& identifier) {
   Expr expr;
-  expr.type = IDENTIFIER;
+  expr.type_ = IDENTIFIER;
   expr.identifier = identifier;
   return expr;
 }
 
 Expr Expr::createPrimitive(const string& value) {
   Expr expr;
-  expr.type = STRING;
+  expr.type_ = STRING;
   expr.stringValue = value;
   return expr;
 }
 
 Expr Expr::createPrimitive(long value) {
   Expr expr;
-  expr.type = LONG;
+  expr.type_ = LONG;
   expr.longValue = value;
   return expr;
 }
 
 Expr Expr::createPrimitive(double value) {
   Expr expr;
-  expr.type = DOUBLE;
+  expr.type_ = DOUBLE;
   expr.doubleValue = value;
   return expr;
 }
 
 Expr Expr::createPrimitive(bool value) {
   Expr expr;
-  expr.type = BOOL;
+  expr.type_ = BOOL;
   expr.boolValue = value;
   return expr;
 }
@@ -132,7 +132,7 @@ Expr Expr::createPrimitive(bool value) {
 BooleanExpr BooleanExpr::create(
     CompoundBooleanOp op, const BooleanExpr& lhs, const BooleanExpr& rhs) {
   BooleanExpr bexpr;
-  bexpr.type = BOOLEAN;
+  bexpr.type_ = BOOLEAN;
   bexpr.compoundBooleanExpr.op = op;
   bexpr.compoundBooleanExpr.lhs.reset(new BooleanExpr());
   bexpr.compoundBooleanExpr.rhs.reset(new BooleanExpr());
@@ -144,7 +144,7 @@ BooleanExpr BooleanExpr::create(
 BooleanExpr BooleanExpr::create(
     SimpleBooleanOp op, const Expr& lhs, const Expr& rhs) {
   BooleanExpr bexpr;
-  bexpr.type = SIMPLE;
+  bexpr.type_ = SIMPLE;
   bexpr.simpleBooleanExpr.op = op;
   bexpr.simpleBooleanExpr.lhs = lhs;
   bexpr.simpleBooleanExpr.rhs = rhs;
@@ -153,10 +153,104 @@ BooleanExpr BooleanExpr::create(
 
 BooleanExpr BooleanExpr::createNullary(bool isNull, const string& identifier) {
   BooleanExpr bexpr;
-  bexpr.type = NULLARY;
+  bexpr.type_ = NULLARY;
   bexpr.nullaryBooleanExpr.isNull = isNull;
   bexpr.nullaryBooleanExpr.identifier = identifier;
   return bexpr;
+}
+
+SelectField SelectField::create(const Expr& expr, const string& alias) {
+  SelectField select_field;
+  select_field.expr = expr;
+  select_field.alias = alias;
+  return select_field;
+}
+
+SelectStmt SelectStmt::create(const vector<SelectField>& select_fields,
+                              bool distinct) {
+  SelectStmt select_stmt;
+  select_stmt.distinct = distinct;
+  select_stmt.selectFields = select_fields;
+  return select_stmt;
+}
+
+FromStmt FromStmt::create(const string& proto_name) {
+  FromStmt from_stmt;
+  from_stmt.protoName = proto_name;
+  return from_stmt;
+}
+
+WhereStmt WhereStmt::create() {
+  return WhereStmt();
+}
+
+WhereStmt WhereStmt::create(BooleanExpr boolean_expr) {
+  WhereStmt where_stmt;
+  where_stmt.booleanExpr = boolean_expr;
+  return where_stmt;
+}
+
+OrderByField OrderByField::create(const Expr& expr, bool desc) {
+  OrderByField order_by_field;
+  order_by_field.expr = expr;
+  order_by_field.desc = desc;
+  return order_by_field;
+}
+
+OrderByStmt OrderByStmt::create() {
+  return OrderByStmt();
+}
+
+OrderByStmt OrderByStmt::create(const vector<OrderByField>& order_by_fields) {
+  OrderByStmt order_by_stmt;
+  order_by_stmt.orderByFields = order_by_fields;
+  return order_by_stmt;
+}
+
+bool Expr::isIdentifier() const {
+  return type_ == IDENTIFIER;
+}
+
+bool Expr::isString() const {
+  return type_ == STRING;
+}
+
+const string& Expr::getIdentifier() const {
+  ASSERT(isIdentifier());
+  return identifier;
+}
+
+const string& Expr::getStringValue() const {
+  ASSERT(isString());
+  return stringValue;
+}
+
+const Expr& SelectField::getExpr() const {
+  return expr;
+}
+
+string SelectField::getHeader() const {
+  return alias.empty() ? str() : alias;
+}
+
+const Expr& OrderByField::getExpr() const {
+  return expr;
+}
+
+bool OrderByField::isDesc() const {
+  return desc;
+}
+
+const vector<SelectField>& SelectStmt::getSelectFields() const {
+  return selectFields;
+}
+
+const string& FromStmt::getProtoName() const {
+  return protoName;
+}
+
+const vector<OrderByField>& OrderByStmt::getOrderByFields() const {
+  return orderByFields;
 }
 
 void BinaryExpr::getAllIdentifiers(set<string>& identifiers) const {
@@ -179,7 +273,7 @@ void Fn3CallExpr::getAllIdentifiers(set<string>& identifiers) const {
 }
 
 void Expr::getAllIdentifiers(set<string>& identifiers) const {
-  switch (type) {
+  switch (type_) {
   case BINARY_EXPR: binaryExpr.getAllIdentifiers(identifiers); break;
   case UNARY_EXPR: unaryExpr.getAllIdentifiers(identifiers); break;
   case FN1_CALL_EXPR: fn1CallExpr.getAllIdentifiers(identifiers); break;
@@ -204,7 +298,7 @@ void SimpleBooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
 }
 
 void BooleanExpr::getAllIdentifiers(set<string>& identifiers) const {
-  switch (type) {
+  switch (type_) {
   case BOOLEAN: compoundBooleanExpr.getAllIdentifiers(identifiers); break;
   case SIMPLE: simpleBooleanExpr.getAllIdentifiers(identifiers); break;
   case NULLARY: nullaryBooleanExpr.getAllIdentifiers(identifiers); break;
@@ -231,7 +325,7 @@ void WhereStmt::getAllIdentifiers(set<string>& identifiers) const {
 }
 
 void BooleanExpr::canoncialize(vector<const BooleanExpr*>& andClauses) const {
-  if ((type == BOOLEAN) && (compoundBooleanExpr.op == AND)) {
+  if ((type_ == BOOLEAN) && (compoundBooleanExpr.op == AND)) {
     compoundBooleanExpr.lhs->canoncialize(andClauses);
     compoundBooleanExpr.rhs->canoncialize(andClauses);
   } else {
@@ -289,7 +383,7 @@ string Fn3CallExpr::str() const {
 }
 
 string Expr::str() const {
-  switch (type) {
+  switch (type_) {
   case BINARY_EXPR:   return binaryExpr.str();
   case UNARY_EXPR:    return unaryExpr.str();
   case FN1_CALL_EXPR: return fn1CallExpr.str();
@@ -329,14 +423,12 @@ string SimpleBooleanExpr::str() const {
 }
 
 string NullaryBooleanExpr::str() const {
-  Expr expr;
-  expr.type = IDENTIFIER;
-  expr.identifier = identifier;
+  Expr expr = Expr::createIdentifier(identifier);
   return expr.str() + " IS" + (isNull ? "" : " NOT") + " NULL";
 }
 
 string BooleanExpr::str() const {
-  switch (type) {
+  switch (type_) {
   case BOOLEAN: return compoundBooleanExpr.str();
   case SIMPLE:  return simpleBooleanExpr.str();
   case NULLARY: return nullaryBooleanExpr.str();
@@ -386,13 +478,13 @@ void CompoundBooleanExpr::extractStatics(CodeGenReqs& cgr) const {
 }
 
 void SimpleBooleanExpr::extractStatics(CodeGenReqs& cgr) const {
-  if ((op == LIKE) && (rhs.type == STRING)) {
-    cgr.regexMap.emplace(rhs.stringValue, "");
+  if ((op == LIKE) && (rhs.isString())) {
+    cgr.regexMap.emplace(rhs.getStringValue(), "");
   }
 }
 
 void BooleanExpr::extractStatics(CodeGenReqs& cgr) const {
-  switch (type) {
+  switch (type_) {
   case BOOLEAN: compoundBooleanExpr.extractStatics(cgr); break;
   case SIMPLE: simpleBooleanExpr.extractStatics(cgr); break;
   case NULLARY: break;
@@ -448,7 +540,7 @@ string Fn3CallExpr::code(const CodeGenReqs& cgr) const {
 }
 
 string Expr::code(const CodeGenReqs& cgr) const {
-  switch (type) {
+  switch (type_) {
   case BINARY_EXPR:   return binaryExpr.code(cgr);
   case UNARY_EXPR:    return unaryExpr.code(cgr);
   case FN1_CALL_EXPR: return fn1CallExpr.code(cgr);
@@ -487,8 +579,8 @@ string SimpleBooleanExpr::code(const CodeGenReqs& cgr) const {
   }
   string lhs_code = lhs.code(cgr);
   string rhs_code;
-  if ((op == LIKE) && (rhs.type == STRING)) {
-    auto f = cgr.regexMap.find(rhs.stringValue);
+  if ((op == LIKE) && (rhs.isString())) {
+    auto f = cgr.regexMap.find(rhs.getStringValue());
     ASSERT(f != cgr.regexMap.end());
     rhs_code = f->second;
   } else {
@@ -498,14 +590,12 @@ string SimpleBooleanExpr::code(const CodeGenReqs& cgr) const {
 }
 
 string NullaryBooleanExpr::code(const CodeGenReqs& cgr) const {
-  Expr expr;
-  expr.type = IDENTIFIER;
-  expr.identifier = identifier;
+  Expr expr = Expr::createIdentifier(identifier);
   return string(isNull ? "IsNull" : "IsNotNull") + "(" + expr.code(cgr) + ")";
 }
 
 string BooleanExpr::code(const CodeGenReqs& cgr) const {
-  switch (type) {
+  switch (type_) {
   case BOOLEAN: return compoundBooleanExpr.code(cgr);
   case SIMPLE:  return simpleBooleanExpr.code(cgr);
   case NULLARY: return nullaryBooleanExpr.code(cgr);
@@ -527,27 +617,27 @@ string Expr::cppType(const CodeGenReqs& cgr) const {
   return "decltype(" + code(copy) + ")";
 }
 
-void BinaryExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+void BinaryExpr::removeSelectAliases(const SelectAliases& aliases) {
   lhs->removeSelectAliases(aliases);
   rhs->removeSelectAliases(aliases);
 }
 
-void UnaryExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+void UnaryExpr::removeSelectAliases(const SelectAliases& aliases) {
   expr->removeSelectAliases(aliases);
 }
 
-void Fn1CallExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+void Fn1CallExpr::removeSelectAliases(const SelectAliases& aliases) {
   expr->removeSelectAliases(aliases);
 }
 
-void Fn3CallExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+void Fn3CallExpr::removeSelectAliases(const SelectAliases& aliases) {
   expr1->removeSelectAliases(aliases);
   expr2->removeSelectAliases(aliases);
   expr3->removeSelectAliases(aliases);
 }
 
-void Expr::removeSelectAliases(const map<string, const Expr*>& aliases) {
-  switch (type) {
+void Expr::removeSelectAliases(const SelectAliases& aliases) {
+  switch (type_) {
   case BINARY_EXPR:   binaryExpr.removeSelectAliases(aliases); break;
   case UNARY_EXPR:    unaryExpr.removeSelectAliases(aliases); break;
   case FN1_CALL_EXPR: fn1CallExpr.removeSelectAliases(aliases); break;
@@ -567,27 +657,27 @@ void Expr::removeSelectAliases(const map<string, const Expr*>& aliases) {
   }
 }
 
-void CompoundBooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+void CompoundBooleanExpr::removeSelectAliases(const SelectAliases& aliases) {
   lhs->removeSelectAliases(aliases);
   rhs->removeSelectAliases(aliases);
 }
 
-void SimpleBooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+void SimpleBooleanExpr::removeSelectAliases(const SelectAliases& aliases) {
   lhs.removeSelectAliases(aliases);
   rhs.removeSelectAliases(aliases);
 }
 
-void NullaryBooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
+void NullaryBooleanExpr::removeSelectAliases(const SelectAliases& aliases) {
   auto f = aliases.find(identifier);
   if (f != aliases.end()) {
     const Expr* expr = f->second;
-    ASSERT(expr->type == IDENTIFIER, "Only identifiers can be NULL checked");
-    identifier = expr->identifier;
+    ASSERT(expr->isIdentifier(), "Only identifiers can be NULL checked");
+    identifier = expr->getIdentifier();
   }
 }
 
-void BooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
-  switch (type) {
+void BooleanExpr::removeSelectAliases(const SelectAliases& aliases) {
+  switch (type_) {
   case BOOLEAN: compoundBooleanExpr.removeSelectAliases(aliases); break;
   case SIMPLE: simpleBooleanExpr.removeSelectAliases(aliases); break;
   case NULLARY: nullaryBooleanExpr.removeSelectAliases(aliases); break;
@@ -595,23 +685,47 @@ void BooleanExpr::removeSelectAliases(const map<string, const Expr*>& aliases) {
   }
 }
 
-void SelectQuery::removeSelectAliases() {
-  map<string, const Expr*> aliases;
-  for (SelectField& selectField : selectStmt.selectFields) {
-    if (!aliases.empty()) {
-      selectField.expr.removeSelectAliases(aliases);
-    }
-    if (!selectField.alias.empty()) {
-      aliases.emplace(selectField.alias, &(selectField.expr));
-    }
+void SelectField::removeSelectAliases(const SelectAliases& aliases) {
+  expr.removeSelectAliases(aliases);
+}
+
+void SelectField::populateAliasIfPresent(SelectAliases& aliases) const {
+  if (!alias.empty()) {
+    aliases.emplace(alias, &expr);
   }
+}
+
+void SelectStmt::removeSelectAliases(SelectAliases& aliases) {
+  for (SelectField& selectField : selectFields) {
+    if (!aliases.empty()) {
+      selectField.removeSelectAliases(aliases);
+    }
+    selectField.populateAliasIfPresent(aliases);
+  }
+}
+
+void WhereStmt::removeSelectAliases(const SelectAliases& aliases) {
+  if (booleanExpr) {
+    booleanExpr->removeSelectAliases(aliases);
+  }
+}
+
+void OrderByField::removeSelectAliases(const SelectAliases& aliases) {
+  expr.removeSelectAliases(aliases);
+}
+
+void OrderByStmt::removeSelectAliases(const SelectAliases& aliases) {
+  for (OrderByField& orderByField : orderByFields) {
+    orderByField.removeSelectAliases(aliases);
+  }
+}
+
+void SelectQuery::removeSelectAliases() {
+  SelectAliases aliases;
+  selectStmt.removeSelectAliases(aliases);
   if (!aliases.empty()) {
-    if (whereStmt.booleanExpr) {
-      whereStmt.booleanExpr->removeSelectAliases(aliases);
-    }
-    for (OrderByField& orderByField : orderByStmt.orderByFields) {
-      orderByField.expr.removeSelectAliases(aliases);
-    }
+    whereStmt.removeSelectAliases(aliases);
+    orderByStmt.removeSelectAliases(aliases);
   }
 }
 
