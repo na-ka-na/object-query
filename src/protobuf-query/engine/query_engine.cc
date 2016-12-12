@@ -14,12 +14,11 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 using namespace std;
 using namespace google::protobuf;
 
-void FieldPart::parseFrom(const Descriptor& parentDescriptor,
-                          const string& partName) {
-  descriptor = parentDescriptor.FindFieldByName(partName);
+FieldPart FieldPart::parseFrom(const Descriptor& parentDescriptor,
+                               const string& partName) {
+  const FieldDescriptor* descriptor = parentDescriptor.FindFieldByName(partName);
   if (descriptor != nullptr) {
-    part_type = NORMAL;
-    return;
+    return FieldPart(descriptor);
   }
   static std::regex size_regex("^(.+)_size$");
   std::smatch size_match;
@@ -28,8 +27,7 @@ void FieldPart::parseFrom(const Descriptor& parentDescriptor,
     string base_part = base_match.str();
     descriptor = parentDescriptor.FindFieldByName(base_part);
     if (descriptor != nullptr) {
-      part_type = SIZE;
-      return;
+      return FieldPart(descriptor, SIZE);
     }
   }
   static std::regex has_regex("^has_(.+)$");
@@ -39,12 +37,14 @@ void FieldPart::parseFrom(const Descriptor& parentDescriptor,
     string base_part = base_match.str();
     descriptor = parentDescriptor.FindFieldByName(base_part);
     if (descriptor != nullptr) {
-      part_type = HAS;
-      return;
+      return FieldPart(descriptor, HAS);
     }
   }
   THROW("No fieldPart by name", partName);
 }
+
+FieldPart::FieldPart(const FieldDescriptor* descriptor, Type type) :
+    descriptor(descriptor), part_type(type) {}
 
 bool FieldPart::operator<(const FieldPart& other) const {
   if (part_type < other.part_type) {
@@ -246,6 +246,39 @@ string QueryGraph::getProtoCppType() const {
   return FieldPart::full_name_to_cpp_type(protoDescriptor->full_name());
 }
 
+vector<string> QueryGraph::splitDotIdentifier(const string& identifier) {
+  static regex notdot("([^.]+)");
+  auto partsBegin = sregex_iterator(identifier.begin(), identifier.end(), notdot);
+  vector<string> selectFieldParts;
+  for (sregex_iterator it = partsBegin; it != sregex_iterator(); ++it) {
+    selectFieldParts.push_back(it->str());
+  }
+  return selectFieldParts;
+}
+
+void QueryGraph::resolveStarIdentifier(const string& star_identifier,
+                                       vector<string>& resolved_identifiers) {
+  const Descriptor* parentDescriptor = protoDescriptor;
+  string parentPath;
+  vector<string> selectFieldParts = splitDotIdentifier(star_identifier);
+  for (size_t j=0; j<selectFieldParts.size(); j++) {
+    if (j != (selectFieldParts.size()-1)) {
+      FieldPart fieldPart = FieldPart::parseFrom(
+          *parentDescriptor, selectFieldParts[j]);
+      parentDescriptor = fieldPart.message_descriptor();
+      parentPath += (fieldPart.name() + ".");
+    } else {
+      ASSERT(selectFieldParts[j] == "*");
+      for (int i=0; i<parentDescriptor->field_count(); i++) {
+        FieldPart field_part(parentDescriptor->field(i));
+        if (!field_part.is_message() && !field_part.is_repeated()) {
+          resolved_identifiers.push_back(parentPath + field_part.name());
+        }
+      }
+    }
+  }
+}
+
 void QueryGraph::addReadIdentifier(const string& identifier) {
   if (idFieldMap.find(identifier) != idFieldMap.end()) {
     return;
@@ -253,15 +286,10 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
   const Descriptor* parentDescriptor = protoDescriptor;
   Node* parent = &root;
   Field field;
-  static regex notdot("([^.]+)");
-  auto partsBegin = sregex_iterator(identifier.begin(), identifier.end(), notdot);
-  vector<string> selectFieldParts;
-  for (sregex_iterator it = partsBegin; it != sregex_iterator(); ++it) {
-    selectFieldParts.push_back(it->str());
-  }
+  vector<string> selectFieldParts = splitDotIdentifier(identifier);
   for (size_t j=0; j<selectFieldParts.size(); j++) {
-    FieldPart fieldPart;
-    fieldPart.parseFrom(*parentDescriptor, selectFieldParts[j]);
+    FieldPart fieldPart = FieldPart::parseFrom(
+        *parentDescriptor, selectFieldParts[j]);
     field.fieldParts.push_back(fieldPart);
     if (j != (selectFieldParts.size()-1)) {
       ASSERT(fieldPart.is_message(),
@@ -351,11 +379,14 @@ void QueryGraph::processExpr(
   Node::walkNode(root, startNodeFn, endNodeFn);
 }
 
-void QueryGraph::initGraph(const SelectQuery& query) {
+void QueryGraph::initProto(const SelectQuery& query) {
   const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
   protoDescriptor = pool->FindMessageTypeByName(query.fromStmt.getProtoName());
   ASSERT(protoDescriptor != nullptr, "Unable to find proto descriptor for",
          query.fromStmt.getProtoName());
+}
+
+void QueryGraph::initGraph(const SelectQuery& query) {
   root.type = ROOT;
   root.objName = protoDescriptor->name();
   std::transform(root.objName.begin(), root.objName.end(),
@@ -654,7 +685,11 @@ void QueryEngine::process() {
   ASSERT(query.parse(), "Parsing select query failed");
   out << "/*" << endl;
   out << query.str() << endl << endl;
-  query.preProcess();
+  queryGraph.initProto(query);
+  auto resolver = std::bind(&QueryGraph::resolveStarIdentifier, &queryGraph,
+                            std::placeholders::_1, std::placeholders::_2);
+  query.resolveSelectStars(resolver);
+  query.removeSelectAliases();
   queryGraph.initGraph(query);
   printPlan();
   out << "*/" << endl;

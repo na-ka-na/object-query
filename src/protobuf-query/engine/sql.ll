@@ -19,7 +19,9 @@ string  '[^\n']*'
 ws      [ \t]
 alpha   [A-Za-z]
 dig     [0-9]
-name    ({alpha})({alpha}|{dig}|[_.$])*
+name    ({alpha}|[_$])({alpha}|{dig}|[_$])*
+iden    {name}(\.{name})*
+siden   {iden}\.\*
 num1    [-+]?{dig}+\.?([eE][-+]?{dig}+)?
 num2    [-+]?{dig}*\.{dig}+([eE][-+]?{dig}+)?
 number  {num1}|{num2}
@@ -49,7 +51,7 @@ query.loc.step();
 ","         return yy::SqlParser::make_COMMA(query.loc);
 "+"         return yy::SqlParser::make_PLUS(query.loc);
 "-"         return yy::SqlParser::make_MINUS(query.loc);
-"*"         return yy::SqlParser::make_MULT(query.loc);
+"*"         return yy::SqlParser::make_STAR(query.loc);
 "/"         return yy::SqlParser::make_DIVIDE(query.loc);
 "="         return yy::SqlParser::make_EQ(query.loc);
 "!="        return yy::SqlParser::make_NE(query.loc);
@@ -87,7 +89,8 @@ query.loc.step();
 {number}    {double d = std::strtod(yytext, NULL);
              return yy::SqlParser::make_DOUBLE(d, query.loc);}
 
-{name}      return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
+{iden}      return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
+{siden}     return yy::SqlParser::make_STAR_IDENTIFIER(yytext, query.loc);
 
 .           query.mark_lexer_invalid_char(yytext[0]);
 <<EOF>>     return yy::SqlParser::make_END(query.loc);

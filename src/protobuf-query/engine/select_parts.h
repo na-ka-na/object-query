@@ -226,6 +226,22 @@ private:
   NullaryBooleanExpr nullary_boolean_expr_;
 };
 
+using StarFieldResolver = function<void(const string&, vector<string>&)>;
+
+class RawSelectField {
+public:
+  static RawSelectField create(const Expr& expr, const string& alias);
+  static RawSelectField create(const string& star_identifier,
+                               const string& alias);
+  string str() const;
+  void resolveSelectStar(const StarFieldResolver& resolver,
+                         vector<SelectField>& resolved) const;
+private:
+  Expr expr_;
+  string star_identifier_;
+  string alias_;
+};
+
 class SelectField {
 public:
   static SelectField create(const Expr& expr, const string& alias);
@@ -243,13 +259,15 @@ private:
 
 class SelectStmt {
 public:
-  static SelectStmt create(const vector<SelectField>& select_fields,
+  static SelectStmt create(const vector<RawSelectField>& raw_select_fields,
                            bool distinct);
+  void resolveSelectStars(const StarFieldResolver& resolver);
   void removeSelectAliases(SelectAliases& aliases);
   string str() const;
   const vector<SelectField>& getSelectFields() const;
 private:
   bool distinct_;
+  vector<RawSelectField> raw_select_fields_;
   vector<SelectField> select_fields_;
 };
 

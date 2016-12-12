@@ -159,6 +159,45 @@ BooleanExpr BooleanExpr::createNullary(bool isNull, const string& identifier) {
   return bexpr;
 }
 
+RawSelectField RawSelectField::create(const Expr& expr, const string& alias) {
+  RawSelectField raw_select_field;
+  raw_select_field.expr_ = expr;
+  raw_select_field.alias_ = alias;
+  return raw_select_field;
+}
+
+RawSelectField RawSelectField::create(const string& star_identifier,
+                                      const string& alias) {
+  RawSelectField raw_select_field;
+  raw_select_field.star_identifier_ = star_identifier;
+  raw_select_field.alias_ = alias;
+  return raw_select_field;
+}
+
+void RawSelectField::resolveSelectStar(
+    const StarFieldResolver& resolver, vector<SelectField>& resolved) const {
+  if (!star_identifier_.empty()) {
+    vector<string> resolved_identifiers;
+    resolver(star_identifier_, resolved_identifiers);
+    for (const string& resolved_identifier : resolved_identifiers) {
+      Expr expr = Expr::createIdentifier(resolved_identifier);
+      string alias;
+      if (!alias_.empty()) {
+        alias = alias_ + ".";
+        auto idx = resolved_identifier.rfind(".");
+        if (idx == string::npos) {
+          alias += resolved_identifier;
+        } else {
+          alias += resolved_identifier.substr(idx+1);
+        }
+      }
+      resolved.push_back(SelectField::create(expr, alias));
+    }
+  } else {
+    resolved.push_back(SelectField::create(expr_, alias_));
+  }
+}
+
 SelectField SelectField::create(const Expr& expr, const string& alias) {
   SelectField select_field;
   select_field.expr_ = expr;
@@ -166,12 +205,18 @@ SelectField SelectField::create(const Expr& expr, const string& alias) {
   return select_field;
 }
 
-SelectStmt SelectStmt::create(const vector<SelectField>& select_fields,
+SelectStmt SelectStmt::create(const vector<RawSelectField>& raw_select_fields,
                               bool distinct) {
   SelectStmt select_stmt;
   select_stmt.distinct_ = distinct;
-  select_stmt.select_fields_ = select_fields;
+  select_stmt.raw_select_fields_ = raw_select_fields;
   return select_stmt;
+}
+
+void SelectStmt::resolveSelectStars(const StarFieldResolver& resolver) {
+  for (const RawSelectField& raw_select_field : raw_select_fields_) {
+    raw_select_field.resolveSelectStar(resolver, select_fields_);
+  }
 }
 
 FromStmt FromStmt::create(const string& proto_name) {
@@ -436,13 +481,18 @@ string BooleanExpr::str() const {
   }
 }
 
+string RawSelectField::str() const {
+  return (star_identifier_.empty() ? expr_.str() : star_identifier_) +
+         (alias_.empty() ? "" : (" AS " + alias_));
+}
+
 string SelectField::str() const {
   return expr_.str() + (alias_.empty() ? "" : (" AS " + alias_));
 }
 
 string SelectStmt::str() const {
   return "SELECT " + string(distinct_ ? "DISTINCT " : "") +
-         joinVec(", ", select_fields_, strfn<SelectField>());
+         joinVec(", ", raw_select_fields_, strfn<RawSelectField>());
 }
 
 string OrderByField::str() const {
@@ -720,6 +770,10 @@ void OrderByStmt::removeSelectAliases(const SelectAliases& aliases) {
   }
 }
 
+void SelectQuery::resolveSelectStars(const StarFieldResolver& resolver) {
+  selectStmt.resolveSelectStars(resolver);
+}
+
 void SelectQuery::removeSelectAliases() {
   SelectAliases aliases;
   selectStmt.removeSelectAliases(aliases);
@@ -727,8 +781,4 @@ void SelectQuery::removeSelectAliases() {
     whereStmt.removeSelectAliases(aliases);
     orderByStmt.removeSelectAliases(aliases);
   }
-}
-
-void SelectQuery::preProcess() {
-  removeSelectAliases();
 }

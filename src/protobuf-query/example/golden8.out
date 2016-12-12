@@ -1,0 +1,4 @@
+founded | emp.id | emp.name | emp.active
+------- | ------ | -------- | ----------
+1       | 1      | abc      | false     
+1       | 2      | def      | true      

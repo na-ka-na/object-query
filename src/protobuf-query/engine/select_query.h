@@ -55,8 +55,8 @@ public:
   void mark_parse_error(
       const yy::SqlParser::location_type& loc,
       const string& msg);
+  void resolveSelectStars(const StarFieldResolver& resolver);
   void removeSelectAliases();
-  void preProcess();
   string str() const;
 };
 

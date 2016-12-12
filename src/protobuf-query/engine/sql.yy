@@ -43,7 +43,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
   COMMA      ","
   PLUS       "+"
   MINUS      "-"
-  MULT       "*"
+  STAR       "*"
   DIVIDE     "/"
   EQ         "="
   NE         "!="
@@ -65,6 +65,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 ;
 
 %token <std::string> IDENTIFIER "identifier"
+%token <std::string> STAR_IDENTIFIER "star_identifier"
 %token <std::string> STRING "string"
 %token <long> LONG "long"
 %token <double> DOUBLE "double"
@@ -79,8 +80,9 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 %type <Fn3> fn3
 
 %type <SelectStmt> select_stmt
-%type <std::vector<SelectField>> select_fields
-%type <SelectField> select_field
+%type <std::vector<RawSelectField>> select_fields
+%type <RawSelectField> select_field
+%type <std::string> as_alias
 
 %type <OrderByStmt> order_by_stmt
 %type <std::vector<OrderByField>> order_by_fields
@@ -117,11 +119,15 @@ fn3: "SUBSTR" {$$=$1;};
 select_stmt: "SELECT" select_fields  {$$=SelectStmt::create($2,false);}
  | "SELECT" "DISTINCT" select_fields {$$=SelectStmt::create($3,true);}
  ;
-select_fields: select_field        {$$=vector<SelectField>{$1};}
+select_fields: select_field        {$$=vector<RawSelectField>{$1};}
  | select_fields "," select_field  {$$=$1; $$.push_back($3);}
  ;
-select_field: expr        {$$=SelectField::create($1,"");}
- | expr "AS" "identifier" {$$=SelectField::create($1,$3);}
+select_field: "*"    as_alias {$$=RawSelectField::create("*",$2);}
+ | "star_identifier" as_alias {$$=RawSelectField::create($1,$2);}
+ | expr              as_alias {$$=RawSelectField::create($1,$2);}
+ ;
+as_alias: %empty      {$$="";}
+ | "AS" "identifier"  {$$=$2;}
  ;
 
 from_stmt: "FROM" "identifier" {$$=FromStmt::create($2);};

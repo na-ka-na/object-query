@@ -23,18 +23,15 @@ struct CodeGenSpec {
   vector<string> headerIncludes;
 };
 
-struct FieldPart {
-  enum Type { NORMAL, SIZE, HAS};
-  Type part_type;
-  const FieldDescriptor* descriptor;
-
-  void parseFrom(const Descriptor& parentDescriptor, const string& partName);
-
+class FieldPart {
+public:
+  static string full_name_to_cpp_type(const string& full_name);
+  static FieldPart parseFrom(const Descriptor& parentDescriptor,
+                             const string& partName);
+  enum Type { NORMAL, SIZE, HAS };
+  FieldPart(const FieldDescriptor* descriptor, Type type=NORMAL);
   bool operator<(const FieldPart& other) const;
   bool operator==(const FieldPart& other) const;
-
-  static string full_name_to_cpp_type(const string& full_name);
-
   string name() const;
   FieldDescriptor::Type type() const;
   string type_name() const;
@@ -49,6 +46,9 @@ struct FieldPart {
   string accessor() const;
   bool needs_has_check() const;
   string has_accessor() const;
+private:
+  const FieldDescriptor* descriptor;
+  Type part_type;
 };
 
 struct Field {
@@ -109,10 +109,14 @@ struct QueryGraph {
   const Descriptor* protoDescriptor;
   Node root;
   map<string, Field> idFieldMap;
+  void initProto(const SelectQuery& query);
   void initGraph(const SelectQuery& query);
+  void resolveStarIdentifier(const string& star_identifier,
+                             vector<string>& resolved_identifiers);
 
   static string makePlural(const string& name);
   static string makeSingular(const string& name);
+  static vector<string> splitDotIdentifier(const string& identifier);
   string getProtoCppType() const;
   void addReadIdentifier(const string& identifier);
   void processSelect(const SelectStmt& selectStmt);
