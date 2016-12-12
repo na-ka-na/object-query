@@ -44,6 +44,15 @@ We can run SQL queries:
     p4
     p5
 
+    SELECT persons.* FROM com.ka.Persons
+    persons.name | persons.ssn
+    ------------ | --------------
+    p1           | NULL
+    p2           | NULL
+    p3           | 
+    p4           | ssn4
+    p5           | ssn5
+
     SELECT persons.name, persons.emails FROM com.ka.Persons
     persons.name | persons.emails
     ------------ | --------------
@@ -115,6 +124,8 @@ We can run SQL queries:
 
 - Following SQL keywords are supported right now: `AS`, `LIKE`, `IS`, `NOT`, `NULL`, `AND`, `OR`, `ASC`, `DESC`,
   `TRUE`, `FALSE`, `,`, `+`, `-`, `*`, `/`, `=`, `!=`, `<`, `<=`, `>`, `>=`, `(`, `)`
+
+- `SELECT *` or `SELECT a.b.*` are allowed. This will select all primitive fields in that message.
 
 - `WHERE` clause allows full expression support.
 
