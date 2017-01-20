@@ -21,12 +21,21 @@ vector<string> header = {
   "employee",
   "employee2",
 };
+
+template<typename Arg0, typename Ret=decltype(STR(Arg0()))>
+optional<Ret> $STR(const optional<Arg0>& arg0) {
+  if (arg0) {
+    return optional<Ret>(STR(*arg0));
+  } else {
+    return optional<Ret>();
+  }
+}
 using S0 = optional<bool>;   /*.active()*/
 using S1 = optional<int32>;  /*.id()*/
 using S2 = optional<string>; /*.name()*/
 using S3 = optional<int32>;  /*.founded()*/
-using S4 = decltype(Plus(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(": ")), S2()), optional<string>(" (")), ToStr(S0())), optional<string>(")"))); /*(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')*/
-using S5 = decltype(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(S1()), optional<string>(": ")), S2()), optional<string>(" (")), ToStr(S0())), optional<string>(")"))), optional<string>(" ")), ToStr(S3()))); /*((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded))*/
+using S4 = decltype(Plus(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(": ")), S2()), optional<string>(" (")), $STR(S0())), optional<string>(")"))); /*(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')*/
+using S5 = decltype(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(": ")), S2()), optional<string>(" (")), $STR(S0())), optional<string>(")"))), optional<string>(" ")), $STR(S3()))); /*((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded))*/
 using TupleType = tuple<S4, S5>;
 
 std::regex r6(".*true.*", std::regex::optimize);
@@ -50,9 +59,9 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
       if (all_employee && all_employee->has_active()) {
         s0 = all_employee->active();
       }
-      if (!Like(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3)), r6)) { continue; }
-      S4 s4 = Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"));
-      S5 s5 = Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus(ToStr(s1), optional<string>(": ")), s2), optional<string>(" (")), ToStr(s0)), optional<string>(")"))), optional<string>(" ")), ToStr(s3));
+      if (!Like(Plus(Plus(Plus(Plus($STR(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus($STR(s1), optional<string>(": ")), s2), optional<string>(" (")), $STR(s0)), optional<string>(")"))), optional<string>(" ")), $STR(s3)), r6)) { continue; }
+      S4 s4 = Plus(Plus(Plus(Plus(Plus($STR(s1), optional<string>(": ")), s2), optional<string>(" (")), $STR(s0)), optional<string>(")"));
+      S5 s5 = Plus(Plus(Plus(Plus($STR(s1), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus($STR(s1), optional<string>(": ")), s2), optional<string>(" (")), $STR(s0)), optional<string>(")"))), optional<string>(" ")), $STR(s3));
       tuples.emplace_back(s4, s5);
     }
   }

@@ -71,12 +71,8 @@ template<> inline string Stringify(const bool& t) {return t ? "true" : "false";}
 template<> inline string Stringify(const string& t) {return t;}
 
 template<typename T>
-inline optional<string> ToStr(const optional<T>& t) {
-  optional<string> s;
-  if (t) {
-    s = Stringify(*t);
-  }
-  return s;
+inline string STR(const T& t) {
+  return Stringify(t);
 }
 
 template<typename T>
@@ -89,12 +85,8 @@ template<> inline int Intify(const string& t) {
 }
 
 template<typename T>
-inline optional<int> ToInt(const optional<T>& t) {
-  optional<int> i;
-  if (t) {
-    i = Intify(*t);
-  }
-  return i;
+inline int INT(const T& t) {
+  return Intify(t);
 }
 
 template<typename T>

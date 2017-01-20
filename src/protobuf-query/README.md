@@ -4,6 +4,63 @@
 
 This project allows one to run SQL queries over protocol buffers. Right now protobuf 2.x is supported.
 
+## Features
+- All proto scalar and compound types are supported except maps.
+
+- Querying a field at any nested level is supported.
+
+- Querying across any number of repeated fields is supported.
+
+- Selecting multiple repeated fields will result in a cartesian product across them.
+
+- For non repeated fields, one may query `has_xxx`. For repeated fields, one may query `xxx_size`.
+
+- Enums are printed as name and may be filtered by name in where clause.
+
+- No assumption on the presence of values is made, missing values come as `NULL`.
+
+#### SQL
+- Following SQL statements are supported right now: `SELECT`, `FROM`, `WHERE`, `ORDER BY`.
+
+- Following SQL keywords are supported right now: `AS`, `LIKE`, `IS`, `NOT`, `NULL`, `AND`, `OR`, `ASC`, `DESC`,
+  `TRUE`, `FALSE`, `,`, `+`, `-`, `*`, `/`, `=`, `!=`, `<`, `<=`, `>`, `>=`, `(`, `)`
+
+- `SELECT *` or `SELECT a.b.*` are allowed. This will select all primitive fields in that message.
+
+- `WHERE` clause allows full expression support.
+
+- Arithmetic operators behave per C++14 standard.
+
+- String concatenation is supported with `+`.
+
+- `LIKE` is different: it takes [default C++](http://en.cppreference.com/w/cpp/regex/ecmascript) regular expressions instead of supporting SQL standard.
+
+- Following custom SQL functions are supported right now: `STR`, `INT` for primitives. You may define
+  your own overrides for these functions, for e.g `STR` may be overriden for message types:
+
+        string STR(const X& x);
+        message X {
+        }
+        message Z {
+          X x;
+          int y;
+        }
+        SELECT STR(x), 'y='+STR(y) FROM Z;
+
+- Additionally you may define any custom functions (must return primitives or string):
+
+        string foo(const X& x);
+        string bar(int y);
+        double qux(const X& x, int y);
+
+        SELECT foo(x), bar(y), qux(x,y) FROM Z;
+
+- Alias support with `AS`:
+    
+        SELECT y % 10 AS y10 FROM Z WHERE y10=3 ORDER BY y10
+
+## Examples
+
 Example: person.proto:
 
     package com.ka;
@@ -102,47 +159,6 @@ We can run SQL queries:
     p4           | true            | 1
     p1           | false           | 0
     p3           | true            | 0
-
-
-## Features
-- All proto scalar and compound types are supported except maps.
-
-- Querying a field at any nested level is supported.
-
-- Querying across any number of repeated fields is supported.
-
-- Selecting multiple repeated fields will result in a cartesian product across them.
-
-- For non repeated fields, one may query `has_xxx`. For repeated fields, one may query `xxx_size`.
-
-- Enums are printed as name and may be filtered by name in where clause.
-
-- No assumption on the presence of values is made, missing values come as `NULL`.
-
-#### SQL
-- Following SQL statements are supported right now: `SELECT`, `FROM`, `WHERE`, `ORDER BY`.
-
-- Following SQL keywords are supported right now: `AS`, `LIKE`, `IS`, `NOT`, `NULL`, `AND`, `OR`, `ASC`, `DESC`,
-  `TRUE`, `FALSE`, `,`, `+`, `-`, `*`, `/`, `=`, `!=`, `<`, `<=`, `>`, `>=`, `(`, `)`
-
-- `SELECT *` or `SELECT a.b.*` are allowed. This will select all primitive fields in that message.
-
-- `WHERE` clause allows full expression support.
-
-- Arithmetic operators behave per C++14 standard.
-
-- String concatenation is supported with `+`.
-
-- `LIKE` is different: it takes [default C++](http://en.cppreference.com/w/cpp/regex/ecmascript) regular expressions instead of supporting SQL standard (with the `%`).
-
-- Additionally following custom SQL functions are supported right now: `STR`, `INT`. You may define
-  your own overrides for these functions, for e.g `STR` may be overriden for message types:
-    
-        SELECT STR(persons.addresses)
-
-- Alias support with `AS`:
-    
-        SELECT persons.addresses.zip % 10 AS z0 FROM com.ka.Persons WHERE z0=3 ORDER BY z0
 
 
 ## Usage

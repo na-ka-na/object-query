@@ -76,8 +76,6 @@ using EndNodeFn = function<void(int indent, Node& node)>;
 
 // Root will be a node and all repeated fields will be nodes
 struct Node {
-  // only the ROOT node will be marked ROOT
-  NodeType type;
   // this is the variable name in the generated code
   string objName;
   // this will be set for non root nodes
@@ -85,7 +83,7 @@ struct Node {
   // children of this node, repeated fields, repeated field => Node.
   map<Field, Node> children;
   // list of non-repeating read fields for this node.
-  set<Field> allFields;
+  map<Field, bool> allFields; // value is if the field is repeating
   // list of all canonical where clauses
   vector<const BooleanExpr*> whereClauses;
   // list of all select and order by exprs

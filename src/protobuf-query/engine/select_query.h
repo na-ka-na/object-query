@@ -57,6 +57,7 @@ public:
       const string& msg);
   void resolveSelectStars(const StarFieldResolver& resolver);
   void removeSelectAliases();
+  void extractStatics(CodeGenReqs& cgr) const;
   string str() const;
 };
 

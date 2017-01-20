@@ -297,7 +297,6 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
              fieldPart.type_name());
       if (fieldPart.is_repeated()) {
         Node& child = parent->children[field];
-        child.type = REPEATED_MESSAGE;
         child.objName = makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
@@ -307,12 +306,13 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
     } else {
       if (fieldPart.is_repeated()) {
         Node& child = parent->children[field];
-        child.type = REPEATED_LEAF;
         child.objName = makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
+        parent->allFields.emplace(field, true);
+      } else {
+        parent->allFields.emplace(field, false);
       }
-      parent->allFields.insert(field);
     }
   }
   idFieldMap.emplace(identifier, field);
@@ -387,7 +387,6 @@ void QueryGraph::initProto(const SelectQuery& query) {
 }
 
 void QueryGraph::initGraph(const SelectQuery& query) {
-  root.type = ROOT;
   root.objName = protoDescriptor->name();
   std::transform(root.objName.begin(), root.objName.end(),
                  root.objName.begin(), ::tolower);
@@ -473,7 +472,45 @@ void QueryEngine::printCode() {
   out << header << endl;
 
   CodeGenReqs cgr;
-  query.whereStmt.extractStatics(cgr);
+  query.extractStatics(cgr);
+
+  for (const auto& f : cgr.fnMap) {
+    out << "\n";
+    const string& fnname = f.first;
+    unsigned num_params = f.second;
+    out << "template<";
+    for (unsigned i=0; i<num_params; i++) {
+      out << "typename Arg" << i << ", ";
+    }
+    out << "typename Ret=decltype(" << fnname << "(";
+    for (unsigned i=0; i<num_params; i++) {
+      out << "Arg" << i << "()";
+      if (i != (num_params-1)) out << ", ";
+    }
+    out << "))>\n";
+    out << "optional<Ret> $" << fnname << "(";
+    for (unsigned i=0; i<num_params; i++) {
+      out << "const optional<Arg" << i << ">& arg" << i;
+      if (i != (num_params-1)) out << ", ";
+    }
+    out << ") {\n";
+    out << "  if (";
+    for (unsigned i=0; i<num_params; i++) {
+      out << "arg" << i;
+      if (i != (num_params-1)) out << " && ";
+    }
+    out << ") {\n";
+    out << "    return optional<Ret>(" << fnname << "(";
+    for (unsigned i=0; i<num_params; i++) {
+      out << "*arg" << i;
+      if (i != (num_params-1)) out << ", ";
+    }
+    out << "));\n";
+    out << "  } else {\n";
+    out << "    return optional<Ret>();\n";
+    out << "  }\n";
+    out << "}\n";
+  }
 
   map<Field, string> fieldVarMap;
   map<Field, string> fieldTypeMap;
@@ -561,10 +598,12 @@ void QueryEngine::printCode() {
           << " : nullptr)) {" << endl;
     }
     ind += "  ";
-    for (const Field& field : node.allFields) {
+    for (const auto& f : node.allFields) {
+      const Field& field = f.first;
+      bool repeating = f.second;
       out << ind << fieldTypeMap[field] << " " << fieldVarMap[field] << " = "
           << fieldDefaultMap[field] << ";" << endl;
-      if (node.type == REPEATED_LEAF) {
+      if (repeating) {
         out << ind << "if (" << node.objName << ") {" << endl;
         out << ind << "  " << fieldVarMap[field] << " = "
             << (field.is_enum()

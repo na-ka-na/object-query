@@ -71,26 +71,15 @@ Expr Expr::create(UnaryExprOp op, const Expr& uexpr) {
   return expr;
 }
 
-Expr Expr::create(Fn1 fn1, const Expr& fexpr) {
+Expr Expr::createFnCall(const string& fn, const vector<Expr>& params) {
   Expr expr;
-  expr.type_ = FN1_CALL_EXPR;
-  expr.fn1_call_expr_.fn1_ = fn1;
-  expr.fn1_call_expr_.expr_.reset(new Expr());
-  *(expr.fn1_call_expr_.expr_) = fexpr;
-  return expr;
-}
-
-Expr Expr::create(Fn3 fn3, const Expr& expr1, const Expr& expr2,
-                  const Expr& expr3) {
-  Expr expr;
-  expr.type_ = FN3_CALL_EXPR;
-  expr.fn3_call_expr_.fn3_ = fn3;
-  expr.fn3_call_expr_.expr1_.reset(new Expr());
-  expr.fn3_call_expr_.expr2_.reset(new Expr());
-  expr.fn3_call_expr_.expr3_.reset(new Expr());
-  *(expr.fn3_call_expr_.expr1_) = expr1;
-  *(expr.fn3_call_expr_.expr2_) = expr2;
-  *(expr.fn3_call_expr_.expr3_) = expr3;
+  expr.type_ = FN_CALL_EXPR;
+  expr.fn_call_expr_.fn_ = fn;
+  for (const Expr& param : params) {
+    auto param_ptr = make_shared<Expr>();
+    *param_ptr = param;
+    expr.fn_call_expr_.params_.push_back(param_ptr);
+  }
   return expr;
 }
 
@@ -307,22 +296,17 @@ void UnaryExpr::getAllIdentifiers(set<string>& identifiers) const {
   expr_->getAllIdentifiers(identifiers);
 }
 
-void Fn1CallExpr::getAllIdentifiers(set<string>& identifiers) const {
-  expr_->getAllIdentifiers(identifiers);
-}
-
-void Fn3CallExpr::getAllIdentifiers(set<string>& identifiers) const {
-  expr1_->getAllIdentifiers(identifiers);
-  expr2_->getAllIdentifiers(identifiers);
-  expr3_->getAllIdentifiers(identifiers);
+void FnCallExpr::getAllIdentifiers(set<string>& identifiers) const {
+  for (auto& param : params_) {
+    param->getAllIdentifiers(identifiers);
+  }
 }
 
 void Expr::getAllIdentifiers(set<string>& identifiers) const {
   switch (type_) {
   case BINARY_EXPR: binary_expr_.getAllIdentifiers(identifiers); break;
   case UNARY_EXPR: unary_expr_.getAllIdentifiers(identifiers); break;
-  case FN1_CALL_EXPR: fn1_call_expr_.getAllIdentifiers(identifiers); break;
-  case FN3_CALL_EXPR: fn3_call_expr_.getAllIdentifiers(identifiers); break;
+  case FN_CALL_EXPR: fn_call_expr_.getAllIdentifiers(identifiers); break;
   case IDENTIFIER: identifiers.insert(identifier_); break;
   case STRING: break;
   case LONG: break;
@@ -405,34 +389,23 @@ string UnaryExpr::str() const {
   return prefix + expr_->str();
 }
 
-string Fn1CallExpr::str() const {
-  string fnStr;
-  switch (fn1_) {
-  case STR:   fnStr = "STR"; break;
-  case INT:   fnStr = "INT"; break;
-  case SUM:   fnStr = "SUM"; break;
-  case COUNT: fnStr = "COUNT"; break;
-  default:    fnStr = "<fn1>";
+string FnCallExpr::str() const {
+  string str = fn_ + "(";
+  if (params_.size() > 0) {
+    str += params_[0]->str();
+    for (size_t i=1; i<params_.size(); i++) {
+      str += "," + params_[i]->str();
+    }
   }
-  return fnStr + "(" + expr_->str() + ")";
-}
-
-string Fn3CallExpr::str() const {
-  string fnStr;
-  switch (fn3_) {
-  case SUBSTR: fnStr = "SUBSTR"; break;
-  default:     fnStr = "<fn3>";
-  }
-  return fnStr + "(" + expr1_->str() + "," + expr2_->str() + "," +
-         expr3_->str() + ")";
+  str += ")";
+  return str;
 }
 
 string Expr::str() const {
   switch (type_) {
   case BINARY_EXPR:   return binary_expr_.str();
   case UNARY_EXPR:    return unary_expr_.str();
-  case FN1_CALL_EXPR: return fn1_call_expr_.str();
-  case FN3_CALL_EXPR: return fn3_call_expr_.str();
+  case FN_CALL_EXPR:  return fn_call_expr_.str();
   case IDENTIFIER:    return identifier_;
   case STRING:        return "'"+string_value_+"'";
   case LONG:          return to_string(long_value_);
@@ -522,6 +495,34 @@ string SelectQuery::str() const {
          (orderByStr.empty() ? "" : (" " + orderByStr));
 }
 
+void BinaryExpr::extractStatics(CodeGenReqs& cgr) const {
+  lhs_->extractStatics(cgr);
+  rhs_->extractStatics(cgr);
+}
+
+void UnaryExpr::extractStatics(CodeGenReqs& cgr) const {
+  expr_->extractStatics(cgr);
+}
+
+void FnCallExpr::extractStatics(CodeGenReqs& cgr) const {
+  auto f = cgr.fnMap.find(fn_);
+  if (f == cgr.fnMap.end()) {
+    cgr.fnMap.emplace(fn_, params_.size());
+  } else {
+    ASSERT(params_.size() == f->second, "Num params mismatch for fn_",
+           fn_, f->second, params_.size());
+  }
+}
+
+void Expr::extractStatics(CodeGenReqs& cgr) const {
+  switch (type_) {
+  case BINARY_EXPR:   binary_expr_.extractStatics(cgr); break;
+  case UNARY_EXPR:    unary_expr_.extractStatics(cgr); break;
+  case FN_CALL_EXPR:  fn_call_expr_.extractStatics(cgr); break;
+  default:            break;
+  }
+}
+
 void CompoundBooleanExpr::extractStatics(CodeGenReqs& cgr) const {
   lhs_->extractStatics(cgr);
   rhs_->extractStatics(cgr);
@@ -531,14 +532,34 @@ void SimpleBooleanExpr::extractStatics(CodeGenReqs& cgr) const {
   if ((op_ == LIKE) && (rhs_.isString())) {
     cgr.regexMap.emplace(rhs_.getStringValue(), "");
   }
+  lhs_.extractStatics(cgr);
+  rhs_.extractStatics(cgr);
+}
+
+void NullaryBooleanExpr::extractStatics(CodeGenReqs&) const {
+  /* nothing to do */
 }
 
 void BooleanExpr::extractStatics(CodeGenReqs& cgr) const {
   switch (type_) {
   case BOOLEAN: compound_boolean_expr_.extractStatics(cgr); break;
   case SIMPLE: simple_boolean_expr_.extractStatics(cgr); break;
-  case NULLARY: break;
+  case NULLARY: nullary_boolean_expr_.extractStatics(cgr); break;
   default: THROW("Unhandled BooleanExpr case");
+  }
+}
+
+void SelectField::extractStatics(CodeGenReqs& cgr) const {
+  expr_.extractStatics(cgr);
+}
+
+void OrderByField::extractStatics(CodeGenReqs& cgr) const {
+  expr_.extractStatics(cgr);
+}
+
+void SelectStmt::extractStatics(CodeGenReqs& cgr) const {
+  for (const SelectField& selectField : select_fields_) {
+    selectField.extractStatics(cgr);
   }
 }
 
@@ -546,6 +567,18 @@ void WhereStmt::extractStatics(CodeGenReqs& cgr) const {
   if (boolean_expr_) {
     boolean_expr_->extractStatics(cgr);
   }
+}
+
+void OrderByStmt::extractStatics(CodeGenReqs& cgr) const {
+  for (const OrderByField& orderByField : order_by_fields_) {
+    orderByField.extractStatics(cgr);
+  }
+}
+
+void SelectQuery::extractStatics(CodeGenReqs& cgr) const {
+  selectStmt.extractStatics(cgr);
+  whereStmt.extractStatics(cgr);
+  orderByStmt.extractStatics(cgr);
 }
 
 string BinaryExpr::code(const CodeGenReqs& cgr) const {
@@ -569,32 +602,23 @@ string UnaryExpr::code(const CodeGenReqs& cgr) const {
   return unaryFn + "(" + expr_->code(cgr) + ")";
 }
 
-string Fn1CallExpr::code(const CodeGenReqs& cgr) const {
-  string fnStr;
-  switch (fn1_) {
-  case STR:   fnStr = "ToStr"; break;
-  case INT:   fnStr = "ToInt"; break;
-  default:    fnStr = "<fn1>";
+string FnCallExpr::code(const CodeGenReqs& cgr) const {
+  string code = "$" + fn_ + "(";
+  if (params_.size() > 0) {
+    code += params_[0]->code(cgr);
+    for (size_t i=1; i<params_.size(); i++) {
+      code += ", " + params_[i]->code(cgr);
+    }
   }
-  return fnStr + "(" + expr_->code(cgr) + ")";
-}
-
-string Fn3CallExpr::code(const CodeGenReqs& cgr) const {
-  string fnStr;
-  switch (fn3_) {
-  case SUBSTR: fnStr = "substr"; break;
-  default:     fnStr = "<fn3>";
-  }
-  return fnStr + "(" + expr1_->code(cgr) + "," + expr2_->code(cgr) + "," +
-         expr3_->code(cgr) + ")";
+  code += ")";
+  return code;
 }
 
 string Expr::code(const CodeGenReqs& cgr) const {
   switch (type_) {
   case BINARY_EXPR:   return binary_expr_.code(cgr);
   case UNARY_EXPR:    return unary_expr_.code(cgr);
-  case FN1_CALL_EXPR: return fn1_call_expr_.code(cgr);
-  case FN3_CALL_EXPR: return fn3_call_expr_.code(cgr);
+  case FN_CALL_EXPR:  return fn_call_expr_.code(cgr);
   case IDENTIFIER:    {auto f = cgr.idVarMap.find(identifier_);
                        return f==cgr.idVarMap.end() ? identifier_ : f->second;}
   case STRING:        return string("optional<string>(") + "\"" + string_value_ + "\")";
@@ -676,22 +700,17 @@ void UnaryExpr::removeSelectAliases(const SelectAliases& aliases) {
   expr_->removeSelectAliases(aliases);
 }
 
-void Fn1CallExpr::removeSelectAliases(const SelectAliases& aliases) {
-  expr_->removeSelectAliases(aliases);
-}
-
-void Fn3CallExpr::removeSelectAliases(const SelectAliases& aliases) {
-  expr1_->removeSelectAliases(aliases);
-  expr2_->removeSelectAliases(aliases);
-  expr3_->removeSelectAliases(aliases);
+void FnCallExpr::removeSelectAliases(const SelectAliases& aliases) {
+  for (auto& param : params_) {
+    param->removeSelectAliases(aliases);
+  }
 }
 
 void Expr::removeSelectAliases(const SelectAliases& aliases) {
   switch (type_) {
   case BINARY_EXPR:   binary_expr_.removeSelectAliases(aliases); break;
   case UNARY_EXPR:    unary_expr_.removeSelectAliases(aliases); break;
-  case FN1_CALL_EXPR: fn1_call_expr_.removeSelectAliases(aliases); break;
-  case FN3_CALL_EXPR: fn3_call_expr_.removeSelectAliases(aliases); break;
+  case FN_CALL_EXPR:  fn_call_expr_.removeSelectAliases(aliases); break;
   case IDENTIFIER:    {
                        auto f = aliases.find(identifier_);
                        if (f != aliases.end()) {

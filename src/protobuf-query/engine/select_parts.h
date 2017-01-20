@@ -30,14 +30,14 @@ struct CodeGenReqs {
   map<string, string> idVarMap;
   map<string, string> idDefaultMap;
   map<string, string> regexMap;
+  map<string, unsigned> fnMap; // name => number of params
 };
 
 // note: update Expr::str() on mod
 enum ExprType {
   BINARY_EXPR,
   UNARY_EXPR,
-  FN1_CALL_EXPR,
-  FN3_CALL_EXPR,
+  FN_CALL_EXPR,
   IDENTIFIER,
   STRING,
   LONG,
@@ -55,20 +55,11 @@ enum UnaryExprOp {
   UMINUS
 };
 
-// note: update Fn1CallExpr::str() on mod
-enum Fn1 {
-  STR, INT, SUM, COUNT
-};
-
-// note: update Fn3CallExpr::str() on mod
-enum Fn3 {
-  SUBSTR
-};
-
 class BinaryExpr {
 public:
   void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
+  void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
 private:
@@ -82,6 +73,7 @@ class UnaryExpr {
 public:
   void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
+  void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
 private:
@@ -90,37 +82,24 @@ private:
   shared_ptr<Expr> expr_;
 };
 
-class Fn1CallExpr {
+class FnCallExpr {
 public:
   void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
+  void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
 private:
   friend Expr;
-  Fn1 fn1_;
-  shared_ptr<Expr> expr_;
-};
-
-class Fn3CallExpr {
-public:
-  void removeSelectAliases(const SelectAliases& aliases);
-  void getAllIdentifiers(set<string>& identifiers) const;
-  string code(const CodeGenReqs& cgr) const;
-  string str() const;
-private:
-  friend Expr;
-  Fn3 fn3_;
-  shared_ptr<Expr> expr1_, expr2_, expr3_;
+  string fn_;
+  vector<shared_ptr<Expr>> params_;
 };
 
 class Expr {
 public:
   static Expr create(BinaryExprOp op, const Expr& lhs, const Expr& rhs);
   static Expr create(UnaryExprOp op, const Expr& expr);
-  static Expr create(Fn1 fn1, const Expr& expr);
-  static Expr create(Fn3 fn3, const Expr& expr1, const Expr& expr2,
-                     const Expr& expr3);
+  static Expr createFnCall(const string& fn, const vector<Expr>& params);
   static Expr createIdentifier(const string& identifier);
   static Expr createPrimitive(const string& value);
   static Expr createPrimitive(long value);
@@ -128,6 +107,7 @@ public:
   static Expr createPrimitive(bool value);
   void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
+  void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string cppType(const CodeGenReqs& cgr) const;
   string str() const;
@@ -141,8 +121,7 @@ private:
   // union doesn't work nicely, we get complaints about destructor.
   BinaryExpr binary_expr_;
   UnaryExpr unary_expr_;
-  Fn1CallExpr fn1_call_expr_;
-  Fn3CallExpr fn3_call_expr_;
+  FnCallExpr fn_call_expr_;
   string identifier_;
   string string_value_;
   long long_value_;
@@ -197,6 +176,7 @@ class NullaryBooleanExpr {
 public:
   void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
+  void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
 private:
@@ -247,6 +227,7 @@ public:
   static SelectField create(const Expr& expr, const string& alias);
   void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
+  void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
   void populateAliasIfPresent(SelectAliases& aliases) const;
@@ -263,6 +244,7 @@ public:
                            bool distinct);
   void resolveSelectStars(const StarFieldResolver& resolver);
   void removeSelectAliases(SelectAliases& aliases);
+  void extractStatics(CodeGenReqs& cgr) const;
   string str() const;
   const vector<SelectField>& getSelectFields() const;
 private:
@@ -298,6 +280,7 @@ public:
   static OrderByField create(const Expr& expr, bool desc);
   void removeSelectAliases(const SelectAliases& aliases);
   void getAllIdentifiers(set<string>& identifiers) const;
+  void extractStatics(CodeGenReqs& cgr) const;
   string code(const CodeGenReqs& cgr) const;
   string str() const;
   const Expr& getExpr() const;
@@ -312,6 +295,7 @@ public:
   static OrderByStmt create();
   static OrderByStmt create(const vector<OrderByField>& order_by_fields);
   void removeSelectAliases(const SelectAliases& aliases);
+  void extractStatics(CodeGenReqs& cgr) const;
   string str() const;
   const vector<OrderByField>& getOrderByFields() const;
 private:

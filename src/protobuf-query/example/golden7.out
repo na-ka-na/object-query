@@ -1,4 +1,4 @@
-all_employees
--------------
-abc(id=1)    
-def(id=2)    
+EmployeeStr(all_employees.name,all_employees.id) | STR(all_employees.id) | STR(all_employees)
+------------------------------------------------ | --------------------- | ------------------
+abc(id=1)                                        | 1                     | abc(id=1)         
+def(id=2)                                        | 2                     | def(id=2)         

@@ -70,14 +70,6 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 %token <long> LONG "long"
 %token <double> DOUBLE "double"
 %token <bool> BOOL "bool"
-%token <Fn1> STR "STR"
-%token <Fn1> INT "INT"
-%token <Fn1> SUM "SUM"
-%token <Fn1> COUNT "COUNT"
-%token <Fn3> SUBSTR "SUBSTR"
-
-%type <Fn1> fn1
-%type <Fn3> fn3
 
 %type <SelectStmt> select_stmt
 %type <std::vector<RawSelectField>> select_fields
@@ -93,6 +85,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 %type <WhereStmt> where_stmt
 %type <BooleanExpr> boolean_expr
 %type <Expr> expr
+%type <std::vector<Expr>> exprs
+%type <std::vector<Expr>> exprs1
 
 %printer { yyoutput << $$; } <*>;
 %%
@@ -108,13 +102,6 @@ query: select_stmt
   query.whereStmt = $3;
   query.orderByStmt = $6;}
  ;
-
-fn1: "STR"  {$$=$1;}
- | "INT"    {$$=$1;}
- | "SUM"    {$$=$1;}
- | "COUNT"  {$$=$1;}
- ;
-fn3: "SUBSTR" {$$=$1;};
 
 select_stmt: "SELECT" select_fields  {$$=SelectStmt::create($2,false);}
  | "SELECT" "DISTINCT" select_fields {$$=SelectStmt::create($3,true);}
@@ -153,6 +140,12 @@ boolean_expr:
  | "identifier" "IS" "NOT" "NULL"  {$$=BooleanExpr::createNullary(false, $1);}
  ;
 
+exprs: %empty                      {$$=vector<Expr>{};}
+ | exprs1                          {$$=$1;}
+
+exprs1: expr                       {$$=vector<Expr>{$1};}
+ | exprs1 "," expr                 {$$=$1; $$.push_back($3);}
+
 %left "+" "-";
 %left "*" "/";
 %precedence UMINUS;
@@ -163,8 +156,7 @@ expr:
  | expr "*" expr                      {$$=Expr::create(MULT,$1,$3);}
  | expr "/" expr                      {$$=Expr::create(DIVIDE,$1,$3);}
  | "-" expr %prec UMINUS              {$$=Expr::create(UMINUS,$2);}
- | fn1 "(" expr ")"                   {$$=Expr::create($1,$3);}
- | fn3 "(" expr "," expr "," expr ")" {$$=Expr::create($1,$3,$5,$7);}
+ | "identifier" "(" exprs ")"         {$$=Expr::createFnCall($1,$3);}
  | "identifier"                       {$$=Expr::createIdentifier($1);}
  | "string"                           {$$=Expr::createPrimitive($1);}
  | "long"                             {$$=Expr::createPrimitive($1);}
