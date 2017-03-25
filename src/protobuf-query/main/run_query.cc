@@ -11,6 +11,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <stdio.h>
 #include <dlfcn.h>
 #include <gflags/gflags.h>
+#include <cstdlib>
 #include "query_engine.h"
 
 DEFINE_string(codeGenDir, ".",
@@ -135,7 +136,8 @@ void compileGeneratedCode() {
   set<string> linkDirs = mkLinkDirs();
   set<string> linkLibs = mkLinkLibs();
 
-  string cmd = "c++ -g --std=c++14 -Wall -Wextra -O3";
+  string cpp_compiler = getenv("CXX") ? getenv("CXX") : "c++";
+  string cmd = cpp_compiler + " -g --std=c++14 -Wall -Wextra -O3";
   for (const string& includeDir : includeDirs) {
     cmd += " -I" + includeDir;
   }
