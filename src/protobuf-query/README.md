@@ -161,18 +161,43 @@ We can run SQL queries:
     p3           | true            | 0
 
 
-## Usage
+## Usage / Installation
 
 #### Pre requisites
-- C++ compiler with C++14 support. Runs on Mac OS X El Capitan.
-- Install protobuf 2.x
+- C++ compiler with C++14 support. Tested with clang 7.x, 8.x on MacOS, gcc 6.3.0 on Linux.
+- Install protobuf 3.x
 - Install gflags
 
 
 #### Building
 - Clone the git repo
     
-        cd object-query; mkdir build; cd build; cmake ../src; cd protobuf-query/main; make
+        cd object-query
+        mkdir build
+        cd build
+        cmake ../src
+        make
+        make test
+        ./protobuf-query/main/RunQuery
+
+
+#### Building with non-default compiler
+
+If your default compiler does not support C++14 (gcc < 4.9 does not)
+
+- Install compiler which does, e.g. gcc 6.3. Say we install everything inside $GCC6 directory.
+
+		export CC=$GCC6/gcc-6.3.0-installed/bin/gcc
+		export CXX=$GCC6/gcc-6.3.0-installed/bin/g++
+		export LD_LIBRARY_PATH=$GCC6/gcc-6.3.0-installed/lib64:$GCC6/isl-0.16.1/installed/lib
+
+- Compile and install gflags and protobuf using the above compiler
+
+		cmake -DCMAKE_PREFIX_PATH="$GCC6/gflags-2.2.0/installed;$GCC6/protobuf-3.2.0/installed" ../src
+		make
+		make test
+		./protobuf-query/main/RunQuery
+		
 
 
 #### Running
@@ -199,7 +224,7 @@ We can run SQL queries:
 #### Under the hood
 RunQuery is performing the following steps
 * Step (1) Loads the proto lib to understand the structure of proto (using proto reflection).
-* Step (2) Parses the SQL query and generated C++14 source code for it.
+* Step (2) Parses the SQL query and generates C++14 source code for it.
 * Step (3) Compiles the generated code with the `--cppProtoHeader` and links it with `--cppProtoLib`.
 * Step (4) Invokes the generated binary to actually run the query.
 * Step (5) The generated binary reads in the protos using the `FROM` macro.
