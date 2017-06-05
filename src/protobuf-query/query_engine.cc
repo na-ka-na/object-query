@@ -200,35 +200,6 @@ string Field::has_check(const string& objName) const {
   return Utils::joinVec(" && ", checks, Utils::string2str);
 }
 
-void Node::walkNode(Node* parent,
-                    Node& node,
-                    int& indent,
-                    StartNodeFn& startNodeFn,
-                    uint32_t indentInc,
-                    map<int, Node*>& endNodesMap) {
-  startNodeFn(indent, node, parent);
-  endNodesMap.emplace(-indent, &node);
-  for (auto& e : node.children) {
-    Node& child = e.second;
-    indent += indentInc;
-    walkNode(&node, child, indent, startNodeFn, indentInc, endNodesMap);
-  }
-}
-
-void Node::walkNode(Node& root,
-                    StartNodeFn& startNodeFn,
-                    EndNodeFn& endNodeFn,
-                    uint32_t indentInc) {
-  int indent = 0;
-  map<int, Node*> endNodesMap;
-  walkNode(nullptr, root, indent, startNodeFn, indentInc, endNodesMap);
-  for (auto& e : endNodesMap) {
-    int indent = -e.first;
-    Node* node = e.second;
-    endNodeFn(indent, *node);
-  }
-}
-
 string QueryGraph::getProtoCppType() const {
   return FieldPart::full_name_to_cpp_type(protoDescriptor->full_name());
 }
@@ -261,7 +232,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
     return;
   }
   const Descriptor* parentDescriptor = protoDescriptor;
-  Node* parent = &root;
+  Node<Field>* parent = &root;
   Field field;
   vector<string> selectFieldParts = Utils::splitDotIdentifier(identifier);
   for (size_t j=0; j<selectFieldParts.size(); j++) {
@@ -273,7 +244,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
              "FieldPart", selectFieldParts[j], "expected to be message but is",
              fieldPart.type_name());
       if (fieldPart.is_repeated()) {
-        Node& child = parent->children[field];
+        Node<Field>& child = parent->children[field];
         child.objName = Utils::makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
@@ -282,7 +253,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
       parentDescriptor = fieldPart.message_descriptor();
     } else {
       if (fieldPart.is_repeated()) {
-        Node& child = parent->children[field];
+        Node<Field>& child = parent->children[field];
         child.objName = Utils::makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
@@ -299,7 +270,7 @@ void QueryGraph::processSelect(const SelectStmt& selectStmt) {
   for (const SelectField& selectField : selectStmt.getSelectFields()) {
     set<string> identifiers;
     selectField.getAllIdentifiers(identifiers);
-    auto callback = [&selectField](Node& node) {
+    auto callback = [&selectField](Node<Field>& node) {
       QueryGraph::addExpr(node.selectAndOrderByExprs, &(selectField.getExpr()));
     };
     processExpr(identifiers, callback);
@@ -312,7 +283,7 @@ void QueryGraph::processWhere(const WhereStmt& whereStmt) {
   for (const BooleanExpr* clause : andClauses) {
     set<string> identifiers;
     clause->getAllIdentifiers(identifiers);
-    auto callback = [clause](Node& node) {
+    auto callback = [clause](Node<Field>& node) {
       node.whereClauses.push_back(clause);
     };
     processExpr(identifiers, callback);
@@ -323,7 +294,7 @@ void QueryGraph::processOrderBy(const OrderByStmt& orderByStmt) {
   for (const OrderByField& orderByField : orderByStmt.getOrderByFields()) {
     set<string> identifiers;
     orderByField.getAllIdentifiers(identifiers);
-    auto callback = [&orderByField](Node& node) {
+    auto callback = [&orderByField](Node<Field>& node) {
       QueryGraph::addExpr(node.selectAndOrderByExprs, &(orderByField.getExpr()));
     };
     processExpr(identifiers, callback);
@@ -331,29 +302,31 @@ void QueryGraph::processOrderBy(const OrderByStmt& orderByStmt) {
 }
 
 void QueryGraph::processExpr(
-    const set<string>& identifiers, function<void(Node& node)> callback) {
+    const set<string>& identifiers,
+    const function<void(Node<Field>& node)>& callback) {
   set<Field> fields;
   for (const string& identifier : identifiers) {
     addReadIdentifier(identifier);
     fields.insert(idFieldMap[identifier]);
   }
-  StartNodeFn startNodeFn = [&](int, Node& node, Node*){
-    if (fields.empty()) {
-      return;
-    }
-    for(auto it = fields.begin(); it != fields.end();) {
-      if (node.allFields.find(*it) != node.allFields.end()) {
-        it = fields.erase(it);
-      } else {
-        ++it;
-      }
-    }
-    if (fields.empty()) {
-      callback(node);
-    }
-  };
-  EndNodeFn endNodeFn = [](int, Node&) {};
-  Node::walkNode(root, startNodeFn, endNodeFn);
+  StartNodeFn<Field> startNodeFn =
+      [&](int, Node<Field>& node, Node<Field>*){
+        if (fields.empty()) {
+          return;
+        }
+        for(auto it = fields.begin(); it != fields.end();) {
+          if (node.allFields.find(*it) != node.allFields.end()) {
+            it = fields.erase(it);
+          } else {
+            ++it;
+          }
+        }
+        if (fields.empty()) {
+          callback(node);
+        }
+      };
+  EndNodeFn<Field> endNodeFn = [](int, Node<Field>&) {};
+  Node<Field>::walkNode(root, startNodeFn, endNodeFn);
 }
 
 void QueryGraph::initProto(const SelectQuery& query) {
@@ -385,33 +358,35 @@ QueryEngine::QueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream&
     spec(spec), query(SelectQuery(rawSql)), out(out) {}
 
 void QueryEngine::printPlan() {
-  StartNodeFn startNodeFn = [this](int indent, const Node& node, const Node* parent) {
-    if (!parent) { //root
-      out << string(indent, ' ') << "with (" << queryGraph.root.objName
-          << " = parseFromFile()) {" << endl;
-    } else {
-      out << string(indent, ' ') << "for each " << node.objName << " in "
-          << node.repeatedField.accessor(parent->objName + ".", false)
-          << " {" << endl;
-    }
-    indent+=2;
-    for (const BooleanExpr* expr : node.whereClauses) {
-      out << string(indent, ' ') << "if (!" << expr->str()
-          << ") { continue; }" << endl;
-    }
-    for (const Expr* expr : node.selectAndOrderByExprs) {
-      out << string(indent, ' ') << "tuples.add(" << expr->str() << ")" << endl;
-    }
-  };
+  StartNodeFn<Field> startNodeFn =
+      [this] (int indent, const Node<Field>& node, const Node<Field>* parent) {
+        if (!parent) { //root
+          out << string(indent, ' ') << "with (" << queryGraph.root.objName
+              << " = parseFromFile()) {" << endl;
+        } else {
+          out << string(indent, ' ') << "for each " << node.objName << " in "
+              << node.repeatedField.accessor(parent->objName + ".", false)
+              << " {" << endl;
+        }
+        indent+=2;
+        for (const BooleanExpr* expr : node.whereClauses) {
+          out << string(indent, ' ') << "if (!" << expr->str()
+              << ") { continue; }" << endl;
+        }
+        for (const Expr* expr : node.selectAndOrderByExprs) {
+          out << string(indent, ' ') << "tuples.add(" << expr->str() << ")" << endl;
+        }
+      };
   bool firstEnd = true;
-  EndNodeFn endNodeFn = [this, &firstEnd](int indent, const Node& node) {
-    if (firstEnd) {
-      out << string(indent+2, ' ') << "tuples.record()" << endl;
-      firstEnd = false;
-    }
-    out << string(indent, ' ') << "} //" << node.objName << endl;
-  };
-  Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
+  EndNodeFn<Field> endNodeFn =
+      [this, &firstEnd](int indent, const Node<Field>& node) {
+        if (firstEnd) {
+          out << string(indent+2, ' ') << "tuples.record()" << endl;
+          firstEnd = false;
+        }
+        out << string(indent, ' ') << "} //" << node.objName << endl;
+      };
+  Node<Field>::walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
   if (!query.orderByStmt.getOrderByFields().empty()) {
     out << "tuples.sortBy("
         << Utils::joinVec<OrderByField>(
@@ -562,68 +537,70 @@ void QueryEngine::printCode() {
       << ", vector<TupleType>& tuples) {" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
   bool allSelectAndOrderByFieldsProcessed = false;
-  StartNodeFn startNodeFn = [&](int indent, const Node& node, const Node* parent) {
-    string ind = string(indent+2, ' ');
-    if (!parent) { //root
-      out << ind << "for (const auto* " << node.objName
-          << " : Iterators::mk_iterator(&"
-          << Utils::makePlural(queryGraph.root.objName) << ")) {" << endl;
-    } else {
-      out << ind << "for (const auto* "
-          << node.objName << " : Iterators::mk_iterator(" << parent->objName
-          << " ? &" << node.repeatedField.accessor(parent->objName + "->", false)
-          << " : nullptr)) {" << endl;
-    }
-    ind += "  ";
-    for (const auto& f : node.allFields) {
-      const Field& field = f.first;
-      bool repeating = f.second;
-      out << ind << fieldTypeMap[field] << " " << fieldVarMap[field] << " = "
-          << fieldDefaultMap[field] << ";" << endl;
-      if (repeating) {
-        out << ind << "if (" << node.objName << ") {" << endl;
-        out << ind << "  " << fieldVarMap[field] << " = "
-            << (field.is_enum()
-                ? field.wrap_enum_with_name_accessor("*" + node.objName)
-                : "*" + node.objName)
-            << ";" << endl;
+  StartNodeFn<Field> startNodeFn =
+      [&](int indent, const Node<Field>& node, const Node<Field>* parent) {
+        string ind = string(indent+2, ' ');
+        if (!parent) { //root
+          out << ind << "for (const auto* " << node.objName
+              << " : Iterators::mk_iterator(&"
+              << Utils::makePlural(queryGraph.root.objName) << ")) {" << endl;
+        } else {
+          out << ind << "for (const auto* "
+              << node.objName << " : Iterators::mk_iterator(" << parent->objName
+              << " ? &" << node.repeatedField.accessor(parent->objName + "->", false)
+              << " : nullptr)) {" << endl;
+        }
+        ind += "  ";
+        for (const auto& f : node.allFields) {
+          const Field& field = f.first;
+          bool repeating = f.second;
+          out << ind << fieldTypeMap[field] << " " << fieldVarMap[field] << " = "
+              << fieldDefaultMap[field] << ";" << endl;
+          if (repeating) {
+            out << ind << "if (" << node.objName << ") {" << endl;
+            out << ind << "  " << fieldVarMap[field] << " = "
+                << (field.is_enum()
+                    ? field.wrap_enum_with_name_accessor("*" + node.objName)
+                    : "*" + node.objName)
+                << ";" << endl;
+            out << ind << "}" << endl;
+          } else {
+            string checks = field.has_check(node.objName + "->");
+            out << ind << "if (" << node.objName
+                << (checks.empty() ? "" : " && " + checks) << ") {" << endl;
+            out << ind << "  " << fieldVarMap[field] << " = "
+                << field.accessor(node.objName + "->", true) << ";" << endl;
+            out << ind << "}" << endl;
+          }
+        }
+        // TODO(sanchay): print variable assignment and where clauses in optimal order
+        for (const BooleanExpr* whereClause : node.whereClauses) {
+          out << ind << "if (!" << whereClause->code(cgr)
+              << ") { continue; }" << endl;
+        }
+        for (const Expr* expr : node.selectAndOrderByExprs) {
+          if (!expr->isIdentifier()) {
+            out << ind << exprTypeMap[expr->str()] << " "
+                << exprVarMap[expr->str()] << " = "
+                << expr->code(cgr) << ";" << endl;
+          }
+        }
+        numSelectAndOrderByFieldsProcessed += node.selectAndOrderByExprs.size();
+        if (!allSelectAndOrderByFieldsProcessed &&
+            (numSelectAndOrderByFieldsProcessed == selectAndOrderByExprs.size())) {
+          string tuplesList = Utils::joinVec<const Expr*>(
+              ", ", selectAndOrderByExprs,
+              [&](const Expr* expr) {return exprVarMap[expr->str()];});
+          out << ind << "tuples.emplace_back(" + tuplesList + ");" << endl;
+          allSelectAndOrderByFieldsProcessed = true;
+        }
+      };
+  EndNodeFn<Field> endNodeFn =
+      [&](int indent, const Node<Field>&) {
+        string ind = string(indent+2, ' ');
         out << ind << "}" << endl;
-      } else {
-        string checks = field.has_check(node.objName + "->");
-        out << ind << "if (" << node.objName
-            << (checks.empty() ? "" : " && " + checks) << ") {" << endl;
-        out << ind << "  " << fieldVarMap[field] << " = "
-            << field.accessor(node.objName + "->", true) << ";" << endl;
-        out << ind << "}" << endl;
-      }
-    }
-    // TODO(sanchay): print variable assignment and where clauses in optimal order
-    for (const BooleanExpr* whereClause : node.whereClauses) {
-      out << ind << "if (!" << whereClause->code(cgr)
-          << ") { continue; }" << endl;
-    }
-    for (const Expr* expr : node.selectAndOrderByExprs) {
-      if (!expr->isIdentifier()) {
-        out << ind << exprTypeMap[expr->str()] << " "
-            << exprVarMap[expr->str()] << " = "
-            << expr->code(cgr) << ";" << endl;
-      }
-    }
-    numSelectAndOrderByFieldsProcessed += node.selectAndOrderByExprs.size();
-    if (!allSelectAndOrderByFieldsProcessed &&
-        (numSelectAndOrderByFieldsProcessed == selectAndOrderByExprs.size())) {
-      string tuplesList = Utils::joinVec<const Expr*>(
-          ", ", selectAndOrderByExprs,
-          [&](const Expr* expr) {return exprVarMap[expr->str()];});
-      out << ind << "tuples.emplace_back(" + tuplesList + ");" << endl;
-      allSelectAndOrderByFieldsProcessed = true;
-    }
-  };
-  EndNodeFn endNodeFn = [&](int indent, const Node&) {
-    string ind = string(indent+2, ' ');
-    out << ind << "}" << endl;
-  };
-  Node::walkNode(queryGraph.root, startNodeFn, endNodeFn);
+      };
+  Node<Field>::walkNode(queryGraph.root, startNodeFn, endNodeFn);
   out << "}" << endl;
 
   if (!query.orderByStmt.getOrderByFields().empty()) {
