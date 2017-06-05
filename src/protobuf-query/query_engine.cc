@@ -13,6 +13,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using namespace std;
 using namespace google::protobuf;
+using namespace pb;
 
 FieldPart FieldPart::parseFrom(const Descriptor& parentDescriptor,
                                const string& partName) {

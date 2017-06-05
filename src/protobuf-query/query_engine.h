@@ -14,14 +14,13 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <functional>
 #include <iostream>
 #include <google/protobuf/descriptor.h>
+#include "utils.h"
 #include "select_query.h"
 
 using namespace std;
 using namespace google::protobuf;
 
-struct CodeGenSpec {
-  vector<string> headerIncludes;
-};
+namespace pb {
 
 class FieldPart {
 public:
@@ -134,3 +133,5 @@ private:
   void printPlan();
   void printCode();
 };
+
+} // namespace pb

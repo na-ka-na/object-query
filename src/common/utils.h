@@ -49,3 +49,7 @@ public:
 
   static string makeSingular(const string& name);
 };
+
+struct CodeGenSpec {
+  vector<string> headerIncludes;
+};

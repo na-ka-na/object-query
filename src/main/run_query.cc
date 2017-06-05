@@ -12,6 +12,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <dlfcn.h>
 #include <gflags/gflags.h>
 #include <cstdlib>
+#include "utils.h"
 #include "query_engine.h"
 #include "global_include.h"
 
@@ -208,7 +209,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  QueryEngine engine(spec, rawSql, generated);
+  pb::QueryEngine engine(spec, rawSql, generated);
   engine.process();
 
   int result = dlclose(libHandle);
