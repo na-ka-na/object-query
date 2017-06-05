@@ -9,6 +9,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 // Unit tests for generated_common.h
 
 #include "test_commons.h"
+#include "generated_common.h"
 
 void TestArthimeticFunctions() {
   auto a = Uminus(optional<double>(1.1));

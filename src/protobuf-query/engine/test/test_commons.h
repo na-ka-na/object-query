@@ -9,7 +9,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #pragma once
 
 #include <iostream>
-#include "generated_common.h"
+#include "global_include.h"
 
 #ifndef EXPECT_EQ
 #define EXPECT_EQ(expected, actual, ...) \

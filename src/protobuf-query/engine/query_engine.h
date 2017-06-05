@@ -82,7 +82,7 @@ struct Node {
   Field repeatedField;
   // children of this node, repeated fields, repeated field => Node.
   map<Field, Node> children;
-  // list of non-repeating read fields for this node.
+  // list of all (repeating + non-repeating) read fields for this node.
   map<Field, bool> allFields; // value is if the field is repeating
   // list of all canonical where clauses
   vector<const BooleanExpr*> whereClauses;
@@ -112,9 +112,6 @@ struct QueryGraph {
   void resolveStarIdentifier(const string& star_identifier,
                              vector<string>& resolved_identifiers);
 
-  static string makePlural(const string& name);
-  static string makeSingular(const string& name);
-  static vector<string> splitDotIdentifier(const string& identifier);
   string getProtoCppType() const;
   void addReadIdentifier(const string& identifier);
   void processSelect(const SelectStmt& selectStmt);

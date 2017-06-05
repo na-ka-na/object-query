@@ -465,7 +465,7 @@ string SelectField::str() const {
 
 string SelectStmt::str() const {
   return "SELECT " + string(distinct_ ? "DISTINCT " : "") +
-         joinVec(", ", raw_select_fields_, strfn<RawSelectField>());
+         Utils::joinVec(", ", raw_select_fields_, Utils::strfn<RawSelectField>());
 }
 
 string OrderByField::str() const {
@@ -473,8 +473,8 @@ string OrderByField::str() const {
 }
 
 string OrderByStmt::str() const {
-  return order_by_fields_.empty() ? "" :
-      ("ORDER BY " + joinVec(", ", order_by_fields_, strfn<OrderByField>()));
+  return order_by_fields_.empty() ? "" : ("ORDER BY " +
+      Utils::joinVec(", ", order_by_fields_, Utils::strfn<OrderByField>()));
 }
 
 string FromStmt::str() const {

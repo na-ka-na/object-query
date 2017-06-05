@@ -173,7 +173,7 @@ string Field::wrap_enum_with_name_accessor(const string& accessor) const {
 
 string Field::accessor(const string& objName, bool useNameForEnum) const {
   string str = objName;
-  str += joinVec<FieldPart>(".", fieldParts,
+  str += Utils::joinVec<FieldPart>(".", fieldParts,
       [] (const FieldPart& part) {return part.accessor();});
   if (is_enum() && useNameForEnum) {
     return wrap_enum_with_name_accessor(str);
@@ -196,7 +196,7 @@ string Field::has_check(const string& objName) const {
     check += fieldParts[i].has_accessor();
     checks.push_back(check);
   }
-  return joinVec(" && ", checks, string2str);
+  return Utils::joinVec(" && ", checks, Utils::string2str);
 }
 
 void Node::walkNode(Node* parent,
@@ -228,39 +228,15 @@ void Node::walkNode(Node& root,
   }
 }
 
-string QueryGraph::makePlural(const string& name) {
-  ASSERT(!name.empty());
-  return name + "s";
-}
-
-string QueryGraph::makeSingular(const string& name) {
-  ASSERT(!name.empty());
-  if ((name.size() > 1) && (name.substr(name.size()-1, 1) == "s")) {
-    return name.substr(0, name.size()-1);
-  } else {
-    return "each_" + name;
-  }
-}
-
 string QueryGraph::getProtoCppType() const {
   return FieldPart::full_name_to_cpp_type(protoDescriptor->full_name());
-}
-
-vector<string> QueryGraph::splitDotIdentifier(const string& identifier) {
-  static regex notdot("([^.]+)");
-  auto partsBegin = sregex_iterator(identifier.begin(), identifier.end(), notdot);
-  vector<string> selectFieldParts;
-  for (sregex_iterator it = partsBegin; it != sregex_iterator(); ++it) {
-    selectFieldParts.push_back(it->str());
-  }
-  return selectFieldParts;
 }
 
 void QueryGraph::resolveStarIdentifier(const string& star_identifier,
                                        vector<string>& resolved_identifiers) {
   const Descriptor* parentDescriptor = protoDescriptor;
   string parentPath;
-  vector<string> selectFieldParts = splitDotIdentifier(star_identifier);
+  vector<string> selectFieldParts = Utils::splitDotIdentifier(star_identifier);
   for (size_t j=0; j<selectFieldParts.size(); j++) {
     if (j != (selectFieldParts.size()-1)) {
       FieldPart fieldPart = FieldPart::parseFrom(
@@ -286,7 +262,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
   const Descriptor* parentDescriptor = protoDescriptor;
   Node* parent = &root;
   Field field;
-  vector<string> selectFieldParts = splitDotIdentifier(identifier);
+  vector<string> selectFieldParts = Utils::splitDotIdentifier(identifier);
   for (size_t j=0; j<selectFieldParts.size(); j++) {
     FieldPart fieldPart = FieldPart::parseFrom(
         *parentDescriptor, selectFieldParts[j]);
@@ -297,7 +273,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
              fieldPart.type_name());
       if (fieldPart.is_repeated()) {
         Node& child = parent->children[field];
-        child.objName = makeSingular(fieldPart.name());
+        child.objName = Utils::makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
         field.fieldParts.clear();
@@ -306,7 +282,7 @@ void QueryGraph::addReadIdentifier(const string& identifier) {
     } else {
       if (fieldPart.is_repeated()) {
         Node& child = parent->children[field];
-        child.objName = makeSingular(fieldPart.name());
+        child.objName = Utils::makeSingular(fieldPart.name());
         child.repeatedField = field;
         parent = &child;
         parent->allFields.emplace(field, true);
@@ -437,7 +413,7 @@ void QueryEngine::printPlan() {
   Node::walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
   if (!query.orderByStmt.getOrderByFields().empty()) {
     out << "tuples.sortBy("
-        << joinVec<OrderByField>(
+        << Utils::joinVec<OrderByField>(
             ", ", query.orderByStmt.getOrderByFields(),
             [](const OrderByField& orderByField) {
               return "'" + orderByField.getExpr().str() + "'";
@@ -445,7 +421,7 @@ void QueryEngine::printPlan() {
         << ")" << endl;
   }
   out << "tuples.print("
-      << joinVec<SelectField>(
+      << Utils::joinVec<SelectField>(
           ", ", query.selectStmt.getSelectFields(),
           [](const SelectField& selectField) {
             return "'" + selectField.getExpr().str() + "'";
@@ -463,7 +439,7 @@ void QueryEngine::printCode() {
 
   // select fields header
   string header = "vector<string> header = {\n";
-  header += joinVec<SelectField>(
+  header += Utils::joinVec<SelectField>(
       "\n", query.selectStmt.getSelectFields(),
       [](const SelectField& sf) {
         return "  \"" + sf.getHeader() + "\",";
@@ -562,7 +538,7 @@ void QueryEngine::printCode() {
   }
 
   string tupleType = "using TupleType = tuple<";
-  tupleType += joinVec<const Expr*>(
+  tupleType += Utils::joinVec<const Expr*>(
       ", ", selectAndOrderByExprs,
       [&](const Expr* expr) {return exprTypeMap[expr->str()];});
   tupleType += ">;";
@@ -581,7 +557,7 @@ void QueryEngine::printCode() {
   }
 
   out << "void runSelect(const vector<" << queryGraph.getProtoCppType() << ">& "
-      << QueryGraph::makePlural(queryGraph.root.objName)
+      << Utils::makePlural(queryGraph.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
   bool allSelectAndOrderByFieldsProcessed = false;
@@ -590,7 +566,7 @@ void QueryEngine::printCode() {
     if (!parent) { //root
       out << ind << "for (const auto* " << node.objName
           << " : Iterators::mk_iterator(&"
-          << QueryGraph::makePlural(queryGraph.root.objName) << ")) {" << endl;
+          << Utils::makePlural(queryGraph.root.objName) << ")) {" << endl;
     } else {
       out << ind << "for (const auto* "
           << node.objName << " : Iterators::mk_iterator(" << parent->objName
@@ -635,7 +611,7 @@ void QueryEngine::printCode() {
     numSelectAndOrderByFieldsProcessed += node.selectAndOrderByExprs.size();
     if (!allSelectAndOrderByFieldsProcessed &&
         (numSelectAndOrderByFieldsProcessed == selectAndOrderByExprs.size())) {
-      string tuplesList = joinVec<const Expr*>(
+      string tuplesList = Utils::joinVec<const Expr*>(
           ", ", selectAndOrderByExprs,
           [&](const Expr* expr) {return exprVarMap[expr->str()];});
       out << ind << "tuples.emplace_back(" + tuplesList + ");" << endl;
@@ -707,7 +683,7 @@ void printTuples(const vector<TupleType>& tuples) {
 
   // main
   out << "int main(int argc, char** argv) {" << endl;
-  string protosVecIden = QueryGraph::makePlural(queryGraph.root.objName);
+  string protosVecIden = Utils::makePlural(queryGraph.root.objName);
   out << "  vector<" << queryGraph.getProtoCppType() << "> "
       << protosVecIden << ";" << endl;
   out << "  FROM(argc, argv, " << protosVecIden << ");" << endl;
