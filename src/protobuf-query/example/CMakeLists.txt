@@ -1,12 +1,17 @@
 include_directories(
     SYSTEM ${PROTOBUF_INCLUDE_DIRS}
     ${CMAKE_BINARY_DIR}/protobuf-query/example
+    ${CMAKE_SOURCE_DIR}/common
     ${CMAKE_SOURCE_DIR}/protobuf-query
     ${CMAKE_SOURCE_DIR}/protobuf-query/engine
 )
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
 PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
+
+# protobuf 3.3 generates some code with -Wunused-parameter warnings.
+# I guess we can disable all warning checks for generated files, but only disabling one for now.
+set_source_files_properties(${ProtoSources} PROPERTIES COMPILE_FLAGS -Wno-unused-parameter)
 
 add_library(ExampleProtos SHARED ${ProtoSources} ${ProtoHeaders})
 target_link_libraries(ExampleProtos ${PROTOBUF_LIBRARIES})

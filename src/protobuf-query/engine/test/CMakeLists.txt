@@ -1,6 +1,7 @@
 include_directories(
     SYSTEM ${PROTOBUF_INCLUDE_DIRS}
     ${CMAKE_SOURCE_DIR}/protobuf-query/engine
+    ${CMAKE_SOURCE_DIR}/common/test
 )
 
 add_executable(GeneratedCommonTest generated_common_test.cc)

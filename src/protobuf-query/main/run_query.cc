@@ -13,6 +13,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <gflags/gflags.h>
 #include <cstdlib>
 #include "query_engine.h"
+#include "global_include.h"
 
 DEFINE_string(codeGenDir, ".",
               "optional, directory where generated code files are emitted, "
@@ -80,7 +81,10 @@ set<string> mkIncludeDirs() {
   idx = thisFile.rfind("/", idx-1);
   ASSERT(idx != string::npos);
   string codeDir = thisFile.substr(0, idx);
-  includeDirs.insert(codeDir);
+  idx = codeDir.rfind("/");
+  ASSERT(idx != string::npos);
+  string parentDir = codeDir.substr(0, idx);
+  includeDirs.insert(parentDir + "/common");
   includeDirs.insert(codeDir + "/engine");
   idx = FLAGS_cppProtoHeader.rfind("/");
   includeDirs.insert(

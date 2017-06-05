@@ -62,22 +62,27 @@ if __name__ == "__main__":
     if len(sys.argv) >= 3:
         cmake_prefix_paths = sys.argv[2].split(',')
 
-    proto_file = '../../../src/protobuf-query/example/example1.json'
+    SOURCE_DIR = '../../../src'
+    proto_file = SOURCE_DIR + '/protobuf-query/example/example1.json'
     golden_out = 'golden' + str(testnum) + '.out'
     actual_out = 'actual' + str(testnum) + '.out'
 
     cmd_parts = ['../main/RunQuery']
-    cmd_parts.append('--codeGenDir=../../../src/protobuf-query/example')
+    cmd_parts.append('--codeGenDir=' + SOURCE_DIR + '/protobuf-query/example')
     cmd_parts.append('--codeGenPrefix=generated_query' + str(testnum))
     cmd_parts.append('--codeCompileDir=.')
     cmd_parts.append('--cppProtoHeader=example1.pb.h')
     cmd_parts.append('--cppProtoLib=./libExampleProtos.so')
     cmd_parts.append('--cppExtraIncludes=example1_utils.h')
+    cppExtraIncludeDirs = []
+    cppExtraLinkLibDirs = []
     if len(cmake_prefix_paths) > 0:
-        cmd_parts.append('--cppExtraIncludeDirs=' + \
-                         ','.join([p + '/include' for p in cmake_prefix_paths]))
-        cmd_parts.append('--cppExtraLinkLibDirs=' + \
-                         ','.join([p + '/lib' for p in cmake_prefix_paths]))
+        cppExtraIncludeDirs.extend([p + '/include' for p in cmake_prefix_paths])
+        cppExtraLinkLibDirs.extend([p + '/lib' for p in cmake_prefix_paths])
+    if len(cppExtraIncludeDirs) > 0:
+        cmd_parts.append('--cppExtraIncludeDirs=' + ','.join(cppExtraIncludeDirs))
+    if len(cppExtraLinkLibDirs) > 0:
+        cmd_parts.append('--cppExtraLinkLibDirs=' + ','.join(cppExtraLinkLibDirs))
     cmd_parts.append(TEST_SQL_QUERIES[testnum-1])
     cmd_parts.append(proto_file)
 
