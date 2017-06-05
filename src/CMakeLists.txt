@@ -11,7 +11,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g --std=c++14 -Wall -Wextra")
 enable_testing()
 enable_language(CXX)
 
+include(FindProtobuf)
+find_package(gflags REQUIRED)
+
 add_subdirectory(common)
 add_subdirectory(sql)
 add_subdirectory(protobuf-query)
-
+add_subdirectory(example)
+add_subdirectory(main)

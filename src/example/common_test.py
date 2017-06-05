@@ -62,13 +62,13 @@ if __name__ == "__main__":
     if len(sys.argv) >= 3:
         cmake_prefix_paths = sys.argv[2].split(',')
 
-    SOURCE_DIR = '../../../src'
-    proto_file = SOURCE_DIR + '/protobuf-query/example/example1.json'
+    SOURCE_DIR = '../../src'
+    proto_file = SOURCE_DIR + '/example/example1.json'
     golden_out = 'golden' + str(testnum) + '.out'
     actual_out = 'actual' + str(testnum) + '.out'
 
     cmd_parts = ['../main/RunQuery']
-    cmd_parts.append('--codeGenDir=' + SOURCE_DIR + '/protobuf-query/example')
+    cmd_parts.append('--codeGenDir=' + SOURCE_DIR + '/example')
     cmd_parts.append('--codeGenPrefix=generated_query' + str(testnum))
     cmd_parts.append('--codeCompileDir=.')
     cmd_parts.append('--cppProtoHeader=example1.pb.h')

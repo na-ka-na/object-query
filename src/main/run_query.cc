@@ -77,15 +77,13 @@ set<string> mkIncludeDirs() {
   set<string> includeDirs;
   string thisFile = __FILE__;
   auto idx = thisFile.rfind("/");
-  ASSERT((idx != string::npos) && (idx != 0));
-  idx = thisFile.rfind("/", idx-1);
   ASSERT(idx != string::npos);
   string codeDir = thisFile.substr(0, idx);
   idx = codeDir.rfind("/");
   ASSERT(idx != string::npos);
   string parentDir = codeDir.substr(0, idx);
   includeDirs.insert(parentDir + "/common");
-  includeDirs.insert(codeDir + "/engine");
+  includeDirs.insert(parentDir + "/protobuf-query");
   idx = FLAGS_cppProtoHeader.rfind("/");
   includeDirs.insert(
       (idx == string::npos) ? "." : FLAGS_cppProtoHeader.substr(0, idx));

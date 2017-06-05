@@ -1,9 +1,8 @@
 include_directories(
     SYSTEM ${PROTOBUF_INCLUDE_DIRS}
-    ${CMAKE_BINARY_DIR}/protobuf-query/example
+    ${CMAKE_BINARY_DIR}/example
     ${CMAKE_SOURCE_DIR}/common
     ${CMAKE_SOURCE_DIR}/protobuf-query
-    ${CMAKE_SOURCE_DIR}/protobuf-query/engine
 )
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
