@@ -1,6 +1,6 @@
 include_directories(
     ${CMAKE_SOURCE_DIR}/common
-    ${CMAKE_SOURCE_DIR}/protobuf-query
+    ${CMAKE_SOURCE_DIR}/sql
     ${CMAKE_SOURCE_DIR}/protobuf-query/engine
 )
 

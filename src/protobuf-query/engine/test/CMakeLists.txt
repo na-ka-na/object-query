@@ -8,6 +8,3 @@ add_executable(GeneratedCommonTest generated_common_test.cc)
 target_link_libraries(GeneratedCommonTest ${PROTOBUF_LIBRARIES})
 add_test(GeneratedCommonTest GeneratedCommonTest)
 
-add_executable(SelectQueryTest select_query_test.cc)
-target_link_libraries(SelectQueryTest ${PROTOBUF_LIBRARIES} SqlParser)
-add_test(SelectQueryTest SelectQueryTest)

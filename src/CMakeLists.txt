@@ -12,5 +12,6 @@ enable_testing()
 enable_language(CXX)
 
 add_subdirectory(common)
+add_subdirectory(sql)
 add_subdirectory(protobuf-query)
 
