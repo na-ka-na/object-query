@@ -15,11 +15,11 @@ using namespace std;
 using namespace google::protobuf;
 using namespace pb;
 
-FieldPart FieldPart::parseFrom(const Descriptor& parentDescriptor,
-                               const string& partName) {
+PbFieldPart PbFieldPart::parseFrom(const Descriptor& parentDescriptor,
+                                   const string& partName) {
   const FieldDescriptor* descriptor = parentDescriptor.FindFieldByName(partName);
   if (descriptor != nullptr) {
-    return FieldPart(descriptor);
+    return PbFieldPart(descriptor);
   }
   static std::regex size_regex("^(.+)_size$");
   std::smatch size_match;
@@ -28,7 +28,7 @@ FieldPart FieldPart::parseFrom(const Descriptor& parentDescriptor,
     string base_part = base_match.str();
     descriptor = parentDescriptor.FindFieldByName(base_part);
     if (descriptor != nullptr) {
-      return FieldPart(descriptor, SIZE);
+      return PbFieldPart(descriptor, SIZE);
     }
   }
   static std::regex has_regex("^has_(.+)$");
@@ -38,16 +38,16 @@ FieldPart FieldPart::parseFrom(const Descriptor& parentDescriptor,
     string base_part = base_match.str();
     descriptor = parentDescriptor.FindFieldByName(base_part);
     if (descriptor != nullptr) {
-      return FieldPart(descriptor, HAS);
+      return PbFieldPart(descriptor, HAS);
     }
   }
   THROW("No fieldPart by name", partName);
 }
 
-FieldPart::FieldPart(const FieldDescriptor* descriptor, Type type) :
+PbFieldPart::PbFieldPart(const FieldDescriptor* descriptor, Type type) :
     descriptor(descriptor), part_type(type) {}
 
-bool FieldPart::operator<(const FieldPart& other) const {
+bool PbFieldPart::operator<(const PbFieldPart& other) const {
   if (part_type < other.part_type) {
     return true;
   } else if (part_type == other.part_type) {
@@ -57,16 +57,16 @@ bool FieldPart::operator<(const FieldPart& other) const {
   }
 }
 
-bool FieldPart::operator==(const FieldPart& other) const {
+bool PbFieldPart::operator==(const PbFieldPart& other) const {
   return (part_type == other.part_type) && (descriptor == other.descriptor);
 }
 
-string FieldPart::full_name_to_cpp_type(const string& full_name) {
+string PbFieldPart::full_name_to_cpp_type(const string& full_name) {
   static regex dot("\\.");
   return regex_replace(full_name, dot, "::");
 }
 
-string FieldPart::name() const {
+string PbFieldPart::name() const {
   switch (part_type) {
   case NORMAL : return descriptor->name();
   case SIZE : return descriptor->name() + "_size";
@@ -75,7 +75,7 @@ string FieldPart::name() const {
   }
 }
 
-FieldDescriptor::Type FieldPart::type() const {
+FieldDescriptor::Type PbFieldPart::type() const {
   switch (part_type) {
   case NORMAL : return descriptor->type();
   case SIZE : return FieldDescriptor::Type::TYPE_INT32;
@@ -84,43 +84,43 @@ FieldDescriptor::Type FieldPart::type() const {
   }
 }
 
-string FieldPart::type_name() const {
+string PbFieldPart::type_name() const {
   return FieldDescriptor::TypeName(type());
 }
 
-FieldDescriptor::CppType FieldPart::cpp_type() const {
+FieldDescriptor::CppType PbFieldPart::cpp_type() const {
   return FieldDescriptor::TypeToCppType(type());
 }
 
-string FieldPart::cpp_type_name() const {
+string PbFieldPart::cpp_type_name() const {
   return FieldDescriptor::CppTypeName(cpp_type());
 }
 
-bool FieldPart::is_message() const {
+bool PbFieldPart::is_message() const {
   return type() == FieldDescriptor::Type::TYPE_MESSAGE;
 }
 
-const Descriptor* FieldPart::message_descriptor() const {
+const Descriptor* PbFieldPart::message_descriptor() const {
   ASSERT(is_message());
   return descriptor->message_type();
 }
 
-bool FieldPart::is_repeated() const {
+bool PbFieldPart::is_repeated() const {
   return (part_type == NORMAL) &&
       (descriptor->label() == FieldDescriptor::LABEL_REPEATED);
 }
 
-bool FieldPart::is_enum() const {
+bool PbFieldPart::is_enum() const {
   return type() == FieldDescriptor::Type::TYPE_ENUM;
 }
 
-const EnumDescriptor* FieldPart::enum_descriptor() const {
+const EnumDescriptor* PbFieldPart::enum_descriptor() const {
   ASSERT(is_enum());
   return descriptor->enum_type();
 }
 
 
-string FieldPart::code_type() const {
+string PbFieldPart::code_type() const {
   if (is_message()) {
     return full_name_to_cpp_type(message_descriptor()->full_name());
   } else if (is_enum()) {
@@ -130,7 +130,7 @@ string FieldPart::code_type() const {
   }
 }
 
-string FieldPart::accessor() const {
+string PbFieldPart::accessor() const {
   switch (part_type) {
   case NORMAL : return descriptor->name() + "()";
   case SIZE : return descriptor->name() + "_size()";
@@ -139,50 +139,56 @@ string FieldPart::accessor() const {
   }
 }
 
-bool FieldPart::needs_has_check() const {
+bool PbFieldPart::needs_has_check() const {
   return part_type == NORMAL;
 }
 
-string FieldPart::has_accessor() const {
+string PbFieldPart::has_accessor() const {
   ASSERT(needs_has_check());
   return "has_" + descriptor->name() + "()";
 }
 
-bool Field::operator<(const Field& other) const {
-  return fieldParts < other.fieldParts;
+PbField::PbField(const Descriptor* rootDescriptor) :
+    descriptor(rootDescriptor) {}
+
+bool PbField::operator<(const PbField& other) const {
+  if (fieldParts < other.fieldParts) return true;
+  else if (other.fieldParts < fieldParts) return false;
+  return descriptor < other.descriptor;
 }
 
-bool Field::operator==(const Field& other) const {
-  return fieldParts == other.fieldParts;
+bool PbField::operator==(const PbField& other) const {
+  return (fieldParts == other.fieldParts) &&
+         (descriptor == other.descriptor);
 }
 
-string Field::code_type() const {
+string PbField::code_type() const {
   ASSERT(!fieldParts.empty(), "Can't determine type of empty field");
   return fieldParts.back().code_type();
 }
 
-bool Field::is_enum() const {
+bool PbField::is_enum() const {
   return !fieldParts.empty() && fieldParts.back().is_enum();
 }
 
-string Field::wrap_enum_with_name_accessor(const string& accessor) const {
+string PbField::wrap_enum_with_name_accessor(const string& accessor) const {
   ASSERT(is_enum());
-  string type = FieldPart::full_name_to_cpp_type(
+  string type = PbFieldPart::full_name_to_cpp_type(
       fieldParts.back().enum_descriptor()->full_name());
   return type + "_Name(static_cast<" + type + ">(" + accessor + "))";
 }
 
-string Field::accessor(const string& objName, bool useNameForEnum) const {
+string PbField::accessor(const string& objName, bool useNameForEnum) const {
   string str = objName;
-  str += Utils::joinVec<FieldPart>(".", fieldParts,
-      [] (const FieldPart& part) {return part.accessor();});
+  str += Utils::joinVec<PbFieldPart>(".", fieldParts,
+      [] (const PbFieldPart& part) {return part.accessor();});
   if (is_enum() && useNameForEnum) {
     return wrap_enum_with_name_accessor(str);
   }
   return str;
 }
 
-string Field::has_check(const string& objName) const {
+string PbField::has_check(const string& objName) const {
   vector<string> checks;
   for (uint32_t i=0; i<fieldParts.size(); i++) {
     if (!fieldParts[i].needs_has_check()) {
@@ -200,25 +206,39 @@ string Field::has_check(const string& objName) const {
   return Utils::joinVec(" && ", checks, Utils::string2str);
 }
 
-string QueryGraph::getProtoCppType() const {
-  return FieldPart::full_name_to_cpp_type(protoDescriptor->full_name());
+void PbField::addFieldPart(const string& fieldPartStr) {
+  if (repeated()) fieldParts.clear();
+  ASSERT(descriptor != nullptr,
+         "FieldPart", fieldParts.back().name(), "expected to be message but is",
+         fieldParts.back().type_name());
+  PbFieldPart fieldPart = PbFieldPart::parseFrom(*descriptor, fieldPartStr);
+  fieldParts.push_back(fieldPart);
+  descriptor = fieldPart.is_message() ? fieldPart.message_descriptor() : nullptr;
 }
 
-void QueryGraph::resolveStarIdentifier(const string& star_identifier,
-                                       vector<string>& resolved_identifiers) {
+bool PbField::repeated() const {
+  return !fieldParts.empty() && fieldParts.back().is_repeated();
+}
+
+string PbQueryTree::getProtoCppType() const {
+  return PbFieldPart::full_name_to_cpp_type(protoDescriptor->full_name());
+}
+
+void PbQueryTree::resolveStarIdentifier(const string& star_identifier,
+                                        vector<string>& resolved_identifiers) {
   const Descriptor* parentDescriptor = protoDescriptor;
   string parentPath;
   vector<string> selectFieldParts = Utils::splitDotIdentifier(star_identifier);
   for (size_t j=0; j<selectFieldParts.size(); j++) {
     if (j != (selectFieldParts.size()-1)) {
-      FieldPart fieldPart = FieldPart::parseFrom(
+      PbFieldPart fieldPart = PbFieldPart::parseFrom(
           *parentDescriptor, selectFieldParts[j]);
       parentDescriptor = fieldPart.message_descriptor();
       parentPath += (fieldPart.name() + ".");
     } else {
       ASSERT(selectFieldParts[j] == "*");
       for (int i=0; i<parentDescriptor->field_count(); i++) {
-        FieldPart field_part(parentDescriptor->field(i));
+        PbFieldPart field_part(parentDescriptor->field(i));
         if (!field_part.is_message() && !field_part.is_repeated()) {
           resolved_identifiers.push_back(parentPath + field_part.name());
         }
@@ -227,141 +247,32 @@ void QueryGraph::resolveStarIdentifier(const string& star_identifier,
   }
 }
 
-void QueryGraph::addReadIdentifier(const string& identifier) {
-  if (idFieldMap.find(identifier) != idFieldMap.end()) {
-    return;
-  }
-  const Descriptor* parentDescriptor = protoDescriptor;
-  Node<Field>* parent = &root;
-  Field field;
-  vector<string> selectFieldParts = Utils::splitDotIdentifier(identifier);
-  for (size_t j=0; j<selectFieldParts.size(); j++) {
-    FieldPart fieldPart = FieldPart::parseFrom(
-        *parentDescriptor, selectFieldParts[j]);
-    field.fieldParts.push_back(fieldPart);
-    if (j != (selectFieldParts.size()-1)) {
-      ASSERT(fieldPart.is_message(),
-             "FieldPart", selectFieldParts[j], "expected to be message but is",
-             fieldPart.type_name());
-      if (fieldPart.is_repeated()) {
-        Node<Field>& child = parent->children[field];
-        child.objName = Utils::makeSingular(fieldPart.name());
-        child.repeatedField = field;
-        parent = &child;
-        field.fieldParts.clear();
-      }
-      parentDescriptor = fieldPart.message_descriptor();
-    } else {
-      if (fieldPart.is_repeated()) {
-        Node<Field>& child = parent->children[field];
-        child.objName = Utils::makeSingular(fieldPart.name());
-        child.repeatedField = field;
-        parent = &child;
-        parent->allFields.emplace(field, true);
-      } else {
-        parent->allFields.emplace(field, false);
-      }
-    }
-  }
-  idFieldMap.emplace(identifier, field);
-}
-
-void QueryGraph::processSelect(const SelectStmt& selectStmt) {
-  for (const SelectField& selectField : selectStmt.getSelectFields()) {
-    set<string> identifiers;
-    selectField.getAllIdentifiers(identifiers);
-    auto callback = [&selectField](Node<Field>& node) {
-      QueryGraph::addExpr(node.selectAndOrderByExprs, &(selectField.getExpr()));
-    };
-    processExpr(identifiers, callback);
-  }
-}
-
-void QueryGraph::processWhere(const WhereStmt& whereStmt) {
-  vector<const BooleanExpr*> andClauses;
-  whereStmt.canoncialize(andClauses);
-  for (const BooleanExpr* clause : andClauses) {
-    set<string> identifiers;
-    clause->getAllIdentifiers(identifiers);
-    auto callback = [clause](Node<Field>& node) {
-      node.whereClauses.push_back(clause);
-    };
-    processExpr(identifiers, callback);
-  }
-}
-
-void QueryGraph::processOrderBy(const OrderByStmt& orderByStmt) {
-  for (const OrderByField& orderByField : orderByStmt.getOrderByFields()) {
-    set<string> identifiers;
-    orderByField.getAllIdentifiers(identifiers);
-    auto callback = [&orderByField](Node<Field>& node) {
-      QueryGraph::addExpr(node.selectAndOrderByExprs, &(orderByField.getExpr()));
-    };
-    processExpr(identifiers, callback);
-  }
-}
-
-void QueryGraph::processExpr(
-    const set<string>& identifiers,
-    const function<void(Node<Field>& node)>& callback) {
-  set<Field> fields;
-  for (const string& identifier : identifiers) {
-    addReadIdentifier(identifier);
-    fields.insert(idFieldMap[identifier]);
-  }
-  StartNodeFn<Field> startNodeFn =
-      [&](int, Node<Field>& node, Node<Field>*){
-        if (fields.empty()) {
-          return;
-        }
-        for(auto it = fields.begin(); it != fields.end();) {
-          if (node.allFields.find(*it) != node.allFields.end()) {
-            it = fields.erase(it);
-          } else {
-            ++it;
-          }
-        }
-        if (fields.empty()) {
-          callback(node);
-        }
-      };
-  EndNodeFn<Field> endNodeFn = [](int, Node<Field>&) {};
-  Node<Field>::walkNode(root, startNodeFn, endNodeFn);
-}
-
-void QueryGraph::initProto(const SelectQuery& query) {
+void PbQueryTree::initProto(const SelectQuery& query) {
   const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
   protoDescriptor = pool->FindMessageTypeByName(query.fromStmt.getProtoName());
   ASSERT(protoDescriptor != nullptr, "Unable to find proto descriptor for",
          query.fromStmt.getProtoName());
 }
 
-void QueryGraph::initGraph(const SelectQuery& query) {
-  root.objName = protoDescriptor->name();
-  std::transform(root.objName.begin(), root.objName.end(),
-                 root.objName.begin(), ::tolower);
-  processSelect(query.selectStmt);
-  processWhere(query.whereStmt);
-  processOrderBy(query.orderByStmt);
+string PbQueryTree::getRootName() {
+  string rootName = protoDescriptor->name();
+  std::transform(rootName.begin(), rootName.end(),
+                 rootName.begin(), ::tolower);
+  return rootName;
 }
 
-void QueryGraph::addExpr(vector<const Expr*>& exprs, const Expr* expr) {
-  string exprStr = expr->str();
-  auto f = std::find_if(exprs.begin(), exprs.end(),
-      [&] (const Expr* expr) {return expr->str() == exprStr;});
-  if (f == exprs.end()) {
-    exprs.push_back(expr);
-  }
+PbField PbQueryTree::newField() {
+  return PbField(protoDescriptor);
 }
 
 QueryEngine::QueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out) :
     spec(spec), query(SelectQuery(rawSql)), out(out) {}
 
 void QueryEngine::printPlan() {
-  StartNodeFn<Field> startNodeFn =
-      [this] (int indent, const Node<Field>& node, const Node<Field>* parent) {
+  StartNodeFn<PbField> startNodeFn =
+      [this] (int indent, const Node<PbField>& node, const Node<PbField>* parent) {
         if (!parent) { //root
-          out << string(indent, ' ') << "with (" << queryGraph.root.objName
+          out << string(indent, ' ') << "with (" << queryTree.root.objName
               << " = parseFromFile()) {" << endl;
         } else {
           out << string(indent, ' ') << "for each " << node.objName << " in "
@@ -378,15 +289,15 @@ void QueryEngine::printPlan() {
         }
       };
   bool firstEnd = true;
-  EndNodeFn<Field> endNodeFn =
-      [this, &firstEnd](int indent, const Node<Field>& node) {
+  EndNodeFn<PbField> endNodeFn =
+      [this, &firstEnd](int indent, const Node<PbField>& node) {
         if (firstEnd) {
           out << string(indent+2, ' ') << "tuples.record()" << endl;
           firstEnd = false;
         }
         out << string(indent, ' ') << "} //" << node.objName << endl;
       };
-  Node<Field>::walkNode(queryGraph.root, startNodeFn, endNodeFn, 2);
+  Node<PbField>::walkNode(queryTree.root, startNodeFn, endNodeFn, 2);
   if (!query.orderByStmt.getOrderByFields().empty()) {
     out << "tuples.sortBy("
         << Utils::joinVec<OrderByField>(
@@ -464,13 +375,13 @@ void QueryEngine::printCode() {
     out << "}\n";
   }
 
-  map<Field, string> fieldVarMap;
-  map<Field, string> fieldTypeMap;
-  map<Field, string> fieldDefaultMap;
+  map<PbField, string> fieldVarMap;
+  map<PbField, string> fieldTypeMap;
+  map<PbField, string> fieldDefaultMap;
   uint32_t varIdx = 0;
-  for (const auto& e : queryGraph.idFieldMap) {
+  for (const auto& e : queryTree.idFieldMap) {
     const string& id = e.first;
-    const Field& field = e.second;
+    const PbField& field = e.second;
     fieldVarMap[field] = "s" + to_string(varIdx);
     fieldTypeMap[field] = "S" + to_string(varIdx);
     fieldDefaultMap[field] = "S" + to_string(varIdx) + "()";
@@ -485,10 +396,10 @@ void QueryEngine::printCode() {
 
   vector<const Expr*> selectAndOrderByExprs;
   for (const SelectField& selectField : query.selectStmt.getSelectFields()) {
-    QueryGraph::addExpr(selectAndOrderByExprs, &(selectField.getExpr()));
+    PbQueryTree::addExpr(selectAndOrderByExprs, &(selectField.getExpr()));
   }
   for (const OrderByField& orderByField : query.orderByStmt.getOrderByFields()) {
-    QueryGraph::addExpr(selectAndOrderByExprs, &(orderByField.getExpr()));
+    PbQueryTree::addExpr(selectAndOrderByExprs, &(orderByField.getExpr()));
   }
 
   map<string, string> exprVarMap;
@@ -497,7 +408,7 @@ void QueryEngine::printCode() {
   for (const Expr* expr : selectAndOrderByExprs) {
     string exprStr = expr->str();
     if (expr->isIdentifier()) {
-      Field f = queryGraph.idFieldMap[expr->getIdentifier()];
+      PbField f = queryTree.idFieldMap[expr->getIdentifier()];
       exprVarMap[exprStr] = fieldVarMap[f];
       exprTypeMap[exprStr] = fieldTypeMap[f];
       exprDefaultMap[exprStr] = fieldDefaultMap[f];
@@ -532,18 +443,18 @@ void QueryEngine::printCode() {
     out << endl;
   }
 
-  out << "void runSelect(const vector<" << queryGraph.getProtoCppType() << ">& "
-      << Utils::makePlural(queryGraph.root.objName)
+  out << "void runSelect(const vector<" << queryTree.getProtoCppType() << ">& "
+      << Utils::makePlural(queryTree.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
   bool allSelectAndOrderByFieldsProcessed = false;
-  StartNodeFn<Field> startNodeFn =
-      [&](int indent, const Node<Field>& node, const Node<Field>* parent) {
+  StartNodeFn<PbField> startNodeFn =
+      [&](int indent, const Node<PbField>& node, const Node<PbField>* parent) {
         string ind = string(indent+2, ' ');
         if (!parent) { //root
           out << ind << "for (const auto* " << node.objName
               << " : Iterators::mk_iterator(&"
-              << Utils::makePlural(queryGraph.root.objName) << ")) {" << endl;
+              << Utils::makePlural(queryTree.root.objName) << ")) {" << endl;
         } else {
           out << ind << "for (const auto* "
               << node.objName << " : Iterators::mk_iterator(" << parent->objName
@@ -552,7 +463,7 @@ void QueryEngine::printCode() {
         }
         ind += "  ";
         for (const auto& f : node.allFields) {
-          const Field& field = f.first;
+          const PbField& field = f.first;
           bool repeating = f.second;
           out << ind << fieldTypeMap[field] << " " << fieldVarMap[field] << " = "
               << fieldDefaultMap[field] << ";" << endl;
@@ -595,12 +506,12 @@ void QueryEngine::printCode() {
           allSelectAndOrderByFieldsProcessed = true;
         }
       };
-  EndNodeFn<Field> endNodeFn =
-      [&](int indent, const Node<Field>&) {
+  EndNodeFn<PbField> endNodeFn =
+      [&](int indent, const Node<PbField>&) {
         string ind = string(indent+2, ' ');
         out << ind << "}" << endl;
       };
-  Node<Field>::walkNode(queryGraph.root, startNodeFn, endNodeFn);
+  Node<PbField>::walkNode(queryTree.root, startNodeFn, endNodeFn);
   out << "}" << endl;
 
   if (!query.orderByStmt.getOrderByFields().empty()) {
@@ -661,8 +572,8 @@ void printTuples(const vector<TupleType>& tuples) {
 
   // main
   out << "int main(int argc, char** argv) {" << endl;
-  string protosVecIden = Utils::makePlural(queryGraph.root.objName);
-  out << "  vector<" << queryGraph.getProtoCppType() << "> "
+  string protosVecIden = Utils::makePlural(queryTree.root.objName);
+  out << "  vector<" << queryTree.getProtoCppType() << "> "
       << protosVecIden << ";" << endl;
   out << "  FROM(argc, argv, " << protosVecIden << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;
@@ -678,12 +589,12 @@ void QueryEngine::process() {
   ASSERT(query.parse(), "Parsing select query failed");
   out << "/*" << endl;
   out << query.str() << endl << endl;
-  queryGraph.initProto(query);
-  auto resolver = std::bind(&QueryGraph::resolveStarIdentifier, &queryGraph,
+  queryTree.initProto(query);
+  auto resolver = std::bind(&PbQueryTree::resolveStarIdentifier, &queryTree,
                             std::placeholders::_1, std::placeholders::_2);
   query.resolveSelectStars(resolver);
   query.removeSelectAliases();
-  queryGraph.initGraph(query);
+  queryTree.process(query);
   printPlan();
   out << "*/" << endl;
   printCode();

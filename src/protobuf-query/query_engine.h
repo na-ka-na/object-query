@@ -23,15 +23,15 @@ using namespace google::protobuf;
 
 namespace pb {
 
-class FieldPart {
+class PbFieldPart {
 public:
   static string full_name_to_cpp_type(const string& full_name);
-  static FieldPart parseFrom(const Descriptor& parentDescriptor,
-                             const string& partName);
+  static PbFieldPart parseFrom(const Descriptor& parentDescriptor,
+                               const string& partName);
   enum Type { NORMAL, SIZE, HAS };
-  FieldPart(const FieldDescriptor* descriptor, Type type=NORMAL);
-  bool operator<(const FieldPart& other) const;
-  bool operator==(const FieldPart& other) const;
+  PbFieldPart(const FieldDescriptor* descriptor, Type type=NORMAL);
+  bool operator<(const PbFieldPart& other) const;
+  bool operator==(const PbFieldPart& other) const;
   string name() const;
   FieldDescriptor::Type type() const;
   string type_name() const;
@@ -51,35 +51,32 @@ private:
   Type part_type;
 };
 
-struct Field {
-  vector<FieldPart> fieldParts;
-
-  bool operator<(const Field& other) const;
-  bool operator==(const Field& other) const;
+class PbField : public Field {
+public:
+  PbField() = default;
+  PbField(const Descriptor* rootDescriptor);
+  bool operator<(const PbField& other) const;
+  bool operator==(const PbField& other) const;
   string code_type() const;
   bool is_enum() const;
   string wrap_enum_with_name_accessor(const string& accessor) const;
   string accessor(const string& objName, bool useNameForEnum) const;
   string has_check(const string& objName) const;
+  void addFieldPart(const string&) override;
+  bool repeated() const override;
+private:
+  vector<PbFieldPart> fieldParts;
+  const Descriptor* descriptor = nullptr;
 };
 
-struct QueryGraph {
+struct PbQueryTree : public QueryTree<PbField> {
   const Descriptor* protoDescriptor;
-  Node<Field> root;
-  map<string, Field> idFieldMap;
   void initProto(const SelectQuery& query);
-  void initGraph(const SelectQuery& query);
   void resolveStarIdentifier(const string& star_identifier,
                              vector<string>& resolved_identifiers);
-
   string getProtoCppType() const;
-  void addReadIdentifier(const string& identifier);
-  void processSelect(const SelectStmt& selectStmt);
-  void processWhere(const WhereStmt& whereStmt);
-  void processOrderBy(const OrderByStmt& orderByStmt);
-  void processExpr(const set<string>& identifiers,
-                   const function<void(Node<Field>& node)>& callback);
-  static void addExpr(vector<const Expr*>& exprs, const Expr* expr);
+  string getRootName() override;
+  PbField newField() override;
 };
 
 class QueryEngine {
@@ -90,7 +87,7 @@ public:
 private:
   CodeGenSpec spec;
   SelectQuery query;
-  QueryGraph queryGraph;
+  PbQueryTree queryTree;
   ostream& out;
   void printPlan();
   void printCode();
