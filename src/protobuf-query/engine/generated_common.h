@@ -19,10 +19,12 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <vector>
 #include <regex>
 #include <google/protobuf/stubs/common.h>
+#include <google/protobuf/stubs/status.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/gzip_stream.h>
+#include <google/protobuf/util/json_util.h>
 #include "global_include.h"
 
 using namespace std;
@@ -35,6 +37,18 @@ using uint8  = ::google::protobuf::uint8;
 using uint16 = ::google::protobuf::uint16;
 using uint32 = ::google::protobuf::uint32;
 using uint64 = ::google::protobuf::uint64;
+
+bool GetProtoFromString(const string& data, google::protobuf::Message& proto) {
+  if (data.size() && ((data[0] == '{') || (data[0] == '['))) {
+    // First try json format, then try binary format
+    return google::protobuf::util::JsonStringToMessage(data, &proto).ok() ||
+           proto.ParseFromString(data);
+  } else {
+    // First try binary format, else try json format
+    return proto.ParseFromString(data) ||
+           google::protobuf::util::JsonStringToMessage(data, &proto).ok();
+  }
+}
 
 void ReadFromZeroCopyInputStream(
     google::protobuf::io::ZeroCopyInputStream& steam, string& data) {
@@ -57,9 +71,8 @@ void GetProtoFromFile(const string& file, google::protobuf::Message& proto) {
     google::protobuf::io::FileInputStream fis(fd);
     ReadFromZeroCopyInputStream(fis, data);
   }
-  bool ret = proto.ParseFromString(data);
-  close(fd);
-  ASSERT(ret, "Unable to parse", file);
+  ASSERT(close(fd) == 0, "Unable to close file", file);
+  ASSERT(GetProtoFromString(data, proto), "Unable to parse", file);
 }
 
 #ifndef FROM

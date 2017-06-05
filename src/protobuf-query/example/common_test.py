@@ -62,7 +62,7 @@ if __name__ == "__main__":
     if len(sys.argv) >= 3:
         cmake_prefix_paths = sys.argv[2].split(',')
 
-    proto_file = '../../../src/protobuf-query/example/example1.proto.gz'
+    proto_file = '../../../src/protobuf-query/example/example1.json'
     golden_out = 'golden' + str(testnum) + '.out'
     actual_out = 'actual' + str(testnum) + '.out'
 

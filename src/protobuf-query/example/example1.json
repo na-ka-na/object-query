@@ -1,0 +1,33 @@
+{
+    "allEmployees": [
+        {
+            "active": false,
+            "id": 1,
+            "name": "abc"
+        },
+        {
+            "active": true,
+            "activeDirectReports": [
+                1,
+                2
+            ],
+            "id": 2,
+            "name": "def"
+        }
+    ],
+    "boardOfDirectors": [
+        1,
+        2
+    ],
+    "financial": {
+        "quarterlyProfits": [
+            1,
+            2
+        ],
+        "quarterlyRevenues": [
+            1,
+            2
+        ]
+    },
+    "founded": 1
+}
