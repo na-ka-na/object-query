@@ -151,3 +151,52 @@ void QueryTree<FieldT>::addExpr(vector<const Expr*>& exprs, const Expr* expr) {
     exprs.push_back(expr);
   }
 }
+
+template <typename FieldT>
+void QueryTree<FieldT>::printPlan(const SelectQuery& query, ostream& out) {
+  StartNodeFn<FieldT> startNodeFn =
+      [this, &out] (int indent, const Node<FieldT>& node, const Node<FieldT>* parent) {
+        if (!parent) { // root
+          out << string(indent, ' ') << "with (" << root.objName
+              << " = parseFromFile()) {" << endl;
+        } else {
+          out << string(indent, ' ') << "for each " << node.objName << " in "
+              << parent->objName << "." << node.repeatedField.accessor()
+              << " {" << endl;
+        }
+        indent+=2;
+        for (const BooleanExpr* expr : node.whereClauses) {
+          out << string(indent, ' ') << "if (!" << expr->str()
+              << ") { continue; }" << endl;
+        }
+        for (const Expr* expr : node.selectAndOrderByExprs) {
+          out << string(indent, ' ') << "tuples.add(" << expr->str() << ")" << endl;
+        }
+      };
+  bool firstEnd = true;
+  EndNodeFn<FieldT> endNodeFn =
+      [this, &firstEnd, &out] (int indent, const Node<FieldT>& node) {
+        if (firstEnd) {
+          out << string(indent+2, ' ') << "tuples.record()" << endl;
+          firstEnd = false;
+        }
+        out << string(indent, ' ') << "} //" << node.objName << endl;
+      };
+  Node<FieldT>::walkNode(root, startNodeFn, endNodeFn, 2);
+  if (!query.orderByStmt.getOrderByFields().empty()) {
+    out << "tuples.sortBy("
+        << Utils::joinVec<OrderByField>(
+            ", ", query.orderByStmt.getOrderByFields(),
+            [](const OrderByField& orderByField) {
+              return "'" + orderByField.getExpr().str() + "'";
+            })
+        << ")" << endl;
+  }
+  out << "tuples.print("
+      << Utils::joinVec<SelectField>(
+          ", ", query.selectStmt.getSelectFields(),
+          [](const SelectField& selectField) {
+            return "'" + selectField.getExpr().str() + "'";
+          })
+      << ")" << endl;
+}

@@ -178,16 +178,6 @@ string PbField::wrap_enum_with_name_accessor(const string& accessor) const {
   return type + "_Name(static_cast<" + type + ">(" + accessor + "))";
 }
 
-string PbField::accessor(const string& objName, bool useNameForEnum) const {
-  string str = objName;
-  str += Utils::joinVec<PbFieldPart>(".", fieldParts,
-      [] (const PbFieldPart& part) {return part.accessor();});
-  if (is_enum() && useNameForEnum) {
-    return wrap_enum_with_name_accessor(str);
-  }
-  return str;
-}
-
 string PbField::has_check(const string& objName) const {
   vector<string> checks;
   for (uint32_t i=0; i<fieldParts.size(); i++) {
@@ -220,6 +210,15 @@ bool PbField::repeated() const {
   return !fieldParts.empty() && fieldParts.back().is_repeated();
 }
 
+string PbField::accessor() const {
+  string str = Utils::joinVec<PbFieldPart>(".", fieldParts,
+      [] (const PbFieldPart& part) {return part.accessor();});
+  if (is_enum()) {
+    return wrap_enum_with_name_accessor(str);
+  }
+  return str;
+}
+
 string PbQueryTree::getProtoCppType() const {
   return PbFieldPart::full_name_to_cpp_type(protoDescriptor->full_name());
 }
@@ -247,11 +246,11 @@ void PbQueryTree::resolveStarIdentifier(const string& star_identifier,
   }
 }
 
-void PbQueryTree::initProto(const SelectQuery& query) {
+void PbQueryTree::initProto(const string& protoName) {
   const DescriptorPool* pool = google::protobuf::DescriptorPool::generated_pool();
-  protoDescriptor = pool->FindMessageTypeByName(query.fromStmt.getProtoName());
-  ASSERT(protoDescriptor != nullptr, "Unable to find proto descriptor for",
-         query.fromStmt.getProtoName());
+  protoDescriptor = pool->FindMessageTypeByName(protoName);
+  ASSERT(protoDescriptor != nullptr,
+         "Unable to find proto descriptor for", protoName);
 }
 
 string PbQueryTree::getRootName() {
@@ -267,54 +266,6 @@ PbField PbQueryTree::newField() {
 
 QueryEngine::QueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out) :
     spec(spec), query(SelectQuery(rawSql)), out(out) {}
-
-void QueryEngine::printPlan() {
-  StartNodeFn<PbField> startNodeFn =
-      [this] (int indent, const Node<PbField>& node, const Node<PbField>* parent) {
-        if (!parent) { //root
-          out << string(indent, ' ') << "with (" << queryTree.root.objName
-              << " = parseFromFile()) {" << endl;
-        } else {
-          out << string(indent, ' ') << "for each " << node.objName << " in "
-              << node.repeatedField.accessor(parent->objName + ".", false)
-              << " {" << endl;
-        }
-        indent+=2;
-        for (const BooleanExpr* expr : node.whereClauses) {
-          out << string(indent, ' ') << "if (!" << expr->str()
-              << ") { continue; }" << endl;
-        }
-        for (const Expr* expr : node.selectAndOrderByExprs) {
-          out << string(indent, ' ') << "tuples.add(" << expr->str() << ")" << endl;
-        }
-      };
-  bool firstEnd = true;
-  EndNodeFn<PbField> endNodeFn =
-      [this, &firstEnd](int indent, const Node<PbField>& node) {
-        if (firstEnd) {
-          out << string(indent+2, ' ') << "tuples.record()" << endl;
-          firstEnd = false;
-        }
-        out << string(indent, ' ') << "} //" << node.objName << endl;
-      };
-  Node<PbField>::walkNode(queryTree.root, startNodeFn, endNodeFn, 2);
-  if (!query.orderByStmt.getOrderByFields().empty()) {
-    out << "tuples.sortBy("
-        << Utils::joinVec<OrderByField>(
-            ", ", query.orderByStmt.getOrderByFields(),
-            [](const OrderByField& orderByField) {
-              return "'" + orderByField.getExpr().str() + "'";
-            })
-        << ")" << endl;
-  }
-  out << "tuples.print("
-      << Utils::joinVec<SelectField>(
-          ", ", query.selectStmt.getSelectFields(),
-          [](const SelectField& selectField) {
-            return "'" + selectField.getExpr().str() + "'";
-          })
-      << ")" << endl;
-}
 
 void QueryEngine::printCode() {
   for (const string& headerInclude : spec.headerIncludes) {
@@ -389,7 +340,7 @@ void QueryEngine::printCode() {
     string type = "optional<" + field.code_type() + ">";
     string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
     out << "using " << fieldTypeMap[field] << " = " << type << ";"
-        << spaces << " /*" << field.accessor(".", false) << "*/" << endl;
+        << spaces << " /* " << field.accessor() << " */" << endl;
     cgr.idVarMap[id] = fieldVarMap[field];
     cgr.idDefaultMap[id] = fieldDefaultMap[field];
   }
@@ -420,7 +371,7 @@ void QueryEngine::printCode() {
       string type = expr->cppType(cgr);
       string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
       out << "using " << exprTypeMap[exprStr] << " = " << type << ";"
-          << spaces << " /*" << exprStr << "*/" << endl;
+          << spaces << " /* " << exprStr << " */" << endl;
     }
   }
 
@@ -458,7 +409,7 @@ void QueryEngine::printCode() {
         } else {
           out << ind << "for (const auto* "
               << node.objName << " : Iterators::mk_iterator(" << parent->objName
-              << " ? &" << node.repeatedField.accessor(parent->objName + "->", false)
+              << " ? &" << parent->objName << "->" << node.repeatedField.accessor()
               << " : nullptr)) {" << endl;
         }
         ind += "  ";
@@ -480,7 +431,7 @@ void QueryEngine::printCode() {
             out << ind << "if (" << node.objName
                 << (checks.empty() ? "" : " && " + checks) << ") {" << endl;
             out << ind << "  " << fieldVarMap[field] << " = "
-                << field.accessor(node.objName + "->", true) << ";" << endl;
+                << node.objName << "->" << field.accessor() << ";" << endl;
             out << ind << "}" << endl;
           }
         }
@@ -589,13 +540,13 @@ void QueryEngine::process() {
   ASSERT(query.parse(), "Parsing select query failed");
   out << "/*" << endl;
   out << query.str() << endl << endl;
-  queryTree.initProto(query);
+  queryTree.initProto(query.fromStmt.getProtoName());
   auto resolver = std::bind(&PbQueryTree::resolveStarIdentifier, &queryTree,
                             std::placeholders::_1, std::placeholders::_2);
   query.resolveSelectStars(resolver);
   query.removeSelectAliases();
   queryTree.process(query);
-  printPlan();
+  queryTree.printPlan(query, out);
   out << "*/" << endl;
   printCode();
 }

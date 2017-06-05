@@ -60,10 +60,10 @@ public:
   string code_type() const;
   bool is_enum() const;
   string wrap_enum_with_name_accessor(const string& accessor) const;
-  string accessor(const string& objName, bool useNameForEnum) const;
   string has_check(const string& objName) const;
   void addFieldPart(const string&) override;
   bool repeated() const override;
+  string accessor() const override;
 private:
   vector<PbFieldPart> fieldParts;
   const Descriptor* descriptor = nullptr;
@@ -71,7 +71,7 @@ private:
 
 struct PbQueryTree : public QueryTree<PbField> {
   const Descriptor* protoDescriptor;
-  void initProto(const SelectQuery& query);
+  void initProto(const string& protoName);
   void resolveStarIdentifier(const string& star_identifier,
                              vector<string>& resolved_identifiers);
   string getProtoCppType() const;

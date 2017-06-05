@@ -24,10 +24,10 @@ vector<string> header = {
   "emp.name",
   "emp.active",
 };
-using S0 = optional<bool>;   /*.active()*/
-using S1 = optional<int32>;  /*.id()*/
-using S2 = optional<string>; /*.name()*/
-using S3 = optional<int32>;  /*.founded()*/
+using S0 = optional<bool>;   /* active() */
+using S1 = optional<int32>;  /* id() */
+using S2 = optional<string>; /* name() */
+using S3 = optional<int32>;  /* founded() */
 using TupleType = tuple<S3, S1, S2, S0>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {

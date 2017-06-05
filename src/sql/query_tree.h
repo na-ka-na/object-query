@@ -60,10 +60,12 @@ struct Node {
                        map<int, Node<FieldT>*>& endNodesMap);
 };
 
-struct Field {
+class Field {
+public:
   virtual ~Field() {};
-  virtual bool repeated() const = 0;
   virtual void addFieldPart(const string&) = 0;
+  virtual bool repeated() const = 0;
+  virtual string accessor() const = 0;
 };
 
 template <typename FieldT>
@@ -81,6 +83,8 @@ struct QueryTree {
   virtual FieldT newField() = 0;
 
   void process(const SelectQuery& query);
+  void printPlan(const SelectQuery& query, ostream& out);
+
   void addReadIdentifier(const string& identifier);
   void processSelect(const SelectStmt& selectStmt);
   void processWhere(const WhereStmt& whereStmt);

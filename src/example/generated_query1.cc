@@ -40,14 +40,14 @@ vector<string> header = {
   "founded",
   "board_of_directors",
 };
-using S0 = optional<bool>;   /*.active()*/
-using S1 = optional<int32>;  /*.active_direct_reports()*/
-using S2 = optional<int32>;  /*.id()*/
-using S3 = optional<string>; /*.name()*/
-using S4 = optional<int32>;  /*.board_of_directors()*/
-using S5 = optional<float>;  /*.financial().quarterly_profits()*/
-using S6 = optional<float>;  /*.financial().quarterly_revenues()*/
-using S7 = optional<int32>;  /*.founded()*/
+using S0 = optional<bool>;   /* active() */
+using S1 = optional<int32>;  /* active_direct_reports() */
+using S2 = optional<int32>;  /* id() */
+using S3 = optional<string>; /* name() */
+using S4 = optional<int32>;  /* board_of_directors() */
+using S5 = optional<float>;  /* financial().quarterly_profits() */
+using S6 = optional<float>;  /* financial().quarterly_revenues() */
+using S7 = optional<int32>;  /* founded() */
 using TupleType = tuple<S5, S6, S2, S3, S0, S1, S7, S4>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {

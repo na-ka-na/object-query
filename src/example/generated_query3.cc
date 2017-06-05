@@ -26,10 +26,10 @@ vector<string> header = {
   "all_employees.id",
   "(financial.quarterly_revenues/all_employees.active_direct_reports)",
 };
-using S0 = optional<int32>;  /*.active_direct_reports()*/
-using S1 = optional<int32>;  /*.id()*/
-using S2 = optional<float>;  /*.financial().quarterly_revenues()*/
-using S3 = decltype(Divide(S2(), S0())); /*(financial.quarterly_revenues/all_employees.active_direct_reports)*/
+using S0 = optional<int32>;  /* active_direct_reports() */
+using S1 = optional<int32>;  /* id() */
+using S2 = optional<float>;  /* financial().quarterly_revenues() */
+using S3 = decltype(Divide(S2(), S0())); /* (financial.quarterly_revenues/all_employees.active_direct_reports) */
 using TupleType = tuple<S1, S3>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {

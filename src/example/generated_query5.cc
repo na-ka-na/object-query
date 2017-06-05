@@ -30,12 +30,12 @@ optional<Ret> $STR(const optional<Arg0>& arg0) {
     return optional<Ret>();
   }
 }
-using S0 = optional<bool>;   /*.active()*/
-using S1 = optional<int32>;  /*.id()*/
-using S2 = optional<string>; /*.name()*/
-using S3 = optional<int32>;  /*.founded()*/
-using S4 = decltype(Plus(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(": ")), S2()), optional<string>(" (")), $STR(S0())), optional<string>(")"))); /*(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')*/
-using S5 = decltype(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(": ")), S2()), optional<string>(" (")), $STR(S0())), optional<string>(")"))), optional<string>(" ")), $STR(S3()))); /*((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded))*/
+using S0 = optional<bool>;   /* active() */
+using S1 = optional<int32>;  /* id() */
+using S2 = optional<string>; /* name() */
+using S3 = optional<int32>;  /* founded() */
+using S4 = decltype(Plus(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(": ")), S2()), optional<string>(" (")), $STR(S0())), optional<string>(")"))); /* (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') */
+using S5 = decltype(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(" ")), Plus(Plus(Plus(Plus(Plus($STR(S1()), optional<string>(": ")), S2()), optional<string>(" (")), $STR(S0())), optional<string>(")"))), optional<string>(" ")), $STR(S3()))); /* ((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded)) */
 using TupleType = tuple<S4, S5>;
 
 std::regex r6(".*true.*", std::regex::optimize);
