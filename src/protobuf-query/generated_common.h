@@ -25,6 +25,9 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/util/json_util.h>
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
 #include "global_include.h"
 
 using namespace std;
@@ -96,6 +99,32 @@ inline string Stringify(const optional<T>& t) {
 
 template<> inline string Stringify(const bool& t) {return t ? "true" : "false";}
 template<> inline string Stringify(const string& t) {return t;}
+
+template<>
+inline string Stringify(const rapidjson::Value* const& value) {
+  if (value == nullptr) return "NULL";
+  switch (value->GetType()) {
+    case rapidjson::kNullType:   return "null";
+    case rapidjson::kFalseType:  return Stringify<bool>(false);
+    case rapidjson::kTrueType:   return Stringify<bool>(true);
+    case rapidjson::kObjectType: /* fallthrough */
+    case rapidjson::kArrayType:  {
+      rapidjson::StringBuffer strbuf;
+      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+      value->Accept(writer);
+      return strbuf.GetString();
+    }
+    case rapidjson::kStringType: return value->GetString();
+    case rapidjson::kNumberType: {
+        if (value->IsDouble())      return Stringify<double>(value->GetDouble());
+        else if (value->IsInt())    return Stringify<int>(value->GetInt());
+        else if (value->IsUint())   return Stringify<uint32_t>(value->GetUint());
+        else if (value->IsInt64())  return Stringify<int64_t>(value->GetInt64());
+        else if (value->IsUint64()) return Stringify<uint64_t>(value->GetUint64());
+        else                        return "UnknownRapidJsonType" + to_string(value->GetType());
+    }
+  }
+}
 
 template<typename T>
 inline string STR(const T& t) {
@@ -231,9 +260,10 @@ public:
       return it;
     }
 
-    static ConstIterator mk_singular(bool begin) {
+    static ConstIterator mk_singular(bool begin, const T* singular_elem=nullptr) {
       ConstIterator it;
       it.singular = begin ? 1 : 2;
+      it.singular_elem = singular_elem;
       return it;
     }
 
@@ -242,16 +272,13 @@ public:
         ++(*curr);
       } else {
         singular = 2;
+        singular_elem = nullptr;
       }
       return *this;
     }
 
     inline bool operator==(const ConstIterator& other) const {
-      if (singular == 0) {
-        return (other.singular == 0) && (*curr == *(other.curr));
-      } else {
-        return singular == other.singular;
-      }
+      return (singular == other.singular) && (**this == *other);
     }
 
     inline bool operator!=(const ConstIterator& other) const {
@@ -259,36 +286,35 @@ public:
     }
 
     inline const T* operator*() const {
-      if (singular == 0) {
-        return &**curr;
-      } else {
-        return nullptr;
+      switch (singular) {
+      case 0: return &**curr;
+      case 1: return singular_elem;
+      default: return nullptr;
       }
     }
 
     friend std::ostream& operator<< (std::ostream& stream, const ConstIterator& it) {
-      if (it.singular == 0) {
-        stream << *it;
-      } else {
-        stream << ((it.singular == 1) ? "singular_begin" : "singular_end");
-      }
+      stream << *it;
       return stream;
     }
 
   private:
     It* curr = nullptr;
+    const T* singular_elem = nullptr;
     int singular = 0; // 0 for normal case, 1 for begin, 2 for end
   };
 
-  MyRangeIterator() : singular(true) {}
+  MyRangeIterator(const T* singular_elem = nullptr) :
+      singular(true), singular_elem(singular_elem) {}
 
   MyRangeIterator(It&& orig_begin, It&& orig_end) :
-      singular(false), orig_begin(orig_begin), orig_end(orig_end) {}
+      singular(false), singular_elem(nullptr),
+      orig_begin(orig_begin), orig_end(orig_end) {}
 
   ConstIterator begin() const {
     return (!singular && (orig_begin != orig_end))
         ? ConstIterator::mk_normal((It*) &orig_begin)
-        : ConstIterator::mk_singular(true);
+        : ConstIterator::mk_singular(true, singular_elem);
   }
 
   ConstIterator end() const {
@@ -299,6 +325,7 @@ public:
 
 private:
   bool singular;
+  const T* singular_elem;
   It orig_begin;
   It orig_end;
 };
@@ -338,6 +365,30 @@ public:
           v->begin(), v->end());
     } else {
       return MyRangeIterator<T, typename vector<T>::const_iterator>();
+    }
+  }
+
+  static
+  MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>
+  mk_iterator(const string& path, const rapidjson::Value* value, const string& key) {
+    if (value) {
+      if (!value->IsObject()) {
+        cerr << "Cannot lookup " << key << " at " << path
+             << " since type is not object " << value->GetType() << endl;
+        return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>();
+      }
+      rapidjson::Value::ConstMemberIterator it = value->FindMember(key.c_str());
+      if (it == value->MemberEnd()) {
+        return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>();
+      } else if (it->value.IsArray()) {
+        return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>(
+            it->value.Begin(), it->value.End());
+      } else {
+        return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>(
+            &(it->value));
+      }
+    } else {
+      return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>();
     }
   }
 };

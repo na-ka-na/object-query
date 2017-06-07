@@ -85,6 +85,7 @@ set<string> mkIncludeDirs() {
   string parentDir = codeDir.substr(0, idx);
   includeDirs.insert(parentDir + "/common");
   includeDirs.insert(parentDir + "/protobuf-query");
+  includeDirs.insert(parentDir + "/third-party/rapidjson/include");
   idx = FLAGS_cppProtoHeader.rfind("/");
   includeDirs.insert(
       (idx == string::npos) ? "." : FLAGS_cppProtoHeader.substr(0, idx));
