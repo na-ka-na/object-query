@@ -3,7 +3,9 @@
         {
             "active": false,
             "id": 1,
-            "name": "abc"
+            "name": "abc",
+            "enumx": "ENUMX_X1",
+            "enumy": ["ENUMY_Y1", "ENUMY_Y2"]
         },
         {
             "active": true,
@@ -12,7 +14,8 @@
                 2
             ],
             "id": 2,
-            "name": "def"
+            "name": "def",
+            "enumy": ["ENUMY_Y1"]
         }
     ],
     "boardOfDirectors": [

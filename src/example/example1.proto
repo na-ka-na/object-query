@@ -19,5 +19,18 @@ message Employee {
   optional string name = 2;
   optional bool active = 3;
   repeated int32 active_direct_reports = 4;
+  optional EnumX enumx = 5;
+  repeated EnumY enumy = 6;
 }
 
+enum EnumX {
+  ENUMX_UNKNOWN = 0;
+  ENUMX_X1 = 1;
+  ENUMX_X2 = 2;
+}
+
+enum EnumY {
+  ENUMY_UNKNOWN = 0;
+  ENUMY_Y1 = 1;
+  ENUMY_Y2 = 2;
+}

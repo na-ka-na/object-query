@@ -211,12 +211,8 @@ bool PbField::repeated() const {
 }
 
 string PbField::accessor() const {
-  string str = Utils::joinVec<PbFieldPart>(".", fieldParts,
+  return Utils::joinVec<PbFieldPart>(".", fieldParts,
       [] (const PbFieldPart& part) {return part.accessor();});
-  if (is_enum()) {
-    return wrap_enum_with_name_accessor(str);
-  }
-  return str;
 }
 
 string PbQueryTree::getProtoCppType() const {
@@ -431,7 +427,11 @@ void QueryEngine::printCode() {
             out << ind << "if (" << node.objName
                 << (checks.empty() ? "" : " && " + checks) << ") {" << endl;
             out << ind << "  " << fieldVarMap[field] << " = "
-                << node.objName << "->" << field.accessor() << ";" << endl;
+                << (field.is_enum()
+                    ? field.wrap_enum_with_name_accessor(
+                        node.objName + "->" + field.accessor())
+                    : node.objName + "->" + field.accessor())
+                << ";" << endl;
             out << ind << "}" << endl;
           }
         }

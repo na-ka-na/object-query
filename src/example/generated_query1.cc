@@ -1,5 +1,5 @@
 /*
-SELECT financial.quarterly_profits, financial.quarterly_revenues, all_employees.id, all_employees.name, all_employees.active, all_employees.active_direct_reports, founded, board_of_directors FROM Example1.Company
+SELECT financial.quarterly_profits, financial.quarterly_revenues, all_employees.id, all_employees.name, all_employees.active, all_employees.active_direct_reports, all_employees.enumx, all_employees.enumy, founded, board_of_directors FROM Example1.Company
 
 with (company = parseFromFile()) {
   tuples.add(founded)
@@ -13,16 +13,20 @@ with (company = parseFromFile()) {
           tuples.add(all_employees.id)
           tuples.add(all_employees.name)
           tuples.add(all_employees.active)
+          tuples.add(all_employees.enumx)
           for each active_direct_report in all_employee.active_direct_reports() {
             tuples.add(all_employees.active_direct_reports)
-            tuples.record()
+            for each each_enumy in all_employee.enumy() {
+              tuples.add(all_employees.enumy)
+              tuples.record()
+            } //each_enumy
           } //active_direct_report
         } //all_employee
       } //quarterly_revenue
     } //quarterly_profit
   } //board_of_director
 } //company
-tuples.print('financial.quarterly_profits', 'financial.quarterly_revenues', 'all_employees.id', 'all_employees.name', 'all_employees.active', 'all_employees.active_direct_reports', 'founded', 'board_of_directors')
+tuples.print('financial.quarterly_profits', 'financial.quarterly_revenues', 'all_employees.id', 'all_employees.name', 'all_employees.active', 'all_employees.active_direct_reports', 'all_employees.enumx', 'all_employees.enumy', 'founded', 'board_of_directors')
 */
 #include "example1.pb.h"
 #include "example1_utils.h"
@@ -37,59 +41,73 @@ vector<string> header = {
   "all_employees.name",
   "all_employees.active",
   "all_employees.active_direct_reports",
+  "all_employees.enumx",
+  "all_employees.enumy",
   "founded",
   "board_of_directors",
 };
 using S0 = optional<bool>;   /* active() */
 using S1 = optional<int32>;  /* active_direct_reports() */
-using S2 = optional<int32>;  /* id() */
-using S3 = optional<string>; /* name() */
-using S4 = optional<int32>;  /* board_of_directors() */
-using S5 = optional<float>;  /* financial().quarterly_profits() */
-using S6 = optional<float>;  /* financial().quarterly_revenues() */
-using S7 = optional<int32>;  /* founded() */
-using TupleType = tuple<S5, S6, S2, S3, S0, S1, S7, S4>;
+using S2 = optional<string>; /* enumx() */
+using S3 = optional<string>; /* enumy() */
+using S4 = optional<int32>;  /* id() */
+using S5 = optional<string>; /* name() */
+using S6 = optional<int32>;  /* board_of_directors() */
+using S7 = optional<float>;  /* financial().quarterly_profits() */
+using S8 = optional<float>;  /* financial().quarterly_revenues() */
+using S9 = optional<int32>;  /* founded() */
+using TupleType = tuple<S7, S8, S4, S5, S0, S1, S2, S3, S9, S6>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
   for (const auto* company : Iterators::mk_iterator(&companys)) {
-    S7 s7 = S7();
+    S9 s9 = S9();
     if (company && company->has_founded()) {
-      s7 = company->founded();
+      s9 = company->founded();
     }
     for (const auto* board_of_director : Iterators::mk_iterator(company ? &company->board_of_directors() : nullptr)) {
-      S4 s4 = S4();
+      S6 s6 = S6();
       if (board_of_director) {
-        s4 = *board_of_director;
+        s6 = *board_of_director;
       }
       for (const auto* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
-        S5 s5 = S5();
+        S7 s7 = S7();
         if (quarterly_profit) {
-          s5 = *quarterly_profit;
+          s7 = *quarterly_profit;
         }
         for (const auto* quarterly_revenue : Iterators::mk_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
-          S6 s6 = S6();
+          S8 s8 = S8();
           if (quarterly_revenue) {
-            s6 = *quarterly_revenue;
+            s8 = *quarterly_revenue;
           }
           for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
-            S2 s2 = S2();
+            S4 s4 = S4();
             if (all_employee && all_employee->has_id()) {
-              s2 = all_employee->id();
+              s4 = all_employee->id();
             }
-            S3 s3 = S3();
+            S5 s5 = S5();
             if (all_employee && all_employee->has_name()) {
-              s3 = all_employee->name();
+              s5 = all_employee->name();
             }
             S0 s0 = S0();
             if (all_employee && all_employee->has_active()) {
               s0 = all_employee->active();
+            }
+            S2 s2 = S2();
+            if (all_employee && all_employee->has_enumx()) {
+              s2 = Example1::EnumX_Name(static_cast<Example1::EnumX>(all_employee->enumx()));
             }
             for (const auto* active_direct_report : Iterators::mk_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
               S1 s1 = S1();
               if (active_direct_report) {
                 s1 = *active_direct_report;
               }
-              tuples.emplace_back(s5, s6, s2, s3, s0, s1, s7, s4);
+              for (const auto* each_enumy : Iterators::mk_iterator(all_employee ? &all_employee->enumy() : nullptr)) {
+                S3 s3 = S3();
+                if (each_enumy) {
+                  s3 = Example1::EnumY_Name(static_cast<Example1::EnumY>(*each_enumy));
+                }
+                tuples.emplace_back(s7, s8, s4, s5, s0, s1, s2, s3, s9, s6);
+              }
             }
           }
         }
@@ -112,6 +130,8 @@ void printTuples(const vector<TupleType>& tuples) {
     sizes[5] = max(sizes[5], Stringify(get<5>(t)).size());
     sizes[6] = max(sizes[6], Stringify(get<6>(t)).size());
     sizes[7] = max(sizes[7], Stringify(get<7>(t)).size());
+    sizes[8] = max(sizes[8], Stringify(get<8>(t)).size());
+    sizes[9] = max(sizes[9], Stringify(get<9>(t)).size());
   }
   cout << left;
   for (size_t i=0; i<header.size(); i++) {
@@ -131,6 +151,8 @@ void printTuples(const vector<TupleType>& tuples) {
     cout << " | " << setw(sizes[5]) << Stringify(get<5>(t));
     cout << " | " << setw(sizes[6]) << Stringify(get<6>(t));
     cout << " | " << setw(sizes[7]) << Stringify(get<7>(t));
+    cout << " | " << setw(sizes[8]) << Stringify(get<8>(t));
+    cout << " | " << setw(sizes[9]) << Stringify(get<9>(t));
     cout << endl;
   }
 }

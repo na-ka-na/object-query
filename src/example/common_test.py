@@ -5,7 +5,7 @@ TEST_SQL_QUERIES = [
     # 1
     "SELECT financial.quarterly_profits,financial.quarterly_revenues,all_employees.id,\
             all_employees.name,all_employees.active,all_employees.active_direct_reports,\
-            founded,board_of_directors\
+            all_employees.enumx, all_employees.enumy,founded,board_of_directors\
      FROM Example1.Company",
 
     # 2
