@@ -13,7 +13,7 @@ tuples.print('EmployeeStr(all_employees.name,all_employees.id)', 'STR(all_employ
 */
 #include "example1.pb.h"
 #include "example1_utils.h"
-#include "generated_common.h"
+#include "protobuf_generated_common.h"
 
 using namespace std;
 
@@ -49,8 +49,8 @@ using S5 = decltype($STR(S0())); /* STR(all_employees) */
 using TupleType = tuple<S3, S4, S5>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
-  for (const auto* company : Iterators::mk_iterator(&companys)) {
-    for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+  for (const auto* company : Iterators::mk_vec_iterator(&companys)) {
+    for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
       S0 s0 = S0();
       if (all_employee) {
         s0 = *all_employee;

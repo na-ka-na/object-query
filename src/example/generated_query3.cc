@@ -18,7 +18,7 @@ tuples.print('all_employees.id', '(financial.quarterly_revenues/all_employees.ac
 */
 #include "example1.pb.h"
 #include "example1_utils.h"
-#include "generated_common.h"
+#include "protobuf_generated_common.h"
 
 using namespace std;
 
@@ -33,19 +33,19 @@ using S3 = decltype(Divide(S2(), S0())); /* (financial.quarterly_revenues/all_em
 using TupleType = tuple<S1, S3>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
-  for (const auto* company : Iterators::mk_iterator(&companys)) {
-    for (const auto* quarterly_revenue : Iterators::mk_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
+  for (const auto* company : Iterators::mk_vec_iterator(&companys)) {
+    for (const auto* quarterly_revenue : Iterators::mk_pb_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
       S2 s2 = S2();
       if (quarterly_revenue) {
         s2 = *quarterly_revenue;
       }
       if (!Gt(Mult(s2, optional<int64>(2)), optional<int64>(1))) { continue; }
-      for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+      for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
         S1 s1 = S1();
         if (all_employee && all_employee->has_id()) {
           s1 = all_employee->id();
         }
-        for (const auto* active_direct_report : Iterators::mk_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
+        for (const auto* active_direct_report : Iterators::mk_pb_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
           S0 s0 = S0();
           if (active_direct_report) {
             s0 = *active_direct_report;

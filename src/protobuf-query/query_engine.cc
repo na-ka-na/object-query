@@ -267,7 +267,7 @@ void QueryEngine::printCode() {
   for (const string& headerInclude : spec.headerIncludes) {
     out << "#include \"" << headerInclude << "\"" << endl;
   }
-  out << "#include \"generated_common.h\"" << endl << endl;
+  out << "#include \"protobuf_generated_common.h\"" << endl << endl;
   out << "using namespace std;" << endl;
   out << endl;
 
@@ -400,11 +400,11 @@ void QueryEngine::printCode() {
         string ind = string(indent+2, ' ');
         if (!parent) { //root
           out << ind << "for (const auto* " << node.objName
-              << " : Iterators::mk_iterator(&"
+              << " : Iterators::mk_vec_iterator(&"
               << Utils::makePlural(queryTree.root.objName) << ")) {" << endl;
         } else {
           out << ind << "for (const auto* "
-              << node.objName << " : Iterators::mk_iterator(" << parent->objName
+              << node.objName << " : Iterators::mk_pb_iterator(" << parent->objName
               << " ? &" << parent->objName << "->" << node.repeatedField.accessor()
               << " : nullptr)) {" << endl;
         }

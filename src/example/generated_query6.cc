@@ -15,7 +15,7 @@ tuples.print('all_employees.name', 'all_employees.active_direct_reports')
 */
 #include "example1.pb.h"
 #include "example1_utils.h"
-#include "generated_common.h"
+#include "protobuf_generated_common.h"
 
 using namespace std;
 
@@ -28,13 +28,13 @@ using S1 = optional<string>; /* name() */
 using TupleType = tuple<S1, S0>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
-  for (const auto* company : Iterators::mk_iterator(&companys)) {
-    for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+  for (const auto* company : Iterators::mk_vec_iterator(&companys)) {
+    for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
       S1 s1 = S1();
       if (all_employee && all_employee->has_name()) {
         s1 = all_employee->name();
       }
-      for (const auto* active_direct_report : Iterators::mk_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
+      for (const auto* active_direct_report : Iterators::mk_pb_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
         S0 s0 = S0();
         if (active_direct_report) {
           s0 = *active_direct_report;

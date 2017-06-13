@@ -13,7 +13,7 @@ tuples.print('(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all
 */
 #include "example1.pb.h"
 #include "example1_utils.h"
-#include "generated_common.h"
+#include "protobuf_generated_common.h"
 
 using namespace std;
 
@@ -41,12 +41,12 @@ using TupleType = tuple<S4, S5>;
 std::regex r6(".*true.*", std::regex::optimize);
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
-  for (const auto* company : Iterators::mk_iterator(&companys)) {
+  for (const auto* company : Iterators::mk_vec_iterator(&companys)) {
     S3 s3 = S3();
     if (company && company->has_founded()) {
       s3 = company->founded();
     }
-    for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+    for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
       S1 s1 = S1();
       if (all_employee && all_employee->has_id()) {
         s1 = all_employee->id();

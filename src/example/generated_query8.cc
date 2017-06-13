@@ -15,7 +15,7 @@ tuples.print('founded', 'all_employees.id', 'all_employees.name', 'all_employees
 */
 #include "example1.pb.h"
 #include "example1_utils.h"
-#include "generated_common.h"
+#include "protobuf_generated_common.h"
 
 using namespace std;
 
@@ -34,12 +34,12 @@ using S4 = optional<int32>;  /* founded() */
 using TupleType = tuple<S4, S2, S3, S0, S1>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
-  for (const auto* company : Iterators::mk_iterator(&companys)) {
+  for (const auto* company : Iterators::mk_vec_iterator(&companys)) {
     S4 s4 = S4();
     if (company && company->has_founded()) {
       s4 = company->founded();
     }
-    for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+    for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
       S2 s2 = S2();
       if (all_employee && all_employee->has_id()) {
         s2 = all_employee->id();

@@ -30,7 +30,7 @@ tuples.print('financial.quarterly_profits', 'financial.quarterly_revenues', 'all
 */
 #include "example1.pb.h"
 #include "example1_utils.h"
-#include "generated_common.h"
+#include "protobuf_generated_common.h"
 
 using namespace std;
 
@@ -59,27 +59,27 @@ using S9 = optional<int32>;  /* founded() */
 using TupleType = tuple<S7, S8, S4, S5, S0, S1, S2, S3, S9, S6>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
-  for (const auto* company : Iterators::mk_iterator(&companys)) {
+  for (const auto* company : Iterators::mk_vec_iterator(&companys)) {
     S9 s9 = S9();
     if (company && company->has_founded()) {
       s9 = company->founded();
     }
-    for (const auto* board_of_director : Iterators::mk_iterator(company ? &company->board_of_directors() : nullptr)) {
+    for (const auto* board_of_director : Iterators::mk_pb_iterator(company ? &company->board_of_directors() : nullptr)) {
       S6 s6 = S6();
       if (board_of_director) {
         s6 = *board_of_director;
       }
-      for (const auto* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
+      for (const auto* quarterly_profit : Iterators::mk_pb_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
         S7 s7 = S7();
         if (quarterly_profit) {
           s7 = *quarterly_profit;
         }
-        for (const auto* quarterly_revenue : Iterators::mk_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
+        for (const auto* quarterly_revenue : Iterators::mk_pb_iterator(company ? &company->financial().quarterly_revenues() : nullptr)) {
           S8 s8 = S8();
           if (quarterly_revenue) {
             s8 = *quarterly_revenue;
           }
-          for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+          for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
             S4 s4 = S4();
             if (all_employee && all_employee->has_id()) {
               s4 = all_employee->id();
@@ -96,12 +96,12 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
             if (all_employee && all_employee->has_enumx()) {
               s2 = Example1::EnumX_Name(static_cast<Example1::EnumX>(all_employee->enumx()));
             }
-            for (const auto* active_direct_report : Iterators::mk_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
+            for (const auto* active_direct_report : Iterators::mk_pb_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
               S1 s1 = S1();
               if (active_direct_report) {
                 s1 = *active_direct_report;
               }
-              for (const auto* each_enumy : Iterators::mk_iterator(all_employee ? &all_employee->enumy() : nullptr)) {
+              for (const auto* each_enumy : Iterators::mk_pb_iterator(all_employee ? &all_employee->enumy() : nullptr)) {
                 S3 s3 = S3();
                 if (each_enumy) {
                   s3 = Example1::EnumY_Name(static_cast<Example1::EnumY>(*each_enumy));

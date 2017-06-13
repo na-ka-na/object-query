@@ -17,7 +17,7 @@ tuples.print('all_employees.id', 'all_employees.name')
 */
 #include "example1.pb.h"
 #include "example1_utils.h"
-#include "generated_common.h"
+#include "protobuf_generated_common.h"
 
 using namespace std;
 
@@ -32,14 +32,14 @@ using S3 = optional<float>;  /* financial().quarterly_profits() */
 using TupleType = tuple<S1, S2>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
-  for (const auto* company : Iterators::mk_iterator(&companys)) {
-    for (const auto* quarterly_profit : Iterators::mk_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
+  for (const auto* company : Iterators::mk_vec_iterator(&companys)) {
+    for (const auto* quarterly_profit : Iterators::mk_pb_iterator(company ? &company->financial().quarterly_profits() : nullptr)) {
       S3 s3 = S3();
       if (quarterly_profit) {
         s3 = *quarterly_profit;
       }
       if (!Gt(s3, optional<int64>(0))) { continue; }
-      for (const auto* all_employee : Iterators::mk_iterator(company ? &company->all_employees() : nullptr)) {
+      for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
         S1 s1 = S1();
         if (all_employee && all_employee->has_id()) {
           s1 = all_employee->id();

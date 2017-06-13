@@ -29,35 +29,6 @@ void TestArthimeticFunctions() {
   EXPECT_EQ("-0.550000", Stringify(f));
 }
 
-void TestMyRangeIteratorEmpty() {
-  ::google::protobuf::RepeatedField<int> rf;
-  auto&& myit = Iterators::mk_iterator(&rf);
-  auto&& begin = myit.begin();
-  auto&& end = myit.end();
-  EXPECT_NE(begin, end);
-  EXPECT_EQ((int*) nullptr, *begin);
-  ++begin;
-  EXPECT_EQ(begin, end);
-}
-
-void TestMyRangeIteratorNonEmpty() {
-  ::google::protobuf::RepeatedField<int> rf;
-  rf.Add(1);
-  rf.Add(2);
-  auto&& myit = Iterators::mk_iterator(&rf);
-  auto&& begin = myit.begin();
-  auto&& end = myit.end();
-  EXPECT_NE(begin, end);
-  EXPECT_EQ(&rf.Get(0), *begin);
-  ++begin;
-  EXPECT_NE(begin, end);
-  EXPECT_EQ(&rf.Get(1), *begin);
-  ++begin;
-  EXPECT_EQ(begin, end);
-}
-
 int main() {
   TestArthimeticFunctions();
-  TestMyRangeIteratorEmpty();
-  TestMyRangeIteratorNonEmpty();
 }

@@ -20,3 +20,13 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #define EXPECT_NE(expected, actual, ...) \
   ASSERT(expected != actual, "expected:", expected, "actual:", actual, ##__VA_ARGS__)
 #endif
+
+#ifndef EXPECT_TRUE
+#define EXPECT_TRUE(actual, ...) \
+  ASSERT(static_cast<bool>(actual), "actual not true:", actual, ##__VA_ARGS__)
+#endif
+
+#ifndef EXPECT_FALSE
+#define EXPECT_FALSE(actual, ...) \
+  ASSERT(!static_cast<bool>(actual), "actual not false:", actual, ##__VA_ARGS__)
+#endif

@@ -4,7 +4,6 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/common/test
 )
 
-add_executable(GeneratedCommonTest generated_common_test.cc)
-target_link_libraries(GeneratedCommonTest ${PROTOBUF_LIBRARIES})
-add_test(GeneratedCommonTest GeneratedCommonTest)
-
+add_executable(ProtobufGeneratedCommonTest protobuf_generated_common_test.cc)
+target_link_libraries(ProtobufGeneratedCommonTest ${PROTOBUF_LIBRARIES})
+add_test(ProtobufGeneratedCommonTest ProtobufGeneratedCommonTest)
