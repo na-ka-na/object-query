@@ -65,11 +65,11 @@ if __name__ == "__main__":
     SOURCE_DIR = '../../src'
     proto_file = SOURCE_DIR + '/example/example1.json'
     golden_out = 'golden' + str(testnum) + '.out'
-    actual_out = 'actual' + str(testnum) + '.out'
+    actual_out = 'pb_actual' + str(testnum) + '.out'
 
     cmd_parts = ['../main/RunQuery']
     cmd_parts.append('--codeGenDir=' + SOURCE_DIR + '/example')
-    cmd_parts.append('--codeGenPrefix=generated_query' + str(testnum))
+    cmd_parts.append('--codeGenPrefix=pb_generated_query' + str(testnum))
     cmd_parts.append('--codeCompileDir=.')
     cmd_parts.append('--cppProtoHeader=example1.pb.h')
     cmd_parts.append('--cppProtoLib=./libExampleProtos.so')
