@@ -1,6 +1,6 @@
 financial.quarterly_profits | all_employees.name | all_employees.active
 --------------------------- | ------------------ | --------------------
-2.000000                    | abc                | false               
-1.000000                    | abc                | false               
-2.000000                    | def                | true                
-1.000000                    | def                | true                
+2.432427                    | abc                | false               
+1.322423                    | abc                | false               
+2.432427                    | def                | true                
+1.322423                    | def                | true                

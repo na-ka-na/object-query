@@ -24,12 +24,12 @@
     ],
     "financial": {
         "quarterlyProfits": [
-            1,
-            2
+            1.322423,
+            2.432427
         ],
         "quarterlyRevenues": [
-            1,
-            2
+            1.989245,
+            2.274987
         ]
     },
     "founded": 1
