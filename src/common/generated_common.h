@@ -187,7 +187,14 @@ public:
     }
 
     inline bool operator==(const ConstIterator& other) const {
-      return (singular == other.singular) && (**this == *other);
+      if ((singular == 0) && (other.singular == 0)) {
+        return (*curr) == (*other.curr);
+      } else if ((singular == 1) && (other.singular == 1)) {
+        return singular_elem == other.singular_elem;
+      } else if ((singular == 2) && (other.singular == 2)) {
+        return true;
+      }
+      return false;
     }
 
     inline bool operator!=(const ConstIterator& other) const {
