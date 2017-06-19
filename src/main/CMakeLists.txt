@@ -5,4 +5,4 @@ include_directories(
 )
 
 add_executable(RunQuery run_query.cc)
-target_link_libraries(RunQuery dl gflags QueryEngine)
+target_link_libraries(RunQuery dl gflags ProtobufQueryEngine)

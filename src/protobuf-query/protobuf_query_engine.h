@@ -79,9 +79,9 @@ struct PbQueryTree : public QueryTree<PbField> {
   PbField newField() override;
 };
 
-class QueryEngine {
+class ProtobufQueryEngine {
 public:
-  QueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out);
+  ProtobufQueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out);
   void process();
 
 private:

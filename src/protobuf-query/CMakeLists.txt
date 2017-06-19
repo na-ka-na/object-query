@@ -5,7 +5,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/protobuf-query
 )
 
-add_library(QueryEngine query_engine.cc)
-target_link_libraries(QueryEngine ${PROTOBUF_LIBRARIES} Utils SqlParser)
+add_library(ProtobufQueryEngine protobuf_query_engine.cc)
+target_link_libraries(ProtobufQueryEngine ${PROTOBUF_LIBRARIES} Utils SqlParser)
 
 add_subdirectory(test)

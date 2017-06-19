@@ -13,8 +13,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <gflags/gflags.h>
 #include <cstdlib>
 #include "utils.h"
-#include "query_engine.h"
 #include "global_include.h"
+#include "protobuf_query_engine.h"
 
 DEFINE_string(codeGenDir, ".",
               "optional, directory where generated code files are emitted, "
@@ -210,7 +210,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  pb::QueryEngine engine(spec, rawSql, generated);
+  pb::ProtobufQueryEngine engine(spec, rawSql, generated);
   engine.process();
 
   int result = dlclose(libHandle);

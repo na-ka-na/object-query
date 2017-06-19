@@ -9,7 +9,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <regex>
 #include <algorithm>
 #include "utils.h"
-#include "query_engine.h"
+#include "protobuf_query_engine.h"
 
 using namespace std;
 using namespace google::protobuf;
@@ -260,10 +260,10 @@ PbField PbQueryTree::newField() {
   return PbField(protoDescriptor);
 }
 
-QueryEngine::QueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out) :
+ProtobufQueryEngine::ProtobufQueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out) :
     spec(spec), query(SelectQuery(rawSql)), out(out) {}
 
-void QueryEngine::printCode() {
+void ProtobufQueryEngine::printCode() {
   for (const string& headerInclude : spec.headerIncludes) {
     out << "#include \"" << headerInclude << "\"" << endl;
   }
@@ -536,7 +536,7 @@ void printTuples(const vector<TupleType>& tuples) {
   out << "}" << endl;
 }
 
-void QueryEngine::process() {
+void ProtobufQueryEngine::process() {
   ASSERT(query.parse(), "Parsing select query failed");
   out << "/*" << endl;
   out << query.str() << endl << endl;
