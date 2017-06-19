@@ -17,7 +17,7 @@ with (company = parseFromFile()) {
 tuples.print('all_employees.id', '(financial.quarterly_revenues/all_employees.active_direct_reports)')
 */
 #include "example1.pb.h"
-#include "example1_utils.h"
+#include "proto_example1_utils.h"
 #include "protobuf_generated_common.h"
 
 using namespace std;

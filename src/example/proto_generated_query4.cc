@@ -16,7 +16,7 @@ tuples.sortBy('all_employees.active', 'financial.quarterly_profits', 'all_employ
 tuples.print('financial.quarterly_profits', 'all_employees.name', 'all_employees.active')
 */
 #include "example1.pb.h"
-#include "example1_utils.h"
+#include "proto_example1_utils.h"
 #include "protobuf_generated_common.h"
 
 using namespace std;

@@ -12,7 +12,7 @@ with (company = parseFromFile()) {
 tuples.print('EmployeeStr(all_employees.name,all_employees.id)', 'STR(all_employees.id)', 'STR(all_employees)')
 */
 #include "example1.pb.h"
-#include "example1_utils.h"
+#include "proto_example1_utils.h"
 #include "protobuf_generated_common.h"
 
 using namespace std;

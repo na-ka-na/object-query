@@ -47,33 +47,21 @@ TEST_SQL_QUERIES = [
      FROM Example1.Company",
 ]
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        sys.stderr.write('Invalid num arguments, expected atleast 2, testnum and sql query\n')
-        sys.exit(1)
-
-    testnum = int(sys.argv[1])
-    if (testnum < 1) or (testnum > len(TEST_SQL_QUERIES)):
-        sys.stderr.write('Invalid testnum ' + str(testnum) + ' valid range: [1,' +
-                         str(len(TEST_SQL_QUERIES)) + ']')
-        sys.exit(1)
-
-    cmake_prefix_paths = []
-    if len(sys.argv) >= 3:
-        cmake_prefix_paths = sys.argv[2].split(',')
-
+def runTest(querytype, testnum, cmake_prefix_paths):
     SOURCE_DIR = '../../src'
-    proto_file = SOURCE_DIR + '/example/example1.json'
+    data_file = SOURCE_DIR + '/example/example1.json'
     golden_out = 'golden' + str(testnum) + '.out'
-    actual_out = 'pb_actual' + str(testnum) + '.out'
+    actual_out = querytype + '_actual' + str(testnum) + '.out'
 
     cmd_parts = ['../main/RunQuery']
+    cmd_parts.append('--queryType=' + querytype)
     cmd_parts.append('--codeGenDir=' + SOURCE_DIR + '/example')
-    cmd_parts.append('--codeGenPrefix=pb_generated_query' + str(testnum))
+    cmd_parts.append('--codeGenPrefix=' + querytype + '_generated_query' + str(testnum))
     cmd_parts.append('--codeCompileDir=.')
-    cmd_parts.append('--cppProtoHeader=example1.pb.h')
-    cmd_parts.append('--cppProtoLib=./libExampleProtos.so')
-    cmd_parts.append('--cppExtraIncludes=example1_utils.h')
+    if querytype == 'proto':
+        cmd_parts.append('--cppProtoHeader=example1.pb.h')
+        cmd_parts.append('--cppProtoLib=./libExampleProtos.so')
+        cmd_parts.append('--cppExtraIncludes=proto_example1_utils.h')
     cppExtraIncludeDirs = []
     cppExtraLinkLibDirs = []
     if len(cmake_prefix_paths) > 0:
@@ -84,7 +72,7 @@ if __name__ == "__main__":
     if len(cppExtraLinkLibDirs) > 0:
         cmd_parts.append('--cppExtraLinkLibDirs=' + ','.join(cppExtraLinkLibDirs))
     cmd_parts.append(TEST_SQL_QUERIES[testnum-1])
-    cmd_parts.append(proto_file)
+    cmd_parts.append(data_file)
 
     # subprocess.check* will raise error if command fails
     sys.stderr.write('RUNNING ' + ' '.join(cmd_parts) + '\n')
@@ -99,3 +87,26 @@ if __name__ == "__main__":
         sys.stderr.write(diff_res)
         exit(1)
     sys.stderr.write('Success\n')
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        sys.stderr.write('Invalid num arguments, expected atleast 2, querytype, testnum\n')
+        sys.exit(1)
+
+    querytype = sys.argv[1]
+    if querytype != 'proto' and querytype != 'json':
+        sys.stderr.write('querytype should be either proto or json')
+        sys.exit(1)
+
+    testnum = int(sys.argv[2])
+    if (testnum < 1) or (testnum > len(TEST_SQL_QUERIES)):
+        sys.stderr.write('Invalid testnum ' + str(testnum) + ' valid range: [1,' +
+                         str(len(TEST_SQL_QUERIES)) + ']')
+        sys.exit(1)
+
+    cmake_prefix_paths = []
+    if len(sys.argv) >= 4:
+        cmake_prefix_paths = sys.argv[3].split(',')
+
+    runTest(querytype, testnum, cmake_prefix_paths)

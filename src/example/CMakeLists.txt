@@ -23,13 +23,15 @@ add_custom_command(OUTPUT ${common_test_py}
 string(REPLACE ";" "," CMAKE_PREFIX_PATHS "${CMAKE_PREFIX_PATH}")
 
 foreach(testnum RANGE 1 8)
-  set(golden_out "golden${testnum}.out")
-  add_custom_command(OUTPUT ${golden_out}
-                     COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${golden_out} ${CMAKE_CURRENT_BINARY_DIR}
-                     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${golden_out})
-  add_custom_target(PbTest${testnum} ALL DEPENDS ${common_test_py} ${golden_out} RunQuery)
-  add_test(NAME PbTest${testnum} COMMAND python ${common_test_py} ${testnum} ${CMAKE_PREFIX_PATHS})
-  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "pb_actual${testnum}.out")
-  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "pb_generated_query${testnum}")
-  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "pb_generated_query${testnum}.dSYM")
+  foreach(qtype IN ITEMS proto)
+  	set(golden_out "golden${testnum}.out")
+  	add_custom_command(OUTPUT ${golden_out}
+                       COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${golden_out} ${CMAKE_CURRENT_BINARY_DIR}
+                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${golden_out})
+  	add_custom_target(${qtype}Test${testnum} ALL DEPENDS ${common_test_py} ${golden_out} RunQuery)
+  	add_test(NAME ${qtype}Test${testnum} COMMAND python ${common_test_py} ${qtype} ${testnum} ${CMAKE_PREFIX_PATHS})
+  	set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${qtype}"_actual${testnum}.out")
+  	set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${qtype}"_generated_query${testnum}")
+  	set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${qtype}"_generated_query${testnum}.dSYM")
+  endforeach(qtype)
 endforeach(testnum)

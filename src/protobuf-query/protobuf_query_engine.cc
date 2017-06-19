@@ -215,7 +215,7 @@ string PbField::accessor() const {
       [] (const PbFieldPart& part) {return part.accessor();});
 }
 
-string PbQueryTree::getProtoCppType() const {
+string PbQueryTree::getRootType() const {
   return PbFieldPart::full_name_to_cpp_type(protoDescriptor->full_name());
 }
 
@@ -249,14 +249,14 @@ void PbQueryTree::initProto(const string& protoName) {
          "Unable to find proto descriptor for", protoName);
 }
 
-string PbQueryTree::getRootName() {
+string PbQueryTree::getRootName() const {
   string rootName = protoDescriptor->name();
   std::transform(rootName.begin(), rootName.end(),
                  rootName.begin(), ::tolower);
   return rootName;
 }
 
-PbField PbQueryTree::newField() {
+PbField PbQueryTree::newField() const {
   return PbField(protoDescriptor);
 }
 
@@ -390,7 +390,7 @@ void ProtobufQueryEngine::printCode() {
     out << endl;
   }
 
-  out << "void runSelect(const vector<" << queryTree.getProtoCppType() << ">& "
+  out << "void runSelect(const vector<" << queryTree.getRootType() << ">& "
       << Utils::makePlural(queryTree.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
   unsigned numSelectAndOrderByFieldsProcessed = 0;
@@ -524,7 +524,7 @@ void printTuples(const vector<TupleType>& tuples) {
   // main
   out << "int main(int argc, char** argv) {" << endl;
   string protosVecIden = Utils::makePlural(queryTree.root.objName);
-  out << "  vector<" << queryTree.getProtoCppType() << "> "
+  out << "  vector<" << queryTree.getRootType() << "> "
       << protosVecIden << ";" << endl;
   out << "  FROM(argc, argv, " << protosVecIden << ");" << endl;
   out << "  vector<TupleType> tuples;" << endl;

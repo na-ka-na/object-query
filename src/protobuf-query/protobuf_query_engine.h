@@ -57,26 +57,29 @@ public:
   PbField(const Descriptor* rootDescriptor);
   bool operator<(const PbField& other) const;
   bool operator==(const PbField& other) const;
-  string code_type() const;
+  void addFieldPart(const string&) override;
+  bool repeated() const override;
+  string code_type() const override;
+  string accessor() const override;
+  // custom PbField functions
   bool is_enum() const;
   string wrap_enum_with_name_accessor(const string& accessor) const;
   string has_check(const string& objName) const;
-  void addFieldPart(const string&) override;
-  bool repeated() const override;
-  string accessor() const override;
 private:
   vector<PbFieldPart> fieldParts;
   const Descriptor* descriptor = nullptr;
 };
 
-struct PbQueryTree : public QueryTree<PbField> {
-  const Descriptor* protoDescriptor;
+class PbQueryTree : public QueryTree<PbField> {
+public:
   void initProto(const string& protoName);
   void resolveStarIdentifier(const string& star_identifier,
                              vector<string>& resolved_identifiers);
-  string getProtoCppType() const;
-  string getRootName() override;
-  PbField newField() override;
+  string getRootType() const override;
+  string getRootName() const override;
+  PbField newField() const override;
+private:
+  const Descriptor* protoDescriptor;
 };
 
 class ProtobufQueryEngine {
@@ -89,7 +92,6 @@ private:
   SelectQuery query;
   PbQueryTree queryTree;
   ostream& out;
-  void printPlan();
   void printCode();
 };
 

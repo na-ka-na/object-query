@@ -6,6 +6,8 @@ you may not use this file except in compliance with the License.
 You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 */
 
+#pragma once
+
 #include <functional>
 #include <map>
 #include <string>
@@ -60,11 +62,13 @@ struct Node {
                        map<int, Node<FieldT>*>& endNodesMap);
 };
 
+// Fields should also implement ==, <
 class Field {
 public:
   virtual ~Field() {};
   virtual void addFieldPart(const string&) = 0;
   virtual bool repeated() const = 0;
+  virtual string code_type() const = 0;
   virtual string accessor() const = 0;
 };
 
@@ -79,8 +83,9 @@ struct QueryTree {
   Node<FieldT> root;
   map<string, FieldT> idFieldMap;
 
-  virtual string getRootName() = 0;
-  virtual FieldT newField() = 0;
+  virtual string getRootName() const = 0;
+  virtual string getRootType() const = 0;
+  virtual FieldT newField() const = 0;
 
   void process(const SelectQuery& query);
   void printPlan(const SelectQuery& query, ostream& out);
