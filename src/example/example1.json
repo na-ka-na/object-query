@@ -1,34 +1,39 @@
 {
-    "allEmployees": [
+    "all_employees": [
         {
             "active": false,
-            "id": 1,
-            "name": "abc",
             "enumx": "ENUMX_X1",
-            "enumy": ["ENUMY_Y1", "ENUMY_Y2"]
+            "enumy": [
+                "ENUMY_Y1",
+                "ENUMY_Y2"
+            ],
+            "id": 1,
+            "name": "abc"
         },
         {
             "active": true,
-            "activeDirectReports": [
+            "active_direct_reports": [
                 1,
                 2
             ],
+            "enumy": [
+                "ENUMY_Y1"
+            ],
             "id": 2,
-            "name": "def",
-            "enumy": ["ENUMY_Y1"]
+            "name": "def"
         }
     ],
-    "boardOfDirectors": [
+    "board_of_directors": [
         1,
         2
     ],
     "financial": {
-        "quarterlyProfits": [
+        "quarterly_profits": [
             1.322423,
-            2.432427
+            2.4324269
         ],
-        "quarterlyRevenues": [
-            1.989245,
+        "quarterly_revenues": [
+            1.9892451,
             2.274987
         ]
     },
