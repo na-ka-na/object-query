@@ -26,10 +26,16 @@ class BooleanExpr;
 class SelectField;
 using SelectAliases = map<string, const Expr*>;
 
+struct ConstExpr {
+  string varName;
+  string varType;
+  bool isRegex;
+};
+
 struct CodeGenReqs {
   map<string, string> idVarMap;
   map<string, string> idDefaultMap;
-  map<string, string> regexMap;
+  map<string, ConstExpr> constExprs; // expr => variable name
   map<string, unsigned> fnMap; // name => number of params
 };
 
@@ -114,7 +120,7 @@ public:
   bool isIdentifier() const;
   bool isString() const;
   const string& getIdentifier() const;
-  const string& getStringValue() const;
+  string constExpr() const;
 private:
   ExprType type_;
   // TODO(sanchay): figure out how to use variant.

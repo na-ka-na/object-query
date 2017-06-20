@@ -26,6 +26,7 @@ vector<string> header = {
   "emp.active",
   "emp.enumx",
 };
+
 using S0 = optional<bool>;   /* active() */
 using S1 = optional<string>; /* enumx() */
 using S2 = optional<int32>;  /* id() */

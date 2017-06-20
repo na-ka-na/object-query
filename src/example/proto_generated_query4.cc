@@ -26,6 +26,7 @@ vector<string> header = {
   "all_employees.name",
   "all_employees.active",
 };
+
 using S0 = optional<bool>;   /* active() */
 using S1 = optional<int32>;  /* id() */
 using S2 = optional<string>; /* name() */

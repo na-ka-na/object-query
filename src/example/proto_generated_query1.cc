@@ -46,6 +46,7 @@ vector<string> header = {
   "founded",
   "board_of_directors",
 };
+
 using S0 = optional<bool>;   /* active() */
 using S1 = optional<int32>;  /* active_direct_reports() */
 using S2 = optional<string>; /* enumx() */

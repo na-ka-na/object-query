@@ -26,6 +26,11 @@ vector<string> header = {
   "all_employees.id",
   "(financial.quarterly_revenues/all_employees.active_direct_reports)",
 };
+
+auto $c1 = 0;
+auto $c3 = 1;
+auto $c2 = 2;
+
 using S0 = optional<int32>;  /* active_direct_reports() */
 using S1 = optional<int32>;  /* id() */
 using S2 = optional<float>;  /* financial().quarterly_revenues() */
@@ -39,7 +44,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
       if (quarterly_revenue) {
         s2 = *quarterly_revenue;
       }
-      if (!Gt(Mult(s2, optional<int64>(2)), optional<int64>(1))) { continue; }
+      if (!Gt(Mult(s2, &$c2), &$c3)) { continue; }
       for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
         S1 s1 = S1();
         if (all_employee && all_employee->has_id()) {
@@ -50,7 +55,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
           if (active_direct_report) {
             s0 = *active_direct_report;
           }
-          if (!Gt(s0, optional<int64>(0))) { continue; }
+          if (!Gt(s0, &$c1)) { continue; }
           S3 s3 = Divide(s2, s0);
           tuples.emplace_back(s1, s3);
         }

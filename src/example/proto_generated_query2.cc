@@ -25,6 +25,12 @@ vector<string> header = {
   "all_employees.id",
   "all_employees.name",
 };
+
+string $c3 = "abc";
+string $c1 = "def";
+auto $c4 = 0;
+auto $c2 = true;
+
 using S0 = optional<bool>;   /* active() */
 using S1 = optional<int32>;  /* id() */
 using S2 = optional<string>; /* name() */
@@ -38,7 +44,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
       if (quarterly_profit) {
         s3 = *quarterly_profit;
       }
-      if (!Gt(s3, optional<int64>(0))) { continue; }
+      if (!Gt(s3, &$c4)) { continue; }
       for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
         S1 s1 = S1();
         if (all_employee && all_employee->has_id()) {
@@ -53,7 +59,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
           s0 = all_employee->active();
         }
         if (!IsNotNull(s1)) { continue; }
-        if (!((Eq(s2, optional<string>("def")) && Eq(s0, optional<bool>(true))) || Eq(s2, optional<string>("abc")))) { continue; }
+        if (!((Eq(s2, &$c1) && Eq(s0, &$c2)) || Eq(s2, &$c3))) { continue; }
         tuples.emplace_back(s1, s2);
       }
     }

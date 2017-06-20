@@ -279,47 +279,61 @@ void ProtobufQueryEngine::printCode() {
         return "  \"" + sf.getHeader() + "\",";
       });
   header += "\n};";
-  out << header << endl;
+  out << header << endl << endl;
 
   CodeGenReqs cgr;
   query.extractStatics(cgr);
 
-  for (const auto& f : cgr.fnMap) {
-    out << "\n";
-    const string& fnname = f.first;
-    unsigned num_params = f.second;
-    out << "template<";
-    for (unsigned i=0; i<num_params; i++) {
-      out << "typename Arg" << i << ", ";
+  if (!cgr.constExprs.empty()) {
+    for (const auto& e : cgr.constExprs) {
+      auto expression = e.first;
+      if (e.second.isRegex) {
+        expression = "regex(" + expression + ", regex::optimize)";
+      }
+      out << e.second.varType << " " << e.second.varName << " = "
+          << expression << ";" << endl;
     }
-    out << "typename Ret=decltype(" << fnname << "(";
-    for (unsigned i=0; i<num_params; i++) {
-      out << "Arg" << i << "()";
-      if (i != (num_params-1)) out << ", ";
+    out << endl;
+  }
+
+  if (!cgr.fnMap.empty()) {
+    for (const auto& f : cgr.fnMap) {
+      const string& fnname = f.first;
+      unsigned num_params = f.second;
+      out << "template<";
+      for (unsigned i=0; i<num_params; i++) {
+        out << "typename Arg" << i << ", ";
+      }
+      out << "typename Ret=decltype(" << fnname << "(";
+      for (unsigned i=0; i<num_params; i++) {
+        out << "Arg" << i << "()";
+        if (i != (num_params-1)) out << ", ";
+      }
+      out << "))>\n";
+      out << "optional<Ret> $" << fnname << "(";
+      for (unsigned i=0; i<num_params; i++) {
+        out << "const optional<Arg" << i << ">& arg" << i;
+        if (i != (num_params-1)) out << ", ";
+      }
+      out << ") {\n";
+      out << "  if (";
+      for (unsigned i=0; i<num_params; i++) {
+        out << "arg" << i;
+        if (i != (num_params-1)) out << " && ";
+      }
+      out << ") {\n";
+      out << "    return optional<Ret>(" << fnname << "(";
+      for (unsigned i=0; i<num_params; i++) {
+        out << "*arg" << i;
+        if (i != (num_params-1)) out << ", ";
+      }
+      out << "));\n";
+      out << "  } else {\n";
+      out << "    return optional<Ret>();\n";
+      out << "  }\n";
+      out << "}\n";
     }
-    out << "))>\n";
-    out << "optional<Ret> $" << fnname << "(";
-    for (unsigned i=0; i<num_params; i++) {
-      out << "const optional<Arg" << i << ">& arg" << i;
-      if (i != (num_params-1)) out << ", ";
-    }
-    out << ") {\n";
-    out << "  if (";
-    for (unsigned i=0; i<num_params; i++) {
-      out << "arg" << i;
-      if (i != (num_params-1)) out << " && ";
-    }
-    out << ") {\n";
-    out << "    return optional<Ret>(" << fnname << "(";
-    for (unsigned i=0; i<num_params; i++) {
-      out << "*arg" << i;
-      if (i != (num_params-1)) out << ", ";
-    }
-    out << "));\n";
-    out << "  } else {\n";
-    out << "    return optional<Ret>();\n";
-    out << "  }\n";
-    out << "}\n";
+    out << endl;
   }
 
   map<PbField, string> fieldVarMap;
@@ -378,17 +392,6 @@ void ProtobufQueryEngine::printCode() {
   tupleType += ">;";
   out << tupleType << endl;
   out << endl;
-
-  if (!cgr.regexMap.empty()) {
-    for (auto& e : cgr.regexMap) {
-      string regexVar = "r" + to_string(varIdx);
-      varIdx++;
-      out << "std::regex " << regexVar << "(\"" << e.first << "\", "
-          << "std::regex::optimize);" << endl;
-      e.second = regexVar;
-    }
-    out << endl;
-  }
 
   out << "void runSelect(const vector<" << queryTree.getRootType() << ">& "
       << Utils::makePlural(queryTree.root.objName)

@@ -28,6 +28,11 @@ inline string Stringify(const T& t) {
 }
 
 template<typename T>
+inline string Stringify(const T* t) {
+  return t ? Stringify<T>(*t) : "NULL";
+}
+
+template<typename T>
 inline string Stringify(const optional<T>& t) {
   return t ? Stringify<T>(*t) : "NULL";
 }
@@ -55,106 +60,110 @@ inline int INT(const T& t) {
 }
 
 template<typename T>
-inline bool IsNull(const optional<T>& t) {
+inline bool IsNull(const T& t) {
   return !static_cast<bool>(t);
 }
 
 template<typename T>
-inline bool IsNotNull(const optional<T>& t) {
+inline bool IsNotNull(const T& t) {
   return !IsNull(t);
 }
 
 template<typename L, typename R>
-inline bool Eq(const optional<L>& l, const optional<R>& r) {
+inline bool Eq(const L& l, const R& r) {
   return (!l && !r) || (l && r && (*l == *r));
 }
 
 template<typename L, typename R>
-inline bool Ne(const optional<L>& l, const optional<R>& r) {
+inline bool Ne(const L& l, const R& r) {
   return !Eq(l, r);
 }
 
 template<typename L, typename R>
-inline bool Lt(const optional<L>& l, const optional<R>& r) {
+inline bool Lt(const L& l, const R& r) {
   return (!l && r) || (l && r && (*l < *r));
 }
 
 template<typename L, typename R>
-inline bool Le(const optional<L>& l, const optional<R>& r) {
+inline bool Le(const L& l, const R& r) {
   return !Lt(r, l);
 }
 
 template<typename L, typename R>
-inline bool Gt(const optional<L>& l, const optional<R>& r) {
+inline bool Gt(const L& l, const R& r) {
   return Lt(r, l);
 }
 
 template<typename L, typename R>
-inline bool Ge(const optional<L>& l, const optional<R>& r) {
+inline bool Ge(const L& l, const R& r) {
   return !Lt(l, r);
 }
 
-inline bool Like(const optional<string>& l, const optional<string>& r) {
+template<typename L, typename R>
+inline bool Like(const L& l, const R& r) {
   return (!l && !r) || (l && r && std::regex_match(*l, std::regex(*r)));
 }
 
-inline bool Like(const optional<string>& l, const std::regex& r) {
+template<typename L>
+inline bool Like(const L& l, const std::regex& r) {
   return (l && std::regex_match(*l, r));
 }
 
 template<typename T>
-inline auto Uminus(const optional<T>& t) {
+inline auto Uminus(const T& t) {
   optional<decltype(-(*t))> o;
   if (t) o = -(*t);
   return o;
 }
 
 template<typename L, typename R>
-inline auto Plus(const optional<L>& l, const optional<R>& r) {
+inline auto Plus(const L& l, const R& r) {
   optional<decltype(*l + *r)> o;
   if (l && r) o = *l + *r;
   return o;
 }
 
 template<typename L, typename R>
-inline auto Minus(const optional<L>& l, const optional<R>& r) {
+inline auto Minus(const L& l, const R& r) {
   optional<decltype(*l - *r)> o;
   if (l && r) o = *l - *r;
   return o;
 }
 
 template<typename L, typename R>
-inline auto Mult(const optional<L>& l, const optional<R>& r) {
+inline auto Mult(const L& l, const R& r) {
   optional<decltype((*l) * (*r))> o;
   if (l && r) o = (*l) * (*r);
   return o;
 }
 
 template<typename L, typename R>
-inline auto Divide(const optional<L>& l, const optional<R>& r) {
+inline auto Divide(const L& l, const R& r) {
   optional<decltype(*l / *r)> o;
   if (l && r) o = *l / *r;
   return o;
 }
 
 template<typename T>
-inline int Compare(const T& t1, const T& t2) {
-  return t1 - t2;
+inline int compare(const T& t1, const T& t2) {
+  if (t1 < t2) return -1;
+  else if (t1 > t2) return 1;
+  return 0;
 }
 
 template<>
-inline int Compare(const string& t1, const string& t2) {
+inline int compare(const string& t1, const string& t2) {
   return t1.compare(t2);
 }
 
 template<typename T>
-inline int Compare(const optional<T>& t1, const optional<T>& t2) {
+inline int Compare(const T& t1, const T& t2) {
   if (!t1) {
     return t2 ? -1 : 0;
   } else if (!t2) {
     return 1;
   } else {
-    return Compare(*t1, *t2);
+    return compare(*t1, *t2);
   }
 }
 

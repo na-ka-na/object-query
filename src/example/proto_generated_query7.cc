@@ -31,7 +31,6 @@ optional<Ret> $EmployeeStr(const optional<Arg0>& arg0, const optional<Arg1>& arg
     return optional<Ret>();
   }
 }
-
 template<typename Arg0, typename Ret=decltype(STR(Arg0()))>
 optional<Ret> $STR(const optional<Arg0>& arg0) {
   if (arg0) {
@@ -40,6 +39,7 @@ optional<Ret> $STR(const optional<Arg0>& arg0) {
     return optional<Ret>();
   }
 }
+
 using S0 = optional<Example1::Employee>; /* all_employees() */
 using S1 = optional<int32>;  /* id() */
 using S2 = optional<string>; /* name() */

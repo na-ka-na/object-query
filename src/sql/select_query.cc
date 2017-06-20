@@ -254,9 +254,14 @@ const string& Expr::getIdentifier() const {
   return identifier_;
 }
 
-const string& Expr::getStringValue() const {
-  ASSERT(isString());
-  return string_value_;
+string Expr::constExpr() const {
+  switch (type_) {
+  case STRING:        return "\"" + string_value_ + "\"";
+  case LONG:          return to_string(long_value_);
+  case DOUBLE:        return to_string(double_value_);
+  case BOOL:          return bool_value_ ? "true" : "false";
+  default:            THROW("Not a constExpr", type_);
+  }
 }
 
 const Expr& SelectField::getExpr() const {
@@ -514,11 +519,28 @@ void FnCallExpr::extractStatics(CodeGenReqs& cgr) const {
   }
 }
 
+unsigned constantExprCounter = 0;
+
+void addVar(const string& value, const string& type, CodeGenReqs& cgr) {
+  auto f = cgr.constExprs.find(value);
+  if (f != cgr.constExprs.end()) {
+    return;
+  }
+  string var = "$c" + to_string(++constantExprCounter);
+  auto& resolved = cgr.constExprs[value];
+  resolved.varName = var;
+  resolved.varType = type;
+}
+
 void Expr::extractStatics(CodeGenReqs& cgr) const {
   switch (type_) {
   case BINARY_EXPR:   binary_expr_.extractStatics(cgr); break;
   case UNARY_EXPR:    unary_expr_.extractStatics(cgr); break;
   case FN_CALL_EXPR:  fn_call_expr_.extractStatics(cgr); break;
+  case STRING:        addVar(constExpr(), "string", cgr); break;
+  case LONG:          addVar(constExpr(), "auto", cgr); break;
+  case DOUBLE:        addVar(constExpr(), "auto", cgr); break;
+  case BOOL:          addVar(constExpr(), "auto", cgr); break;
   default:            break;
   }
 }
@@ -529,11 +551,14 @@ void CompoundBooleanExpr::extractStatics(CodeGenReqs& cgr) const {
 }
 
 void SimpleBooleanExpr::extractStatics(CodeGenReqs& cgr) const {
-  if ((op_ == LIKE) && (rhs_.isString())) {
-    cgr.regexMap.emplace(rhs_.getStringValue(), "");
-  }
   lhs_.extractStatics(cgr);
   rhs_.extractStatics(cgr);
+  if ((op_ == LIKE) && (rhs_.isString())) {
+    auto f = cgr.constExprs.find(rhs_.constExpr());
+    ASSERT(f != cgr.constExprs.end());
+    f->second.isRegex = true;
+    f->second.varType = "regex";
+  }
 }
 
 void NullaryBooleanExpr::extractStatics(CodeGenReqs&) const {
@@ -621,11 +646,13 @@ string Expr::code(const CodeGenReqs& cgr) const {
   case FN_CALL_EXPR:  return fn_call_expr_.code(cgr);
   case IDENTIFIER:    {auto f = cgr.idVarMap.find(identifier_);
                        return f==cgr.idVarMap.end() ? identifier_ : f->second;}
-  case STRING:        return string("optional<string>(") + "\"" + string_value_ + "\")";
-  case LONG:          return string("optional<int64>(") + to_string(long_value_) + ")";
-  case DOUBLE:        return string("optional<double>(") + to_string(double_value_) + ")";
-  case BOOL:          return string("optional<bool>(") + (bool_value_ ? "true" : "false") + ")";
-  default:            return "<Expr>";
+  case STRING:        /* fallthrough */
+  case LONG:          /* fallthrough */
+  case DOUBLE:        /* fallthrough */
+  case BOOL:          {auto f = cgr.constExprs.find(constExpr());
+                       ASSERT(f != cgr.constExprs.end());
+                       return "&" + f->second.varName;}
+  default:            THROW("Unhandled type:", type_);
   }
 }
 
@@ -654,9 +681,10 @@ string SimpleBooleanExpr::code(const CodeGenReqs& cgr) const {
   string lhs_code = lhs_.code(cgr);
   string rhs_code;
   if ((op_ == LIKE) && (rhs_.isString())) {
-    auto f = cgr.regexMap.find(rhs_.getStringValue());
-    ASSERT(f != cgr.regexMap.end());
-    rhs_code = f->second;
+    auto f = cgr.constExprs.find(rhs_.constExpr());
+    ASSERT(f != cgr.constExprs.end());
+    ASSERT(f->second.isRegex);
+    rhs_code = f->second.varName;
   } else {
     rhs_code = rhs_.code(cgr);
   }
