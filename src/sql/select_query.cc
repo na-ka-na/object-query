@@ -74,7 +74,15 @@ Expr Expr::create(UnaryExprOp op, const Expr& uexpr) {
 Expr Expr::createFnCall(const string& fn, const vector<Expr>& params) {
   Expr expr;
   expr.type_ = FN_CALL_EXPR;
-  expr.fn_call_expr_.fn_ = fn;
+  expr.fn_call_expr_.orig_fn_name_ = fn;
+  for (size_t i=0; i<fn.size(); ++i) {
+    if ((i < (fn.size()-1)) && (fn[i] == ':') && (fn[i+1] == ':')) {
+      expr.fn_call_expr_.fn_expr_name_ += '_';
+      ++i;
+    } else {
+      expr.fn_call_expr_.fn_expr_name_ += fn[i];
+    }
+  }
   for (const Expr& param : params) {
     auto param_ptr = make_shared<Expr>();
     *param_ptr = param;
@@ -395,7 +403,7 @@ string UnaryExpr::str() const {
 }
 
 string FnCallExpr::str() const {
-  string str = fn_ + "(";
+  string str = fn_expr_name_ + "(";
   if (params_.size() > 0) {
     str += params_[0]->str();
     for (size_t i=1; i<params_.size(); i++) {
@@ -510,12 +518,26 @@ void UnaryExpr::extractStatics(CodeGenReqs& cgr) const {
 }
 
 void FnCallExpr::extractStatics(CodeGenReqs& cgr) const {
-  auto f = cgr.fnMap.find(fn_);
-  if (f == cgr.fnMap.end()) {
-    cgr.fnMap.emplace(fn_, params_.size());
+  FnExpr& expr = cgr.fnMap[fn_expr_name_];
+  if (expr.origFnName == "") {
+    expr.origFnName = orig_fn_name_;
+    expr.numParams = params_.size();
   } else {
-    ASSERT(params_.size() == f->second, "Num params mismatch for fn_",
-           fn_, f->second, params_.size());
+    ASSERT(orig_fn_name_ == expr.origFnName, "Function name mismatch for fn_",
+           orig_fn_name_, expr.origFnName, fn_expr_name_);
+    ASSERT(params_.size() == expr.numParams, "Num params mismatch for fn_",
+           orig_fn_name_, expr.numParams, params_.size());
+  }
+
+  auto f = cgr.fnMap.find(fn_expr_name_);
+  if (f == cgr.fnMap.end()) {
+    FnExpr& expr = cgr.fnMap[fn_expr_name_];
+    expr.numParams = params_.size();
+    expr.origFnName = orig_fn_name_;
+  } else {
+    const FnExpr& existing = f->second;
+    ASSERT(params_.size() == existing.numParams, "Num params mismatch for fn_",
+           orig_fn_name_, existing.numParams, params_.size());
   }
 }
 
@@ -628,7 +650,7 @@ string UnaryExpr::code(const CodeGenReqs& cgr) const {
 }
 
 string FnCallExpr::code(const CodeGenReqs& cgr) const {
-  string code = "$" + fn_ + "(";
+  string code = "$" + fn_expr_name_ + "(";
   if (params_.size() > 0) {
     code += params_[0]->code(cgr);
     for (size_t i=1; i<params_.size(); i++) {

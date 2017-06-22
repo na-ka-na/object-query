@@ -299,33 +299,33 @@ void ProtobufQueryEngine::printCode() {
   if (!cgr.fnMap.empty()) {
     for (const auto& f : cgr.fnMap) {
       const string& fnname = f.first;
-      unsigned num_params = f.second;
+      const FnExpr& fnexpr = f.second;
       out << "template<";
-      for (unsigned i=0; i<num_params; i++) {
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
         out << "typename Arg" << i << ", ";
       }
-      out << "typename Ret=decltype(" << fnname << "(";
-      for (unsigned i=0; i<num_params; i++) {
+      out << "typename Ret=decltype(" << fnexpr.origFnName << "(";
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
         out << "Arg" << i << "()";
-        if (i != (num_params-1)) out << ", ";
+        if (i != (fnexpr.numParams-1)) out << ", ";
       }
       out << "))>\n";
       out << "optional<Ret> $" << fnname << "(";
-      for (unsigned i=0; i<num_params; i++) {
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
         out << "const optional<Arg" << i << ">& arg" << i;
-        if (i != (num_params-1)) out << ", ";
+        if (i != (fnexpr.numParams-1)) out << ", ";
       }
       out << ") {\n";
       out << "  if (";
-      for (unsigned i=0; i<num_params; i++) {
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
         out << "arg" << i;
-        if (i != (num_params-1)) out << " && ";
+        if (i != (fnexpr.numParams-1)) out << " && ";
       }
       out << ") {\n";
-      out << "    return optional<Ret>(" << fnname << "(";
-      for (unsigned i=0; i<num_params; i++) {
+      out << "    return optional<Ret>(" << fnexpr.origFnName << "(";
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
         out << "*arg" << i;
-        if (i != (num_params-1)) out << ", ";
+        if (i != (fnexpr.numParams-1)) out << ", ";
       }
       out << "));\n";
       out << "  } else {\n";

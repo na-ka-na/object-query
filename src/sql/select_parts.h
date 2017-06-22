@@ -32,11 +32,16 @@ struct ConstExpr {
   bool isRegex;
 };
 
+struct FnExpr {
+  unsigned numParams;
+  string origFnName;
+};
+
 struct CodeGenReqs {
   map<string, string> idVarMap;
   map<string, string> idDefaultMap;
-  map<string, ConstExpr> constExprs; // expr => variable name
-  map<string, unsigned> fnMap; // name => number of params
+  map<string, ConstExpr> constExprs;
+  map<string, FnExpr> fnMap;
 };
 
 // note: update Expr::str() on mod
@@ -97,7 +102,8 @@ public:
   string str() const;
 private:
   friend Expr;
-  string fn_;
+  string orig_fn_name_;
+  string fn_expr_name_;
   vector<shared_ptr<Expr>> params_;
 };
 

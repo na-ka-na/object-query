@@ -19,7 +19,7 @@ string  '[^\n']*'
 ws      [ \t]
 alpha   [A-Za-z]
 dig     [0-9]
-name    ({alpha}|[_$])({alpha}|{dig}|[_$])*
+name    ({alpha}|[_$:])({alpha}|{dig}|[_$:])*
 iden    {name}(\.{name})*
 siden   {iden}\.\*
 num1    [-+]?{dig}+\.?([eE][-+]?{dig}+)?
