@@ -50,7 +50,7 @@ TEST_SQL_QUERIES = [
 def runTest(querytype, testnum, cmake_prefix_paths):
     SOURCE_DIR = '../../src'
     data_file = SOURCE_DIR + '/example/example1.json'
-    golden_out = 'golden' + str(testnum) + '.out'
+    golden_out = querytype + '_golden' + str(testnum) + '.out'
     actual_out = querytype + '_actual' + str(testnum) + '.out'
 
     cmd_parts = ['../main/RunQuery']
