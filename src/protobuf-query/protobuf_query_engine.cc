@@ -396,8 +396,7 @@ void ProtobufQueryEngine::printCode() {
   out << "void runSelect(const vector<" << queryTree.getRootType() << ">& "
       << Utils::makePlural(queryTree.root.objName)
       << ", vector<TupleType>& tuples) {" << endl;
-  unsigned numSelectAndOrderByFieldsProcessed = 0;
-  bool allSelectAndOrderByFieldsProcessed = false;
+  int maxIndent = -1;
   StartNodeFn<PbField> startNodeFn =
       [&](int indent, const Node<PbField>& node, const Node<PbField>* parent) {
         string ind = string(indent+2, ' ');
@@ -450,19 +449,17 @@ void ProtobufQueryEngine::printCode() {
                 << expr->code(cgr) << ";" << endl;
           }
         }
-        numSelectAndOrderByFieldsProcessed += node.selectAndOrderByExprs.size();
-        if (!allSelectAndOrderByFieldsProcessed &&
-            (numSelectAndOrderByFieldsProcessed == selectAndOrderByExprs.size())) {
-          string tuplesList = Utils::joinVec<const Expr*>(
-              ", ", selectAndOrderByExprs,
-              [&](const Expr* expr) {return exprVarMap[expr->str()];});
-          out << ind << "tuples.emplace_back(" + tuplesList + ");" << endl;
-          allSelectAndOrderByFieldsProcessed = true;
-        }
+        maxIndent = max(maxIndent, indent);
       };
   EndNodeFn<PbField> endNodeFn =
       [&](int indent, const Node<PbField>&) {
         string ind = string(indent+2, ' ');
+        if (indent == maxIndent) {
+          string tuplesList = Utils::joinVec<const Expr*>(
+              ", ", selectAndOrderByExprs,
+              [&](const Expr* expr) {return exprVarMap[expr->str()];});
+          out << ind << "  tuples.emplace_back(" + tuplesList + ");" << endl;
+        }
         out << ind << "}" << endl;
       };
   Node<PbField>::walkNode(queryTree.root, startNodeFn, endNodeFn);
