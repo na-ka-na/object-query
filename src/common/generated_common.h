@@ -167,22 +167,41 @@ inline int Compare(const T& t1, const T& t2) {
   }
 }
 
-template<typename T, typename It>
+// T is the output, E is the element type of It
+template<typename T, typename E, typename It>
 class MyRangeIterator {
 public:
+  // Convert given E (may be nullptr) to T. Return pointer to converted T.
+  // May modify second argument and return its address.
+  using ConvertFnType = function<const T*(const E*, T&)>;
+
   class ConstIterator {
   public:
-    static ConstIterator mk_normal(It* curr) {
+    static ConstIterator mk_normal(const ConvertFnType* fn, It* curr) {
       ConstIterator it;
+      it.fn = fn;
+      it.singular = 0;
       it.curr = curr;
+      it.setElemPtr();
       return it;
     }
 
-    static ConstIterator mk_singular(bool begin, const T* singular_elem=nullptr) {
+    static ConstIterator mk_singular(
+        const ConvertFnType* fn, bool begin, const E* singular_elem=nullptr) {
       ConstIterator it;
+      it.fn = fn;
       it.singular = begin ? 1 : 2;
       it.singular_elem = singular_elem;
+      it.setElemPtr();
       return it;
+    }
+
+    inline void setElemPtr() {
+      switch (singular) {
+      case 0: elemptr = (*fn)(&**curr, elem); break;
+      case 1: elemptr = (*fn)(singular_elem, elem); break;
+      case 2: elemptr = nullptr;
+      }
     }
 
     inline ConstIterator& operator++() {
@@ -192,6 +211,7 @@ public:
         singular = 2;
         singular_elem = nullptr;
       }
+      setElemPtr();
       return *this;
     }
 
@@ -211,11 +231,7 @@ public:
     }
 
     inline const T* operator*() const {
-      switch (singular) {
-      case 0: return &**curr;
-      case 1: return singular_elem;
-      default: return nullptr;
-      }
+      return elemptr;
     }
 
     friend std::ostream& operator<< (std::ostream& stream, const ConstIterator& it) {
@@ -224,33 +240,50 @@ public:
     }
 
   private:
+    const ConvertFnType* fn;
     It* curr = nullptr;
-    const T* singular_elem = nullptr;
+    const E* singular_elem = nullptr;
     int singular = 0; // 0 for normal case, 1 for begin, 2 for end
+    T elem;
+    const T* elemptr;
   };
 
-  MyRangeIterator(const T* singular_elem = nullptr) :
-      singular(true), singular_elem(singular_elem) {}
+  static MyRangeIterator mk_singular(
+      const ConvertFnType& fn, const E* singular_elem = nullptr) {
+    MyRangeIterator it;
+    it.fn = fn;
+    it.singular = true;
+    it.singular_elem = singular_elem;
+    return it;
+  }
 
-  MyRangeIterator(It&& orig_begin, It&& orig_end) :
-      singular(false), singular_elem(nullptr),
-      orig_begin(orig_begin), orig_end(orig_end) {}
+  static MyRangeIterator mk_normal(
+      const ConvertFnType& fn, It&& orig_begin, It&& orig_end) {
+    MyRangeIterator it;
+    it.fn = fn;
+    it.singular = false;
+    it.singular_elem = nullptr;
+    it.orig_begin = orig_begin;
+    it.orig_end = orig_end;
+    return it;
+  }
 
   ConstIterator begin() const {
     return (!singular && (orig_begin != orig_end))
-        ? ConstIterator::mk_normal((It*) &orig_begin)
-        : ConstIterator::mk_singular(true, singular_elem);
+        ? ConstIterator::mk_normal(&fn, (It*) &orig_begin)
+        : ConstIterator::mk_singular(&fn, true, singular_elem);
   }
 
   ConstIterator end() const {
     return (!singular && (orig_begin != orig_end))
-        ? ConstIterator::mk_normal((It*) &orig_end)
-        : ConstIterator::mk_singular(false);
+        ? ConstIterator::mk_normal(&fn, (It*) &orig_end)
+        : ConstIterator::mk_singular(&fn, false);
   }
 
 private:
+  ConvertFnType fn;
   bool singular;
-  const T* singular_elem;
+  const E* singular_elem;
   It orig_begin;
   It orig_end;
 };
@@ -259,13 +292,15 @@ class BaseIterators {
 public:
   template<typename T>
   static
-  MyRangeIterator<T, typename vector<T>::const_iterator>
+  MyRangeIterator<T, T, typename vector<T>::const_iterator>
   mk_vec_iterator(const vector<T>* v) {
+    auto convert_fn = [](const T* t, T&) {return t;};
     if (v) {
-      return MyRangeIterator<T, typename vector<T>::const_iterator>(
-          v->begin(), v->end());
+      return MyRangeIterator<T, T, typename vector<T>::const_iterator>::mk_normal(
+          convert_fn, v->begin(), v->end());
     } else {
-      return MyRangeIterator<T, typename vector<T>::const_iterator>();
+      return MyRangeIterator<T, T, typename vector<T>::const_iterator>::mk_singular(
+          convert_fn);
     }
   }
 };

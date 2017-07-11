@@ -89,25 +89,29 @@ class Iterators : public BaseIterators {
 public:
   template<typename T>
   static
-  MyRangeIterator<T, typename ::google::protobuf::RepeatedField<T>::const_iterator>
+  MyRangeIterator<T, T, typename ::google::protobuf::RepeatedField<T>::const_iterator>
   mk_pb_iterator(const ::google::protobuf::RepeatedField<T>* rf) {
+    auto convert_fn = [](const T* t, T&) {return t;};
     if (rf) {
-      return MyRangeIterator<T, typename ::google::protobuf::RepeatedField<T>::const_iterator>(
-          rf->begin(), rf->end());
+      return MyRangeIterator<T, T, typename ::google::protobuf::RepeatedField<T>::const_iterator>::mk_normal(
+          convert_fn, rf->begin(), rf->end());
     } else {
-      return MyRangeIterator<T, typename ::google::protobuf::RepeatedField<T>::const_iterator>();
+      return MyRangeIterator<T, T, typename ::google::protobuf::RepeatedField<T>::const_iterator>::mk_singular(
+          convert_fn);
     }
   }
 
   template<typename T>
   static
-  MyRangeIterator<T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>
+  MyRangeIterator<T, T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>
   mk_pb_iterator(const ::google::protobuf::RepeatedPtrField<T>* rpf) {
+    auto convert_fn = [](const T* t, T&) {return t;};
     if (rpf) {
-      return MyRangeIterator<T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>(
-          rpf->begin(), rpf->end());
+      return MyRangeIterator<T, T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>::mk_normal(
+          convert_fn, rpf->begin(), rpf->end());
     } else {
-      return MyRangeIterator<T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>();
+      return MyRangeIterator<T, T, typename ::google::protobuf::RepeatedPtrField<T>::const_iterator>::mk_singular(
+          convert_fn);
     }
   }
 };
