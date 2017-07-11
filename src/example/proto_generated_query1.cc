@@ -29,7 +29,7 @@ with (company = parseFromFile()) {
 tuples.print('financial.quarterly_profits', 'financial.quarterly_revenues', 'all_employees.id', 'all_employees.name', 'all_employees.active', 'all_employees.active_direct_reports', 'all_employees.enumx', 'all_employees.enumy', 'founded', 'board_of_directors')
 */
 #include "example1.pb.h"
-#include "proto_example1_utils.h"
+#include "proto_example_utils.h"
 #include "protobuf_generated_common.h"
 
 using namespace std;

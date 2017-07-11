@@ -12,7 +12,7 @@ with (company = parseFromFile()) {
 tuples.print('(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')')', '((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded))')
 */
 #include "example1.pb.h"
-#include "proto_example1_utils.h"
+#include "proto_example_utils.h"
 #include "protobuf_generated_common.h"
 
 using namespace std;

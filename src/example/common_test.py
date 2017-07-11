@@ -61,7 +61,7 @@ def runTest(querytype, testnum, cmake_prefix_paths):
     if querytype == 'proto':
         cmd_parts.append('--cppProtoHeader=example1.pb.h')
         cmd_parts.append('--cppProtoLib=./libExampleProtos.so')
-        cmd_parts.append('--cppExtraIncludes=proto_example1_utils.h')
+        cmd_parts.append('--cppExtraIncludes=proto_example_utils.h')
     cppExtraIncludeDirs = []
     cppExtraLinkLibDirs = []
     if len(cmake_prefix_paths) > 0:

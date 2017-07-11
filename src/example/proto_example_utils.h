@@ -1,3 +1,5 @@
+#pragma once
+
 #include "generated_common.h"
 #include "example1.pb.h"
 
