@@ -200,3 +200,253 @@ void QueryTree<FieldT>::printPlan(const SelectQuery& query, ostream& out) {
           })
       << ")" << endl;
 }
+
+template <typename FieldT>
+void QueryTree<FieldT>::printCode(
+    const SelectQuery& query, ostream& out, const CodeGenSpec& spec) {
+  for (const string& headerInclude : spec.headerIncludes) {
+    out << "#include \"" << headerInclude << "\"" << endl;
+  }
+  out << "#include \"" << generatedCommonHeader() << "\"" << endl << endl;
+  out << "using namespace std;" << endl;
+  out << endl;
+
+  // select fields header
+  string header = "vector<string> header = {\n";
+  header += Utils::joinVec<SelectField>(
+      "\n", query.selectStmt.getSelectFields(),
+      [](const SelectField& sf) {
+        return "  \"" + sf.getHeader() + "\",";
+      });
+  header += "\n};";
+  out << header << endl << endl;
+
+  CodeGenReqs cgr;
+  query.extractStatics(cgr);
+
+  if (!cgr.constExprs.empty()) {
+    for (const auto& e : cgr.constExprs) {
+      auto expression = e.first;
+      if (e.second.isRegex) {
+        expression = "regex(" + expression + ", regex::optimize)";
+      }
+      out << e.second.varType << " " << e.second.varName << " = "
+          << expression << ";" << endl;
+    }
+    out << endl;
+  }
+
+  if (!cgr.fnMap.empty()) {
+    for (const auto& f : cgr.fnMap) {
+      const string& fnname = f.first;
+      const FnExpr& fnexpr = f.second;
+      out << "template<";
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
+        out << "typename Arg" << i << ", ";
+      }
+      out << "typename Ret=decltype(" << fnexpr.origFnName << "(";
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
+        out << "Arg" << i << "()";
+        if (i != (fnexpr.numParams-1)) out << ", ";
+      }
+      out << "))>\n";
+      out << "optional<Ret> $" << fnname << "(";
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
+        out << "const optional<Arg" << i << ">& arg" << i;
+        if (i != (fnexpr.numParams-1)) out << ", ";
+      }
+      out << ") {\n";
+      out << "  if (";
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
+        out << "arg" << i;
+        if (i != (fnexpr.numParams-1)) out << " && ";
+      }
+      out << ") {\n";
+      out << "    return optional<Ret>(" << fnexpr.origFnName << "(";
+      for (unsigned i=0; i<fnexpr.numParams; i++) {
+        out << "*arg" << i;
+        if (i != (fnexpr.numParams-1)) out << ", ";
+      }
+      out << "));\n";
+      out << "  } else {\n";
+      out << "    return optional<Ret>();\n";
+      out << "  }\n";
+      out << "}\n";
+    }
+    out << endl;
+  }
+
+  map<FieldT, string> fieldVarMap;
+  map<FieldT, string> fieldTypeMap;
+  map<FieldT, string> fieldDefaultMap;
+  uint32_t varIdx = 0;
+  for (const auto& e : idFieldMap) {
+    const string& id = e.first;
+    const FieldT& field = e.second;
+    fieldVarMap[field] = "s" + to_string(varIdx);
+    fieldTypeMap[field] = "S" + to_string(varIdx);
+    fieldDefaultMap[field] = "S" + to_string(varIdx) + "()";
+    varIdx++;
+    string type = "optional<" + field.code_type() + ">";
+    string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
+    out << "using " << fieldTypeMap[field] << " = " << type << ";"
+        << spaces << " /* " << field.accessor() << " */" << endl;
+    cgr.idVarMap[id] = fieldVarMap[field];
+    cgr.idDefaultMap[id] = fieldDefaultMap[field];
+  }
+
+  vector<const Expr*> selectAndOrderByExprs;
+  for (const SelectField& selectField : query.selectStmt.getSelectFields()) {
+    addExpr(selectAndOrderByExprs, &(selectField.getExpr()));
+  }
+  for (const OrderByField& orderByField : query.orderByStmt.getOrderByFields()) {
+    addExpr(selectAndOrderByExprs, &(orderByField.getExpr()));
+  }
+
+  map<string, string> exprVarMap;
+  map<string, string> exprTypeMap;
+  map<string, string> exprDefaultMap;
+  for (const Expr* expr : selectAndOrderByExprs) {
+    string exprStr = expr->str();
+    if (expr->isIdentifier()) {
+      FieldT f = idFieldMap[expr->getIdentifier()];
+      exprVarMap[exprStr] = fieldVarMap[f];
+      exprTypeMap[exprStr] = fieldTypeMap[f];
+      exprDefaultMap[exprStr] = fieldDefaultMap[f];
+    } else {
+      exprVarMap[exprStr] = "s" + to_string(varIdx);
+      exprTypeMap[exprStr] = "S" + to_string(varIdx);
+      exprDefaultMap[exprStr] = "S" + to_string(varIdx) + "()";
+      varIdx++;
+      string type = expr->cppType(cgr);
+      string spaces(((type.size() < 16) ? (16-type.size()) : 0), ' ');
+      out << "using " << exprTypeMap[exprStr] << " = " << type << ";"
+          << spaces << " /* " << exprStr << " */" << endl;
+    }
+  }
+
+  string tupleType = "using TupleType = tuple<";
+  tupleType += Utils::joinVec<const Expr*>(
+      ", ", selectAndOrderByExprs,
+      [&](const Expr* expr) {return exprTypeMap[expr->str()];});
+  tupleType += ">;";
+  out << tupleType << endl;
+  out << endl;
+
+  out << "void runSelect(const vector<" << getRootType() << ">& "
+      << Utils::makePlural(root.objName) << ", vector<TupleType>& tuples) {"
+      << endl;
+  int maxIndent = -1;
+  StartNodeFn<FieldT> startNodeFn =
+      [&](int indent, const Node<FieldT>& node, const Node<FieldT>* parent) {
+        string ind = string(indent+2, ' ');
+        if (!parent) { //root
+          printRootForLoop(out, ind, node);
+        } else {
+          printNonRootForLoop(out, ind, node, *parent);
+        }
+        ind += "  ";
+        for (const auto& f : node.allFields) {
+          const FieldT& field = f.first;
+          printFieldAssignment(
+              out, ind, node, field, f.second /*repeating*/,
+              fieldTypeMap[field], fieldVarMap[field],
+              fieldDefaultMap[field]);
+        }
+        // TODO(sanchay): print variable assignment and where clauses in optimal order
+        for (const BooleanExpr* whereClause : node.whereClauses) {
+          out << ind << "if (!" << whereClause->code(cgr)
+              << ") { continue; }" << endl;
+        }
+        for (const Expr* expr : node.selectAndOrderByExprs) {
+          if (!expr->isIdentifier()) {
+            out << ind << exprTypeMap[expr->str()] << " "
+                << exprVarMap[expr->str()] << " = "
+                << expr->code(cgr) << ";" << endl;
+          }
+        }
+        maxIndent = max(maxIndent, indent);
+      };
+  EndNodeFn<FieldT> endNodeFn =
+      [&](int indent, const Node<FieldT>&) {
+        string ind = string(indent+2, ' ');
+        if (indent == maxIndent) {
+          string tuplesList = Utils::joinVec<const Expr*>(
+              ", ", selectAndOrderByExprs,
+              [&](const Expr* expr) {return exprVarMap[expr->str()];});
+          out << ind << "  tuples.emplace_back(" + tuplesList + ");" << endl;
+        }
+        out << ind << "}" << endl;
+      };
+  Node<FieldT>::walkNode(root, startNodeFn, endNodeFn);
+  out << "}" << endl;
+
+  if (!query.orderByStmt.getOrderByFields().empty()) {
+    out << endl;
+    out << "bool compareTuples(const TupleType& t1, const TupleType& t2) {" << endl;
+    out << "  int c;" << endl;
+    for (const OrderByField& orderByField : query.orderByStmt.getOrderByFields()) {
+      int idx = -1;
+      string exprStr = orderByField.getExpr().str();
+      for (size_t j=0; j<selectAndOrderByExprs.size(); j++) {
+        if (exprStr == selectAndOrderByExprs[j]->str()) {
+          idx = j;
+          break;
+        }
+      }
+      ASSERT(idx != -1);
+      out << "  c = " << (orderByField.isDesc() ? "-" : "")
+          << "Compare(get<" << idx << ">(t1), get<" << idx << ">(t2));" << endl;
+      out << "  if (c < 0) {return true;} else if (c > 0) {return false;}" << endl;
+    }
+    out << "  return false;" << endl;
+    out << "}" << endl;
+  }
+
+  out << R"fff(
+void printTuples(const vector<TupleType>& tuples) {
+  vector<size_t> sizes;
+  for (size_t i=0; i<header.size(); i++) {
+    sizes.push_back(header[i].size());
+  }
+)fff";
+  out << "  for (const TupleType& t : tuples) {" << endl;
+  for (size_t i=0; i<query.selectStmt.getSelectFields().size(); i++) {
+    out << "    sizes[" << i << "] = max(sizes[" << i << "], Stringify(get<"
+        << i << ">(t)).size());" << endl;
+  }
+  out << "  }" << endl;
+  out << "  cout << left;";
+  out << R"fff(
+  for (size_t i=0; i<header.size(); i++) {
+    cout << ((i==0) ? "" : " | ") << setw(sizes[i]) << header[i];
+  }
+  cout << endl;
+  for (size_t i=0; i<header.size(); i++) {
+    cout << ((i==0) ? "" : " | ") << string(sizes[i], '-');
+  }
+  cout << endl;
+)fff";
+  out << "  for(const TupleType& t : tuples) {" << endl;
+  for (size_t i=0; i<query.selectStmt.getSelectFields().size(); i++) {
+    out << "    cout << " << ((i==0) ? "         " : "\" | \" << ")
+        << "setw(sizes[" << i << "]) << "
+        << "Stringify(get<" << i << ">(t));" << endl;
+  }
+  out << "    cout << endl;" << endl;
+  out << "  }" << endl;
+  out << "}" << endl << endl;
+
+  // main
+  out << "int main(int argc, char** argv) {" << endl;
+  string protosVecIden = Utils::makePlural(root.objName);
+  out << "  vector<" << getRootType() << "> " << protosVecIden << ";" << endl;
+  out << "  FROM(argc, argv, " << protosVecIden << ");" << endl;
+  out << "  vector<TupleType> tuples;" << endl;
+  out << "  runSelect(" << protosVecIden << ", tuples);" << endl;
+  if (!query.orderByStmt.getOrderByFields().empty()) {
+    out << "  std::sort(tuples.begin(), tuples.end(), compareTuples);" << endl;
+  }
+  out << "  printTuples(tuples);" << endl;
+  out << "}" << endl;
+}

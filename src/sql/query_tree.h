@@ -87,8 +87,24 @@ struct QueryTree {
   virtual string getRootType() const = 0;
   virtual FieldT newField() const = 0;
 
+  virtual string generatedCommonHeader() const = 0;
+  virtual void printRootForLoop(ostream& out, const string& ind,
+                                const Node<FieldT>& node) const = 0;
+  virtual void printNonRootForLoop(ostream& out, const string& ind,
+                                   const Node<FieldT>& node,
+                                   const Node<FieldT>& parent) const = 0;
+  virtual void printFieldAssignment(ostream& out, const string& ind,
+                                    const Node<FieldT>& node,
+                                    const FieldT& field,
+                                    bool repeating,
+                                    const string& fieldType,
+                                    const string& fieldVar,
+                                    const string& fieldDefault) const = 0;
+
   void process(const SelectQuery& query);
   void printPlan(const SelectQuery& query, ostream& out);
+  void printCode(const SelectQuery& query, ostream& out,
+                 const CodeGenSpec& spec);
 
   void addReadIdentifier(const string& identifier);
   void processSelect(const SelectStmt& selectStmt);

@@ -78,6 +78,20 @@ public:
   string getRootType() const override;
   string getRootName() const override;
   PbField newField() const override;
+
+  string generatedCommonHeader() const override;
+  void printRootForLoop(ostream& out, const string& ind,
+                        const Node<PbField>& node) const override;
+  void printNonRootForLoop(ostream& out, const string& ind,
+                           const Node<PbField>& node,
+                           const Node<PbField>& parent) const override;
+  void printFieldAssignment(ostream& out, const string& ind,
+                            const Node<PbField>& node,
+                            const PbField& field,
+                            bool repeating,
+                            const string& fieldType,
+                            const string& fieldVar,
+                            const string& fieldDefault) const override;
 private:
   const Descriptor* protoDescriptor;
 };
@@ -92,7 +106,6 @@ private:
   SelectQuery query;
   PbQueryTree queryTree;
   ostream& out;
-  void printCode();
 };
 
 } // namespace pb
