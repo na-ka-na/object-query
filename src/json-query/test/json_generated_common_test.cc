@@ -15,11 +15,12 @@ void TestMyRangeIteratorEmpty() {
   rapidjson::Document object;
   object.Parse("{\"abc\": 123}");
   EXPECT_FALSE(object.HasParseError());
-  auto&& myit = Iterators::mk_rjv_iterator("<root>", &object, "xyz");
+  JsonValue value(object);
+  auto&& myit = Iterators::mk_json_iterator("<root>", &value, "xyz");
   auto&& begin = myit.begin();
   auto&& end = myit.end();
   EXPECT_NE(begin, end);
-  EXPECT_EQ((rapidjson::Value*) nullptr, *begin);
+  EXPECT_EQ((const JsonValue*) nullptr, *begin);
   ++begin;
   EXPECT_EQ(begin, end);
 }
@@ -28,11 +29,12 @@ void TestMyRangeIteratorEmptyArray() {
   rapidjson::Document object;
   object.Parse("{\"abc\": []}");
   EXPECT_FALSE(object.HasParseError());
-  auto&& myit = Iterators::mk_rjv_iterator("<root>", &object, "abc");
+  JsonValue value(object);
+  auto&& myit = Iterators::mk_json_iterator("<root>", &value, "abc");
   auto&& begin = myit.begin();
   auto&& end = myit.end();
   EXPECT_NE(begin, end);
-  EXPECT_EQ((rapidjson::Value*) nullptr, *begin);
+  EXPECT_EQ((const JsonValue*) nullptr, *begin);
   ++begin;
   EXPECT_EQ(begin, end);
 }
@@ -41,11 +43,12 @@ void TestMyRangeIteratorNonEmpty() {
   rapidjson::Document object;
   object.Parse("{\"abc\": \"def\"}");
   EXPECT_FALSE(object.HasParseError());
-  auto&& myit = Iterators::mk_rjv_iterator("<roo>", &object, "abc");
+  JsonValue value(object);
+  auto&& myit = Iterators::mk_json_iterator("<roo>", &value, "abc");
   auto&& begin = myit.begin();
   auto&& end = myit.end();
   EXPECT_NE(begin, end);
-  EXPECT_EQ(&object["abc"], *begin);
+  EXPECT_EQ(JsonValue(object["abc"]), **begin);
   EXPECT_EQ("def", Stringify(*begin));
   ++begin;
   EXPECT_EQ(begin, end);
@@ -55,15 +58,16 @@ void TestMyRangeIteratorNonEmptyArray() {
   rapidjson::Document object;
   object.Parse("{\"abc\": [1.322423, 456]}");
   EXPECT_FALSE(object.HasParseError());
-  auto&& myit = Iterators::mk_rjv_iterator("<roo>", &object, "abc");
+  JsonValue value(object);
+  auto&& myit = Iterators::mk_json_iterator("<roo>", &value, "abc");
   auto&& begin = myit.begin();
   auto&& end = myit.end();
   EXPECT_NE(begin, end);
-  EXPECT_EQ(&object["abc"][0], *begin);
+  EXPECT_EQ(JsonValue(object["abc"][0]), **begin);
   EXPECT_EQ("1.322423", Stringify(*begin));
   ++begin;
   EXPECT_NE(begin, end);
-  EXPECT_EQ(&object["abc"][1], *begin);
+  EXPECT_EQ(JsonValue(object["abc"][1]), **begin);
   EXPECT_EQ("456", Stringify(*begin));
   ++begin;
   EXPECT_EQ(begin, end);

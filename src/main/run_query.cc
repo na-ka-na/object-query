@@ -15,6 +15,9 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include "utils.h"
 #include "global_include.h"
 #include "protobuf_query_engine.h"
+#include "json_query_engine.h"
+
+DEFINE_string(queryType, "", "\033[1mrequired\033[0m, either proto or json");
 
 DEFINE_string(codeGenDir, ".",
               "optional, directory where generated code files are emitted, "
@@ -50,18 +53,30 @@ DEFINE_string(cppExtraLinkLibDirs, "",
 using namespace std;
 
 bool validateFlags() {
-  return !FLAGS_codeGenDir.empty() && !FLAGS_codeCompileDir.empty() &&
-      !FLAGS_codeGenPrefix.empty() && !FLAGS_cppProtoHeader.empty() &&
-      !FLAGS_cppProtoLib.empty();
+  if ((FLAGS_queryType != "proto") && (FLAGS_queryType != "json")) {
+    return false;
+  }
+  if (FLAGS_codeGenDir.empty() || FLAGS_codeCompileDir.empty() ||
+      FLAGS_codeGenPrefix.empty()) {
+    return false;
+  }
+  if (FLAGS_queryType == "proto") {
+    if (FLAGS_cppProtoHeader.empty() || FLAGS_cppProtoLib.empty()) {
+      return false;
+    }
+  }
+  return true;
 }
 
 static regex notCommaRegex("[^,]+");
 
 CodeGenSpec mkCodeGenSpec() {
   CodeGenSpec spec;
-  auto idx = FLAGS_cppProtoHeader.rfind("/");
-  spec.headerIncludes.push_back(
-      FLAGS_cppProtoHeader.substr((idx == string::npos) ? 0 : (idx+1)));
+  if (FLAGS_queryType == "proto") {
+    auto idx = FLAGS_cppProtoHeader.rfind("/");
+    spec.headerIncludes.push_back(
+        FLAGS_cppProtoHeader.substr((idx == string::npos) ? 0 : (idx+1)));
+  }
 
   auto extraIncludesBegin = sregex_iterator(
       FLAGS_cppExtraIncludes.begin(), FLAGS_cppExtraIncludes.end(),
@@ -84,8 +99,12 @@ set<string> mkIncludeDirs() {
   ASSERT(idx != string::npos);
   string parentDir = codeDir.substr(0, idx);
   includeDirs.insert(parentDir + "/common");
-  includeDirs.insert(parentDir + "/protobuf-query");
-  includeDirs.insert(parentDir + "/third-party/rapidjson/include");
+  if (FLAGS_queryType == "proto") {
+    includeDirs.insert(parentDir + "/protobuf-query");
+  } else if (FLAGS_queryType == "json") {
+    includeDirs.insert(parentDir + "/third-party/rapidjson/include");
+    includeDirs.insert(parentDir + "/json-query");
+  }
   idx = FLAGS_cppProtoHeader.rfind("/");
   includeDirs.insert(
       (idx == string::npos) ? "." : FLAGS_cppProtoHeader.substr(0, idx));
@@ -102,9 +121,11 @@ set<string> mkIncludeDirs() {
 // construct -L
 set<string> mkLinkDirs() {
   set<string> linkDirs;
-  auto idx = FLAGS_cppProtoLib.rfind("/");
-  linkDirs.insert(
-      (idx == string::npos) ? "." : FLAGS_cppProtoLib.substr(0, idx));
+  if (FLAGS_queryType == "proto") {
+    auto idx = FLAGS_cppProtoLib.rfind("/");
+    linkDirs.insert(
+        (idx == string::npos) ? "." : FLAGS_cppProtoLib.substr(0, idx));
+  }
   auto extraLinksBegin = sregex_iterator(
       FLAGS_cppExtraLinkLibDirs.begin(), FLAGS_cppExtraLinkLibDirs.end(),
       notCommaRegex);
@@ -118,13 +139,15 @@ set<string> mkLinkDirs() {
 // consturct -l
 set<string> mkLinkLibs() {
   set<string> linkLibs;
-  static regex libRegex("lib(.+)\\.(so|dylib)$");
-  smatch libMatch;
-  if (!regex_search(FLAGS_cppProtoLib, libMatch, libRegex)) {
-    cerr << "Unable to understand lib format " << FLAGS_cppProtoLib << endl;
-    exit(1);
+  if (FLAGS_queryType == "proto") {
+    static regex libRegex("lib(.+)\\.(so|dylib)$");
+    smatch libMatch;
+    if (!regex_search(FLAGS_cppProtoLib, libMatch, libRegex)) {
+      cerr << "Unable to understand lib format " << FLAGS_cppProtoLib << endl;
+      exit(1);
+    }
+    linkLibs.insert(libMatch[1]);
   }
-  linkLibs.insert(libMatch[1]);
   auto extraLinksBegin = sregex_iterator(
       FLAGS_cppExtraLinkLibs.begin(), FLAGS_cppExtraLinkLibs.end(),
       notCommaRegex);
@@ -150,7 +173,9 @@ void compileGeneratedCode() {
   for (const string& linkDir : linkDirs) {
     cmd += " -L" + linkDir;
   }
-  cmd += " -lprotobuf";
+  if (FLAGS_queryType == "proto") {
+    cmd += " -lprotobuf";
+  }
   for (const string& linkLib : linkLibs) {
     cmd += " -l" + linkLib;
   }
@@ -204,19 +229,23 @@ int main(int argc, char** argv) {
     exit(1);
   }
 
-  void* libHandle = dlopen(FLAGS_cppProtoLib.c_str(), RTLD_NOW | RTLD_GLOBAL);
-  if (libHandle == NULL) {
-    cerr << "Unable to load lib " << FLAGS_cppProtoLib << ": " << dlerror();
-    exit(1);
-  }
+  if (FLAGS_queryType == "proto") {
+    void* libHandle = dlopen(FLAGS_cppProtoLib.c_str(), RTLD_NOW | RTLD_GLOBAL);
+    if (libHandle == NULL) {
+      cerr << "Unable to load lib " << FLAGS_cppProtoLib << ": " << dlerror();
+      exit(1);
+    }
+    pb::ProtobufQueryEngine engine(spec, rawSql, generated);
+    engine.process();
+    int result = dlclose(libHandle);
+    if (result != 0) {
+      cerr << "Unable to close lib " << FLAGS_cppProtoLib << ": " << dlerror();
+      exit(1);
+    }
 
-  pb::ProtobufQueryEngine engine(spec, rawSql, generated);
-  engine.process();
-
-  int result = dlclose(libHandle);
-  if (result != 0) {
-    cerr << "Unable to close lib " << FLAGS_cppProtoLib << ": " << dlerror();
-    exit(1);
+  } else if (FLAGS_queryType == "json") {
+    json::JsonQueryEngine engine(spec, rawSql, generated);
+    engine.process();
   }
 
   cerr << "Compiling generated code..." << endl;

@@ -28,30 +28,296 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using namespace std;
 
-template<>
-inline string Stringify(const rapidjson::Value* const& value) {
-  if (value == nullptr) return "NULL";
-  switch (value->GetType()) {
-    case rapidjson::kNullType:   return "null";
-    case rapidjson::kFalseType:  return Stringify<bool>(false);
-    case rapidjson::kTrueType:   return Stringify<bool>(true);
-    case rapidjson::kObjectType: /* fallthrough */
-    case rapidjson::kArrayType:  {
-      rapidjson::StringBuffer strbuf;
-      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-      value->Accept(writer);
-      return strbuf.GetString();
-    }
-    case rapidjson::kStringType: return value->GetString();
-    case rapidjson::kNumberType: {
-        if (value->IsDouble())      return Stringify<double>(value->GetDouble());
-        else if (value->IsInt())    return Stringify<int>(value->GetInt());
-        else if (value->IsUint())   return Stringify<uint32_t>(value->GetUint());
-        else if (value->IsInt64())  return Stringify<int64_t>(value->GetInt64());
-        else if (value->IsUint64()) return Stringify<uint64_t>(value->GetUint64());
-        else                        return "UnknownRapidJsonType" + to_string(value->GetType());
+class JsonValue {
+  struct strview {
+    const char* cs;
+    size_t sz;
+  };
+  union {
+    double d;
+    int64_t i;
+    uint64_t u;
+    strview strv;
+    string str;
+    bool b;
+    const rapidjson::Value* rjv;
+  };
+  enum Type { NONE, DOUBLE, INT, INT64, UINT, UINT64, STR_VIEW, STR, BOOL, OBJ, ARR, NILL};
+  Type t;
+
+  void copyFrom(const JsonValue& other) {
+    t = other.t;
+    switch (t) {
+    case DOUBLE   : d = other.d; break;
+    case INT      : i = other.i; break;
+    case INT64    : i = other.i; break;
+    case UINT     : u = other.u; break;
+    case UINT64   : u = other.u; break;
+    case STR_VIEW : strv = other.strv; break;
+    case STR      : new (&str) string(other.str); break;
+    case BOOL     : b = other.b; break;
+    case NILL     : break;
+    case OBJ      : rjv = other.rjv; break;
+    case ARR      : rjv = other.rjv; break;
+    default       : THROW("Invalid state", t);
     }
   }
+
+#define NUMBEROP(op, ret)\
+  /* http://en.cppreference.com/w/cpp/language/operator_arithmetic */\
+  switch (t) {\
+  case BOOL:\
+    switch (other.t) {\
+    case BOOL   : return ret(b op other.b);\
+    case DOUBLE : return ret(double(b) op other.d);\
+    case INT    : return ret(int(b) op other.i);\
+    case INT64  : return ret(int64_t(b) op other.i);\
+    case UINT   : return ret(unsigned(b) op other.u);\
+    case UINT64 : return ret(uint64_t(b) op other.u);\
+    default     : break;\
+    }\
+    break;\
+  case DOUBLE:\
+    switch (other.t) {\
+    case BOOL   : return ret(d op double(other.b));\
+    case DOUBLE : return ret(d op other.d);\
+    case INT    : return ret(d op double(other.i));\
+    case INT64  : return ret(d op double(other.i));\
+    case UINT   : return ret(d op double(other.u));\
+    case UINT64 : return ret(d op double(other.u));\
+    default     : break;\
+    }\
+    break;\
+  case INT:\
+    switch (other.t) {\
+    case BOOL   : return ret(i op int(other.b));\
+    case DOUBLE : return ret(double(i) op other.d);\
+    case INT    : return ret(i op other.i);\
+    case INT64  : return ret(i op other.i);\
+    case UINT   : return ret(unsigned(i) op other.u);\
+    case UINT64 : return ret(uint64_t(i) op other.u);\
+    default     : break;\
+    }\
+    break;\
+  case INT64:\
+    switch (other.t) {\
+    case BOOL   : return ret(i op int64_t(other.b));\
+    case DOUBLE : return ret(double(i) op other.d);\
+    case INT    : return ret(i op other.i);\
+    case INT64  : return ret(i op other.i);\
+    case UINT   : return ret(i op int64_t(other.u));\
+    case UINT64 : return ret(uint64_t(i) op other.u);\
+    default     : break;\
+    }\
+    break;\
+  case UINT:\
+    switch (other.t) {\
+    case BOOL   : return ret(u op unsigned(other.b));\
+    case DOUBLE : return ret(double(u) op other.d);\
+    case INT    : return ret(u op unsigned(other.i));\
+    case INT64  : return ret(int64_t(u) op other.i);\
+    case UINT   : return ret(u op other.u);\
+    case UINT64 : return ret(u op other.u);\
+    default     : break;\
+    }\
+    break;\
+  case UINT64:\
+    switch (other.t) {\
+    case BOOL   : return ret(u op uint64_t(other.b));\
+    case DOUBLE : return ret(double(u) op other.d);\
+    case INT    : return ret(u op uint64_t(other.i));\
+    case INT64  : return ret(u op uint64_t(other.i));\
+    case UINT   : return ret(u op other.u);\
+    case UINT64 : return ret(u op other.u);\
+    default     : break;\
+    }\
+    break;\
+  default: break;\
+  }\
+
+#define STROP(op, ret)\
+  if (t == STR_VIEW) {\
+    if (other.t == STR_VIEW) return ret(string(strv.cs, strv.sz) op string(other.strv.cs, other.strv.sz));\
+    else if (other.t == STR) return ret(string(strv.cs, strv.sz) op other.str);\
+  } else if (t == STR) {\
+    if (other.t == STR_VIEW) return ret(string(str) op string(other.strv.cs, other.strv.sz));\
+    else if (other.t == STR) return ret(string(str) op other.str);\
+  }\
+
+#define NULLOP(ret1, ret2, ret3)\
+  if (t == NILL) {\
+    if (other.t == NILL) return ret1;\
+    else return ret2;\
+  } else if (other.t == NILL) {\
+    return ret3;\
+  }\
+
+#define THROWINVALID(op) THROW("Invalid op:" #op, t, other.t);
+
+#define COMPAREOP(op, nullret1, nullret2, nullret3)\
+  bool operator op(const JsonValue& other) const {\
+    NULLOP(nullret1, nullret2, nullret3)\
+    STROP(op, bool)\
+    NUMBEROP(op, bool)\
+    THROWINVALID(op)\
+  }\
+
+#define COMPAREOPS()\
+  COMPAREOP(==, true, false, false)\
+  COMPAREOP(<, false, true, false)\
+  COMPAREOP(<=, true, true, false)\
+  COMPAREOP(>, false, false, true)\
+  COMPAREOP(>=, true, false, true)\
+
+#define PLUSOP()\
+  JsonValue operator +(const JsonValue& other) const {\
+    NULLOP(JsonValue(), JsonValue(), JsonValue())\
+    STROP(+, JsonValue)\
+    NUMBEROP(+, JsonValue)\
+    THROWINVALID(op)\
+  }\
+
+#define ARITHOP(op)\
+  JsonValue operator op(const JsonValue& other) const {\
+    NULLOP(JsonValue(), JsonValue(), JsonValue())\
+    NUMBEROP(op, JsonValue)\
+    THROWINVALID(op)\
+  }\
+
+#define ARITHMETICOPS()\
+  PLUSOP()\
+  ARITHOP(-)\
+  ARITHOP(*)\
+  ARITHOP(/)\
+
+public:
+  explicit JsonValue(double d)   : t(DOUBLE)   {this->d = d;}
+  explicit JsonValue(int i)      : t(INT)      {this->i = i;}
+  explicit JsonValue(int64_t i)  : t(INT64)    {this->i = i;}
+  explicit JsonValue(unsigned u) : t(UINT)     {this->u = u;}
+  explicit JsonValue(uint64_t u) : t(UINT64)   {this->u = u;}
+  explicit JsonValue(const string& s) : t(STR) {new (&str) string(s);}
+  explicit JsonValue(bool b)     : t(BOOL)     {this->b = b;}
+  explicit JsonValue()           : t(NILL)     {}
+  explicit JsonValue(const rapidjson::Value& v) {
+    switch (v.GetType()) {
+      case rapidjson::kNullType:   t = NILL; break;
+      case rapidjson::kFalseType:  t = BOOL; b = false; break;
+      case rapidjson::kTrueType:   t = BOOL; b = true; break;
+      case rapidjson::kObjectType: t = OBJ;  rjv = &v; break;
+      case rapidjson::kArrayType:  t = ARR;  rjv = &v; break;
+      case rapidjson::kStringType: t = STR_VIEW; strv.cs = v.GetString();
+                                   strv.sz = v.GetStringLength(); break;
+      case rapidjson::kNumberType: {
+             if (v.IsDouble()) {t = DOUBLE; d = v.GetDouble();}
+        else if (v.IsInt())    {t = INT;    i = v.GetInt();   }
+        else if (v.IsUint())   {t = UINT;   u = v.GetUint();  }
+        else if (v.IsInt64())  {t = INT64;  i = v.GetInt64(); }
+        else if (v.IsUint64()) {t = UINT64; u = v.GetUint64();}
+      } break;
+      default: THROW("Unable to understand json type", v.GetType());
+    }
+  }
+  JsonValue(const JsonValue& other) {
+    copyFrom(other);
+  }
+  JsonValue& operator=(const JsonValue& other) {
+    if (t == STR) str.~string();
+    copyFrom(other);
+    return *this;
+  }
+  ~JsonValue() {
+    if (t == STR) str.~string();
+  }
+  COMPAREOPS()
+  ARITHMETICOPS()
+  string toString() const {
+    switch (t) {
+    case DOUBLE : return to_string(d);
+    case INT    : return to_string(i);
+    case INT64  : return to_string(i);
+    case UINT   : return to_string(u);
+    case UINT64 : return to_string(u);
+    case STR_VIEW: return string(strv.cs, strv.sz);
+    case STR    : return str;
+    case BOOL   : return b ? "true" : "false";
+    case NILL   : return "null";
+    case OBJ    : /* fallthrough */
+    case ARR    : {
+      rapidjson::StringBuffer strbuf;
+      rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+      rjv->Accept(writer);
+      return strbuf.GetString();
+    }
+    default: THROW("Invalid state");
+    }
+  }
+  friend std::ostream& operator<< (std::ostream& stream, const JsonValue& v) {
+    stream << v.toString();
+    return stream;
+  }
+  int  getType()  const { return t; }
+  bool isObject() const { return t == OBJ; }
+  bool isArray()  const { return t == ARR; }
+  const rapidjson::Value* getObject() const { ASSERT(isObject()); return rjv; }
+  const rapidjson::Value* getArray() const  { ASSERT(isArray()); return rjv; }
+  bool regexMatch(const std::regex& r) const {
+    if (t == STR_VIEW) return std::regex_match(strv.cs, r);
+    else if (t == STR) return std::regex_match(str, r);
+    else               return false;
+  }
+};
+
+#define JSONVALUENUMBEROP(type, op, ret)\
+  inline ret operator op(const JsonValue& value, type n) {\
+    return value op JsonValue(n);\
+  }\
+  inline ret operator op(type n, const JsonValue& value) {\
+    return JsonValue(n) op value;\
+  }\
+
+#define JSONVALUEOTHEROP(type, op, ret)\
+  inline ret operator op(const JsonValue& value, const type& n) {\
+    return value op JsonValue(n);\
+  }\
+  inline ret operator op(const type& n, const JsonValue& value) {\
+    return JsonValue(n) op value;\
+  }\
+
+#define JSONVALUENUMBEROPS(type)\
+  JSONVALUENUMBEROP(type, ==, bool)\
+  JSONVALUENUMBEROP(type, <, bool)\
+  JSONVALUENUMBEROP(type, >, bool)\
+  JSONVALUENUMBEROP(type, >=, bool)\
+  JSONVALUENUMBEROP(type, <=, bool)\
+  JSONVALUENUMBEROP(type, +, JsonValue)\
+  JSONVALUENUMBEROP(type, -, JsonValue)\
+  JSONVALUENUMBEROP(type, *, JsonValue)\
+  JSONVALUENUMBEROP(type, /, JsonValue)\
+
+#define JSONVALUESTRINGOPS()\
+  JSONVALUEOTHEROP(string, ==, bool)\
+  JSONVALUEOTHEROP(string, <, bool)\
+  JSONVALUEOTHEROP(string, >, bool)\
+  JSONVALUEOTHEROP(string, <=, bool)\
+  JSONVALUEOTHEROP(string, >=, bool)\
+  JSONVALUEOTHEROP(string, +, JsonValue)\
+
+JSONVALUENUMBEROPS(double)
+JSONVALUENUMBEROPS(int)
+JSONVALUENUMBEROPS(unsigned)
+JSONVALUENUMBEROPS(int64_t)
+JSONVALUENUMBEROPS(uint64_t)
+JSONVALUESTRINGOPS()
+
+template<>
+inline string Stringify(const JsonValue& value) {
+  return value.toString();
+}
+
+template<>
+inline bool Like(const optional<JsonValue>& l, const std::regex& r) {
+  return (l && l->regexMatch(r));
 }
 
 void GetJsonObjectFromFile(const string& file, rapidjson::Document& doc) {
@@ -77,28 +343,43 @@ for (int i=1; i<argc; i++) {\
 
 class Iterators : public BaseIterators {
 public:
-  static
-  MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>
-  mk_rjv_iterator(const string& path, const rapidjson::Value* value, const string& key) {
+  using JsonRangeIterator = MyRangeIterator<JsonValue, rapidjson::Value, rapidjson::Value::ConstValueIterator>;
+
+  static JsonRangeIterator mk_json_iterator(const string& path, const JsonValue* value, const string& key) {
+    auto convert_fn = [](const rapidjson::Value* t, JsonValue& value) -> const JsonValue* {
+      if (t == nullptr) return nullptr;
+      value = JsonValue(*t);
+      return &value;
+    };
     if (value) {
-      if (!value->IsObject()) {
+      if (!value->isObject()) {
         cerr << "Cannot lookup " << key << " at " << path
-             << " since type is not object " << value->GetType() << endl;
-        return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>();
+             << " since type is not object " << value->getType() << endl;
+        return JsonRangeIterator::mk_singular(convert_fn);
       }
-      rapidjson::Value::ConstMemberIterator it = value->FindMember(key.c_str());
-      if (it == value->MemberEnd()) {
-        return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>();
+      const rapidjson::Value* obj = value->getObject(); ASSERT(obj);
+      rapidjson::Value::ConstMemberIterator it = obj->FindMember(key.c_str());
+      if (it == obj->MemberEnd()) {
+        return JsonRangeIterator::mk_singular(convert_fn);
       } else if (it->value.IsArray()) {
-        return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>(
-            it->value.Begin(), it->value.End());
+        return JsonRangeIterator::mk_normal(convert_fn, it->value.Begin(), it->value.End());
       } else {
-        return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>(
-            &(it->value));
+        return JsonRangeIterator::mk_singular(convert_fn, &(it->value));
       }
     } else {
-      return MyRangeIterator<rapidjson::Value, rapidjson::Value::ConstValueIterator>();
+      return JsonRangeIterator::mk_singular(convert_fn);
     }
+  }
+
+  using JsonDocumentIterator = MyRangeIterator<JsonValue, rapidjson::Document, typename vector<rapidjson::Document>::const_iterator>;
+
+  static JsonDocumentIterator mk_json_iterator(const vector<rapidjson::Document>& documents) {
+    auto convert_fn = [](const rapidjson::Document* t, JsonValue& value) -> const JsonValue* {
+      if (t == nullptr) return nullptr;
+      value = JsonValue(*t);
+      return &value;
+    };
+    return JsonDocumentIterator::mk_normal(convert_fn, documents.cbegin(), documents.cend());
   }
 };
 

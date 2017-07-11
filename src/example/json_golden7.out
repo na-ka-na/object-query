@@ -1,0 +1,4 @@
+EmployeeStr(all_employees.name,all_employees.id) | STR(all_employees.id) | STR(all_employees)                                                                     
+------------------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------
+abc(id=1)                                        | 1                     | {"active":false,"enumx":"ENUMX_X1","enumy":["ENUMY_Y1","ENUMY_Y2"],"id":1,"name":"abc"}
+def(id=2)                                        | 2                     | {"active":true,"active_direct_reports":[1,2],"enumy":["ENUMY_Y1"],"id":2,"name":"def"} 

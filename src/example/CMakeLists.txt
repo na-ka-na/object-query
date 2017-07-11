@@ -22,8 +22,11 @@ add_custom_command(OUTPUT ${common_test_py}
 
 string(REPLACE ";" "," CMAKE_PREFIX_PATHS "${CMAKE_PREFIX_PATH}")
 
-foreach(qtype IN ITEMS proto)
+foreach(qtype IN ITEMS proto json)
   foreach(testnum RANGE 1 8)
+    if((${qtype} STREQUAL "json") AND (${testnum} STREQUAL "8"))
+      continue()
+    endif()
   	set(golden_out "${qtype}_golden${testnum}.out")
   	add_custom_command(OUTPUT ${golden_out}
                        COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${golden_out} ${CMAKE_CURRENT_BINARY_DIR}
