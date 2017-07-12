@@ -3,6 +3,8 @@ include_directories(
     ${CMAKE_BINARY_DIR}/example
     ${CMAKE_SOURCE_DIR}/common
     ${CMAKE_SOURCE_DIR}/protobuf-query
+    ${CMAKE_SOURCE_DIR}/json-query
+    ${CMAKE_SOURCE_DIR}/third-party/rapidjson/include
 )
 
 file(GLOB ProtoFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.proto")
@@ -38,3 +40,7 @@ foreach(qtype IN ITEMS proto json)
   	set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${qtype}"_generated_query${testnum}.dSYM")
   endforeach(testnum)
 endforeach(qtype)
+
+# This is just for IDEs
+file(GLOB GenFiles "${CMAKE_CURRENT_SOURCE_DIR}/*.cc")
+add_library(GenFilesLib ${GenFiles})

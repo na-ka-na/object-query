@@ -1,3 +1,5 @@
 build/
 eclipse_build/
 .DS_Store
+src/.idea
+src/cmake-build-debug
