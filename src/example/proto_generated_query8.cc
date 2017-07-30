@@ -28,9 +28,9 @@ vector<string> header = {
 };
 
 using S0 = optional<bool>;   /* active() */
-using S1 = optional<string>; /* enumx() */
+using S1 = optional<MyString>; /* enumx() */
 using S2 = optional<int32>;  /* id() */
-using S3 = optional<string>; /* name() */
+using S3 = optional<MyString>; /* name() */
 using S4 = optional<int32>;  /* founded() */
 using TupleType = tuple<S4, S2, S3, S0, S1>;
 
@@ -47,7 +47,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
       }
       S3 s3 = S3();
       if (all_employee && all_employee->has_name()) {
-        s3 = all_employee->name();
+        s3 = MyString(&(all_employee->name()));
       }
       S0 s0 = S0();
       if (all_employee && all_employee->has_active()) {
@@ -55,7 +55,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
       }
       S1 s1 = S1();
       if (all_employee && all_employee->has_enumx()) {
-        s1 = Example1::EnumX_Name(static_cast<Example1::EnumX>(all_employee->enumx()));
+        s1 = MyString(&(Example1::EnumX_Name(static_cast<Example1::EnumX>(all_employee->enumx()))));
       }
       tuples.emplace_back(s4, s2, s3, s0, s1);
     }

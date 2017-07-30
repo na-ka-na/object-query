@@ -49,10 +49,10 @@ vector<string> header = {
 
 using S0 = optional<bool>;   /* active() */
 using S1 = optional<int32>;  /* active_direct_reports() */
-using S2 = optional<string>; /* enumx() */
-using S3 = optional<string>; /* enumy() */
+using S2 = optional<MyString>; /* enumx() */
+using S3 = optional<MyString>; /* enumy() */
 using S4 = optional<int32>;  /* id() */
-using S5 = optional<string>; /* name() */
+using S5 = optional<MyString>; /* name() */
 using S6 = optional<int32>;  /* board_of_directors() */
 using S7 = optional<float>;  /* financial().quarterly_profits() */
 using S8 = optional<float>;  /* financial().quarterly_revenues() */
@@ -87,7 +87,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
             }
             S5 s5 = S5();
             if (all_employee && all_employee->has_name()) {
-              s5 = all_employee->name();
+              s5 = MyString(&(all_employee->name()));
             }
             S0 s0 = S0();
             if (all_employee && all_employee->has_active()) {
@@ -95,7 +95,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
             }
             S2 s2 = S2();
             if (all_employee && all_employee->has_enumx()) {
-              s2 = Example1::EnumX_Name(static_cast<Example1::EnumX>(all_employee->enumx()));
+              s2 = MyString(&(Example1::EnumX_Name(static_cast<Example1::EnumX>(all_employee->enumx()))));
             }
             for (const auto* active_direct_report : Iterators::mk_pb_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
               S1 s1 = S1();
@@ -105,7 +105,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
               for (const auto* each_enumy : Iterators::mk_pb_iterator(all_employee ? &all_employee->enumy() : nullptr)) {
                 S3 s3 = S3();
                 if (each_enumy) {
-                  s3 = Example1::EnumY_Name(static_cast<Example1::EnumY>(*each_enumy));
+                  s3 = MyString(&(Example1::EnumY_Name(static_cast<Example1::EnumY>(*each_enumy))));
                 }
                 tuples.emplace_back(s7, s8, s4, s5, s0, s1, s2, s3, s9, s6);
               }

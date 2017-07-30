@@ -63,7 +63,7 @@ public:
   string accessor() const override;
   // custom PbField functions
   bool is_enum() const;
-  string wrap_enum_with_name_accessor(const string& accessor) const;
+  string get_wrapped_accessor(const string& accessor) const;
   string has_check(const string& objName) const;
 private:
   vector<PbFieldPart> fieldParts;

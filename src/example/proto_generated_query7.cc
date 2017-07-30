@@ -42,7 +42,7 @@ optional<Ret> $STR(const optional<Arg0>& arg0) {
 
 using S0 = optional<Example1::Employee>; /* all_employees() */
 using S1 = optional<int32>;  /* id() */
-using S2 = optional<string>; /* name() */
+using S2 = optional<MyString>; /* name() */
 using S3 = decltype($EmployeeStr(S2(), S1())); /* EmployeeStr(all_employees.name,all_employees.id) */
 using S4 = decltype($STR(S1())); /* STR(all_employees.id) */
 using S5 = decltype($STR(S0())); /* STR(all_employees) */
@@ -61,7 +61,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
       }
       S2 s2 = S2();
       if (all_employee && all_employee->has_name()) {
-        s2 = all_employee->name();
+        s2 = MyString(&(all_employee->name()));
       }
       S3 s3 = $EmployeeStr(s2, s1);
       S4 s4 = $STR(s1);

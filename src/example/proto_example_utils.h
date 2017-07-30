@@ -3,10 +3,10 @@
 #include "generated_common.h"
 #include "example1.pb.h"
 
-string EmployeeStr(const string& name, int id) {
-  return name + "(id=" + to_string(id) + ")";
+string EmployeeStr(const MyString& name, int id) {
+  return name.toString() + "(id=" + to_string(id) + ")";
 }
 
 string STR(const Example1::Employee& t) {
-  return EmployeeStr(t.name(), t.id());
+  return EmployeeStr(MyString(&t.name()), t.id());
 }

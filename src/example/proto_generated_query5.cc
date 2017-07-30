@@ -39,7 +39,7 @@ optional<Ret> $STR(const optional<Arg0>& arg0) {
 
 using S0 = optional<bool>;   /* active() */
 using S1 = optional<int32>;  /* id() */
-using S2 = optional<string>; /* name() */
+using S2 = optional<MyString>; /* name() */
 using S3 = optional<int32>;  /* founded() */
 using S4 = decltype(Plus(Plus(Plus(Plus(Plus($STR(S1()), &$c1), S2()), &$c2), $STR(S0())), &$c3)); /* (((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')') */
 using S5 = decltype(Plus(Plus(Plus(Plus($STR(S1()), &$c4), Plus(Plus(Plus(Plus(Plus($STR(S1()), &$c1), S2()), &$c2), $STR(S0())), &$c3)), &$c4), $STR(S3()))); /* ((((STR(all_employees.id)+' ')+(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all_employees.active))+')'))+' ')+STR(founded)) */
@@ -58,7 +58,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
       }
       S2 s2 = S2();
       if (all_employee && all_employee->has_name()) {
-        s2 = all_employee->name();
+        s2 = MyString(&(all_employee->name()));
       }
       S0 s0 = S0();
       if (all_employee && all_employee->has_active()) {

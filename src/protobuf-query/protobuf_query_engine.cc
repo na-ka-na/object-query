@@ -121,13 +121,16 @@ const EnumDescriptor* PbFieldPart::enum_descriptor() const {
 
 
 string PbFieldPart::code_type() const {
+  string code_type;
   if (is_message()) {
-    return full_name_to_cpp_type(message_descriptor()->full_name());
+    code_type = full_name_to_cpp_type(message_descriptor()->full_name());
   } else if (is_enum()) {
-    return "string";
+    code_type = "string";
   } else {
-    return cpp_type_name();
+    code_type = cpp_type_name();
   }
+  if (code_type == "string") return "MyString";
+  return code_type;
 }
 
 string PbFieldPart::accessor() const {
@@ -171,11 +174,17 @@ bool PbField::is_enum() const {
   return !fieldParts.empty() && fieldParts.back().is_enum();
 }
 
-string PbField::wrap_enum_with_name_accessor(const string& accessor) const {
-  ASSERT(is_enum());
-  string type = PbFieldPart::full_name_to_cpp_type(
-      fieldParts.back().enum_descriptor()->full_name());
-  return type + "_Name(static_cast<" + type + ">(" + accessor + "))";
+string PbField::get_wrapped_accessor(const string& accessor) const {
+  string wrapped = accessor;
+  if (is_enum()) {
+    string type = PbFieldPart::full_name_to_cpp_type(
+        fieldParts.back().enum_descriptor()->full_name());
+    wrapped = type + "_Name(static_cast<" + type + ">(" + wrapped + "))";
+  }
+  if (code_type() == "MyString") {
+    wrapped = "MyString(&(" + wrapped + "))";
+  }
+  return wrapped;
 }
 
 string PbField::has_check(const string& objName) const {
@@ -286,26 +295,20 @@ void PbQueryTree::printFieldAssignment(
     const string& fieldVar, const string& fieldDefault) const {
   out << ind << fieldType << " " << fieldVar << " = " << fieldDefault
       << ";" << endl;
+  string accessor;
   if (repeating) {
     out << ind << "if (" << node.objName << ") {" << endl;
-    out << ind << "  " << fieldVar << " = "
-        << (field.is_enum()
-            ? field.wrap_enum_with_name_accessor("*" + node.objName)
-            : "*" + node.objName)
-        << ";" << endl;
-    out << ind << "}" << endl;
+    accessor = "*" + node.objName;
   } else {
     string checks = field.has_check(node.objName + "->");
     out << ind << "if (" << node.objName
         << (checks.empty() ? "" : " && " + checks) << ") {" << endl;
-    out << ind << "  " << fieldVar << " = "
-        << (field.is_enum()
-            ? field.wrap_enum_with_name_accessor(
-                node.objName + "->" + field.accessor())
-            : node.objName + "->" + field.accessor())
-        << ";" << endl;
-    out << ind << "}" << endl;
+    accessor = node.objName + "->" + field.accessor();
   }
+  out << ind << "  " << fieldVar << " = "
+      << field.get_wrapped_accessor(accessor)
+      << ";" << endl;
+  out << ind << "}" << endl;
 }
 
 ProtobufQueryEngine::ProtobufQueryEngine(const CodeGenSpec& spec, const string& rawSql, ostream& out) :

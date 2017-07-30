@@ -29,7 +29,7 @@ vector<string> header = {
 
 using S0 = optional<bool>;   /* active() */
 using S1 = optional<int32>;  /* id() */
-using S2 = optional<string>; /* name() */
+using S2 = optional<MyString>; /* name() */
 using S3 = optional<float>;  /* financial().quarterly_profits() */
 using TupleType = tuple<S3, S2, S0, S1>;
 
@@ -47,7 +47,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
         }
         S2 s2 = S2();
         if (all_employee && all_employee->has_name()) {
-          s2 = all_employee->name();
+          s2 = MyString(&(all_employee->name()));
         }
         S0 s0 = S0();
         if (all_employee && all_employee->has_active()) {

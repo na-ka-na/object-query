@@ -8,6 +8,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 // Unit tests for generated_common.h
 
+#include <cstdlib>
+#include <ctime>
 #include "test_commons.h"
 #include "generated_common.h"
 
@@ -29,6 +31,105 @@ void TestArthimeticFunctions() {
   EXPECT_EQ("-0.550000", Stringify(f));
 }
 
+string randomString() {
+  srand (time(NULL));
+  size_t size = rand() % 140;
+  if (size % 10) size = 0;
+  return string(size, 'a');
+}
+
+void checkEq(const string& expected, const MyString& actual) {
+  EXPECT_EQ(expected.size(), actual.size());
+  EXPECT_EQ(expected, actual.toString());
+}
+
+void TestMyString_constructor() {
+  {
+    MyString mystr;
+    checkEq("", mystr);
+  }
+  {
+    string str = randomString();
+    MyString mystr(str.c_str(), str.size());
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    MyString mystr(&str);
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    MyString mystr(str);
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    string copy = str;
+    MyString mystr(move(copy));
+    checkEq(str, mystr);
+  }
+}
+
+void TestMyString_copyConstructor() {
+  {
+    string str = randomString();
+    MyString mystr1(str.c_str(), str.size());
+    MyString mystr(mystr1);
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    MyString mystr1(&str);
+    MyString mystr(mystr1);
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    MyString mystr1(str);
+    MyString mystr(mystr1);
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    string copy = str;
+    MyString mystr1(move(copy));
+    MyString mystr(mystr1);
+    checkEq(str, mystr);
+  }
+}
+
+void TestMyString_moveConstructor() {
+  {
+    string str = randomString();
+    MyString mystr1(str.c_str(), str.size());
+    MyString mystr(move(mystr1));
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    MyString mystr1(&str);
+    MyString mystr(move(mystr1));
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    MyString mystr1(str);
+    MyString mystr(move(mystr1));
+    checkEq(str, mystr);
+  }
+  {
+    string str = randomString();
+    string copy = str;
+    MyString mystr1(move(copy));
+    MyString mystr(move(mystr1));
+    checkEq(str, mystr);
+  }
+}
+
 int main() {
   TestArthimeticFunctions();
+  TestMyString_constructor();
+  TestMyString_copyConstructor();
+  TestMyString_moveConstructor();
 }

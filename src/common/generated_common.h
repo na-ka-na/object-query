@@ -22,6 +22,143 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using namespace std;
 
+class MyString {
+  struct strview {
+    const char* cs = nullptr;
+    size_t sz = 0;
+  };
+  union {
+    strview strv;
+    const string* ptr;
+    string own;
+  };
+  enum Type {VIEW, PTR, OWN};
+  Type type = VIEW;
+  inline void setStrView(const char* cs, size_t sz) noexcept {
+    this->type = VIEW;
+    this->strv.cs = cs;
+    this->strv.sz = sz;
+  }
+  inline void setStrPtr(const string* ptr) noexcept {
+    this->type = PTR;
+    this->ptr = ptr;
+  }
+  inline void setStrOwn(const string& str) {
+    this->type = OWN;
+    new (&this->own) string(str);
+  }
+  inline void setStrOwn(string&& str) {
+    this->type = OWN;
+    new (&this->own) string(move(str));
+  }
+  inline void destroy() noexcept {
+    if (type == OWN) own.~string();
+  }
+  inline string copyView() const {
+    return string(strv.cs, strv.sz);
+  }
+  inline void copyFromOther(const MyString& other) {
+    switch (other.type) {
+    case VIEW: setStrView(other.strv.cs, other.strv.sz); break;
+    case PTR:  setStrPtr(other.ptr); break;
+    case OWN:  setStrOwn(other.own); break;
+    }
+  }
+  inline void moveFromOther(MyString&& other) {
+    switch (other.type) {
+    case VIEW: setStrView(other.strv.cs, other.strv.sz); break;
+    case PTR:  setStrPtr(other.ptr); break;
+    case OWN:  setStrOwn(move(other.own)); break;
+    }
+  }
+public:
+  MyString()                            noexcept { }
+  MyString(const char* cs, size_t sz)   noexcept { setStrView(cs, sz); }
+  explicit MyString(const string* ptr)  noexcept { setStrPtr(ptr); }
+  explicit MyString(const string& str)           { setStrOwn(str); }
+  explicit MyString(string&& str)                { setStrOwn(move(str)); }
+  MyString(const MyString& other)                { copyFromOther(other); }
+  MyString(MyString&& other)                     { moveFromOther(move(other)); }
+  MyString& operator=(const MyString& other)     { destroy(); copyFromOther(other); return *this; }
+  MyString& operator=(MyString&& other) noexcept { destroy(); moveFromOther(move(other)); return *this; }
+  ~MyString()                           noexcept { destroy(); }
+  inline string toString() const {
+    switch (type) {
+    case VIEW: return copyView();
+    case PTR:  return *ptr;
+    case OWN:  return own;
+    default:   THROW();
+    }
+  }
+  inline size_t size() const {
+    switch (type) {
+    case VIEW: return strv.sz;
+    case PTR:  return ptr->size();
+    case OWN:  return own.size();
+    default:   THROW();
+    }
+  }
+  friend std::ostream& operator<< (std::ostream& stream, const MyString& v) {
+    switch (v.type) {
+    case VIEW: stream << v.copyView(); break;
+    case PTR:  stream << (*(v.ptr)); break;
+    case OWN:  stream << v.own; break;
+    }
+    return stream;
+  }
+#define MYSTRINGOP(op, ret)\
+  ret operator op(const MyString& other) const {\
+  switch (type) {\
+  case VIEW: {\
+    switch (other.type) {\
+    case VIEW: return copyView() op other.copyView();\
+    case PTR:  return copyView() op (*(other.ptr));\
+    case OWN:  return copyView() op other.own;\
+    default:   THROW();\
+    }\
+  }\
+  case PTR:  {\
+    switch (other.type) {\
+    case VIEW: return (*ptr) op other.copyView();\
+    case PTR:  return (*ptr) op (*(other.ptr));\
+    case OWN:  return (*ptr) op other.own;\
+    default:   THROW();\
+    }\
+  }\
+  case OWN:  {\
+    switch (other.type) {\
+    case VIEW: return own op other.copyView();\
+    case PTR:  return own op (*(other.ptr));\
+    case OWN:  return own op other.own;\
+    default:   THROW();\
+    }\
+  }\
+  default:   THROW();\
+  }\
+  }
+  MYSTRINGOP(==, bool)\
+  MYSTRINGOP(<, bool)\
+  MYSTRINGOP(<=, bool)\
+  MYSTRINGOP(>, bool)\
+  MYSTRINGOP(>=, bool)\
+  MYSTRINGOP(+, string)\
+};
+
+#define MYSTRINGSTRINGOP(op, ret)\
+  inline ret operator op(const MyString& mys, const string& s) {\
+    return mys op MyString(&s);\
+  }\
+  inline ret operator op(const string& s, const MyString& mys) {\
+    return MyString(&s) op mys;\
+  }\
+
+MYSTRINGSTRINGOP(==, bool)\
+MYSTRINGSTRINGOP(<, bool)\
+MYSTRINGSTRINGOP(<=, bool)\
+MYSTRINGSTRINGOP(>, bool)\
+MYSTRINGSTRINGOP(>=, bool)\
+MYSTRINGSTRINGOP(+, string)\
+
 template<typename T>
 inline string Stringify(const T& t) {
   return to_string(t);
@@ -39,6 +176,7 @@ inline string Stringify(const optional<T>& t) {
 
 template<> inline string Stringify(const bool& t) {return t ? "true" : "false";}
 template<> inline string Stringify(const string& t) {return t;}
+template<> inline string Stringify(const MyString& t) {return t.toString();}
 
 template<typename T>
 inline string STR(const T& t) {

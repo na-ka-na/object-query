@@ -25,7 +25,7 @@ vector<string> header = {
 };
 
 using S0 = optional<int32>;  /* active_direct_reports() */
-using S1 = optional<string>; /* name() */
+using S1 = optional<MyString>; /* name() */
 using TupleType = tuple<S1, S0>;
 
 void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tuples) {
@@ -33,7 +33,7 @@ void runSelect(const vector<Example1::Company>& companys, vector<TupleType>& tup
     for (const auto* all_employee : Iterators::mk_pb_iterator(company ? &company->all_employees() : nullptr)) {
       S1 s1 = S1();
       if (all_employee && all_employee->has_name()) {
-        s1 = all_employee->name();
+        s1 = MyString(&(all_employee->name()));
       }
       for (const auto* active_direct_report : Iterators::mk_pb_iterator(all_employee ? &all_employee->active_direct_reports() : nullptr)) {
         S0 s0 = S0();
