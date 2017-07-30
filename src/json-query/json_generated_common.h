@@ -29,20 +29,15 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 using namespace std;
 
 class JsonValue {
-  struct strview {
-    const char* cs;
-    size_t sz;
-  };
   union {
     double d;
     int64_t i;
     uint64_t u;
-    strview strv;
-    string str;
+    MyString str;
     bool b;
     const rapidjson::Value* rjv;
   };
-  enum Type { NONE, DOUBLE, INT, INT64, UINT, UINT64, STR_VIEW, STR, BOOL, OBJ, ARR, NILL};
+  enum Type { NONE, DOUBLE, INT, INT64, UINT, UINT64, STR, BOOL, OBJ, ARR, NILL};
   Type t;
 
   void copyFrom(const JsonValue& other) {
@@ -53,14 +48,34 @@ class JsonValue {
     case INT64    : i = other.i; break;
     case UINT     : u = other.u; break;
     case UINT64   : u = other.u; break;
-    case STR_VIEW : strv = other.strv; break;
-    case STR      : new (&str) string(other.str); break;
+    case STR      : str = other.str; break;
     case BOOL     : b = other.b; break;
     case NILL     : break;
     case OBJ      : rjv = other.rjv; break;
     case ARR      : rjv = other.rjv; break;
     default       : THROW("Invalid state", t);
     }
+  }
+
+  void moveFrom(JsonValue&& other) {
+    t = other.t;
+    switch (t) {
+    case DOUBLE   : d = other.d; break;
+    case INT      : i = other.i; break;
+    case INT64    : i = other.i; break;
+    case UINT     : u = other.u; break;
+    case UINT64   : u = other.u; break;
+    case STR      : str = move(other.str); break;
+    case BOOL     : b = other.b; break;
+    case NILL     : break;
+    case OBJ      : rjv = other.rjv; break;
+    case ARR      : rjv = other.rjv; break;
+    default       : THROW("Invalid state", t);
+    }
+  }
+
+  void destroy() noexcept {
+    if (t == STR) str.~MyString();
   }
 
 #define NUMBEROP(op, ret)\
@@ -136,13 +151,7 @@ class JsonValue {
   }\
 
 #define STROP(op, ret)\
-  if (t == STR_VIEW) {\
-    if (other.t == STR_VIEW) return ret(string(strv.cs, strv.sz) op string(other.strv.cs, other.strv.sz));\
-    else if (other.t == STR) return ret(string(strv.cs, strv.sz) op other.str);\
-  } else if (t == STR) {\
-    if (other.t == STR_VIEW) return ret(string(str) op string(other.strv.cs, other.strv.sz));\
-    else if (other.t == STR) return ret(string(str) op other.str);\
-  }\
+  if ((t == STR) && (other.t == STR)) return ret(str op other.str);
 
 #define NULLOP(ret1, ret2, ret3)\
   if (t == NILL) {\
@@ -196,7 +205,10 @@ public:
   explicit JsonValue(int64_t i)  : t(INT64)    {this->i = i;}
   explicit JsonValue(unsigned u) : t(UINT)     {this->u = u;}
   explicit JsonValue(uint64_t u) : t(UINT64)   {this->u = u;}
-  explicit JsonValue(const string& s) : t(STR) {new (&str) string(s);}
+  explicit JsonValue(const string& s)   : t(STR) {this->str = MyString(s);}
+  explicit JsonValue(string&& s)        : t(STR) {this->str = MyString(move(s));}
+  explicit JsonValue(const MyString& s) : t(STR) {this->str = s;}
+  explicit JsonValue(MyString&& s)      : t(STR) {this->str = move(s);}
   explicit JsonValue(bool b)     : t(BOOL)     {this->b = b;}
   explicit JsonValue()           : t(NILL)     {}
   explicit JsonValue(const rapidjson::Value& v) {
@@ -206,8 +218,7 @@ public:
       case rapidjson::kTrueType:   t = BOOL; b = true; break;
       case rapidjson::kObjectType: t = OBJ;  rjv = &v; break;
       case rapidjson::kArrayType:  t = ARR;  rjv = &v; break;
-      case rapidjson::kStringType: t = STR_VIEW; strv.cs = v.GetString();
-                                   strv.sz = v.GetStringLength(); break;
+      case rapidjson::kStringType: t = STR;  str = MyString(v.GetString(), v.GetStringLength()); break;
       case rapidjson::kNumberType: {
              if (v.IsDouble()) {t = DOUBLE; d = v.GetDouble();}
         else if (v.IsInt())    {t = INT;    i = v.GetInt();   }
@@ -218,17 +229,11 @@ public:
       default: THROW("Unable to understand json type", v.GetType());
     }
   }
-  JsonValue(const JsonValue& other) {
-    copyFrom(other);
-  }
-  JsonValue& operator=(const JsonValue& other) {
-    if (t == STR) str.~string();
-    copyFrom(other);
-    return *this;
-  }
-  ~JsonValue() {
-    if (t == STR) str.~string();
-  }
+  JsonValue(const JsonValue& other)            {copyFrom(other);}
+  JsonValue(JsonValue&& other)                 {moveFrom(move(other));}
+  JsonValue& operator=(const JsonValue& other) {destroy(); copyFrom(other); return *this;}
+  JsonValue& operator=(JsonValue&& other)      {destroy(); moveFrom(move(other)); return *this;}
+  ~JsonValue()                                 {destroy();}
   COMPAREOPS()
   ARITHMETICOPS()
   string toString() const {
@@ -238,8 +243,7 @@ public:
     case INT64  : return to_string(i);
     case UINT   : return to_string(u);
     case UINT64 : return to_string(u);
-    case STR_VIEW: return string(strv.cs, strv.sz);
-    case STR    : return str;
+    case STR    : return str.toString();
     case BOOL   : return b ? "true" : "false";
     case NILL   : return "null";
     case OBJ    : /* fallthrough */
@@ -262,9 +266,8 @@ public:
   const rapidjson::Value* getObject() const { ASSERT(isObject()); return rjv; }
   const rapidjson::Value* getArray() const  { ASSERT(isArray()); return rjv; }
   bool regexMatch(const std::regex& r) const {
-    if (t == STR_VIEW) return std::regex_match(strv.cs, r);
-    else if (t == STR) return std::regex_match(str, r);
-    else               return false;
+    if (t == STR) return str.regexMatch(r);
+    else          return false;
   }
 };
 

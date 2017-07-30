@@ -106,6 +106,14 @@ public:
     }
     return stream;
   }
+  bool regexMatch(const std::regex& r) const {
+    switch (type) {
+    case VIEW: return std::regex_match(copyView(), r);
+    case PTR:  return std::regex_match(*ptr, r);
+    case OWN:  return std::regex_match(own, r);
+    default:   THROW();
+    }
+  }
 #define MYSTRINGOP(op, ret)\
   ret operator op(const MyString& other) const {\
   switch (type) {\
