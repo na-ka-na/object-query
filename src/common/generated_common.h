@@ -90,19 +90,16 @@ public:
     default:   THROW();
     }
   }
-  inline void Print(std::ostream& stream) const {
-    switch (type) {
-    case VIEW: stream << copyView(); break;
-    case PTR:  stream << (*ptr); break;
-    case OWN:  stream << own; break;
+  friend inline ostream& operator<<(ostream& stream, const MyString& v) {
+    switch (v.type) {
+    case VIEW: stream << v.copyView(); break;
+    case PTR:  stream << (*(v.ptr)); break;
+    case OWN:  stream << v.own; break;
     }
+    return stream;
   }
   inline size_t PrintSize() const {
     return size();
-  }
-  friend ostream& operator<<(ostream& stream, const MyString& v) {
-    v.Print(stream);
-    return stream;
   }
   bool regexMatch(const std::regex& r) const {
     switch (type) {
@@ -166,43 +163,28 @@ MYSTRINGSTRINGOP(>=, bool)\
 MYSTRINGSTRINGOP(+, string)\
 
 template<typename T>
-void Print(std::ostream& stream, const T& t) {
-  stream << to_string(t);
+inline void Print(std::ostream& stream, const T& t) {
+  stream << t;
 }
 template<>
-void Print(std::ostream& stream, const bool& t) {
+inline void Print(std::ostream& stream, const bool& t) {
   stream << (t ? "true" : "false");
 }
-template<>
-void Print(std::ostream& stream, const string& t) {
-  stream << t;
-}
-template<>
-void Print(std::ostream& stream, const char* const &t) {
-  stream << t;
-}
-template<>
-void Print(std::ostream& stream, const MyString& t) {
-  t.Print(stream);
-}
 template<typename T>
-void Print(std::ostream& stream, const optional<T>& t) {
+inline void Print(std::ostream& stream, const optional<T>& t) {
   if (t) Print(stream, *t);
   else stream << "NULL";
 }
 
 template<typename T>
 inline size_t PrintSize(const T& t) {
-  return to_string(t).size();
+  stringstream ss;
+  ss << t;
+  return ss.str().size();
 }
-template<> inline size_t PrintSize(const bool& t) {
+template<>
+inline size_t PrintSize(const bool& t) {
   return t ? strlen("true") : strlen("false");
-}
-template<> inline size_t PrintSize(const string& t) {
-  return t.size();
-}
-template<> inline size_t PrintSize(const MyString& t) {
-  return t.PrintSize();
 }
 template<typename T>
 inline size_t PrintSize(const optional<T>& t) {

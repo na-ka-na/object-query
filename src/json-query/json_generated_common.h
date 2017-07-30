@@ -236,36 +236,33 @@ public:
   ~JsonValue()                                 {destroy();}
   COMPAREOPS()
   ARITHMETICOPS()
-  inline void Print(std::ostream& stream) const {
-    switch (t) {
-    case DOUBLE : stream << to_string(d); break;
-    case INT    : stream << to_string(i); break;
-    case INT64  : stream << to_string(i); break;
-    case UINT   : stream << to_string(u); break;
-    case UINT64 : stream << to_string(u); break;
-    case STR    : str.Print(stream); break;
-    case BOOL   : stream << (b ? "true" : "false"); break;
+  friend inline ostream& operator<<(ostream& stream, const JsonValue& v) {
+    switch (v.t) {
+    case DOUBLE : stream << v.d; break;
+    case INT    : stream << v.i; break;
+    case INT64  : stream << v.i; break;
+    case UINT   : stream << v.u; break;
+    case UINT64 : stream << v.u; break;
+    case STR    : stream << v.str; break;
+    case BOOL   : stream << (v.b ? "true" : "false"); break;
     case NILL   : stream << "null"; break;
     case OBJ    : /* fallthrough */
     case ARR    : {
       rapidjson::StringBuffer strbuf;
       rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
-      rjv->Accept(writer);
+      v.rjv->Accept(writer);
       stream << strbuf.GetString();
       break;
     }
     default: THROW("Invalid state");
     }
+    return stream;
   }
   inline size_t PrintSize() const {
     if (t == STR) return str.PrintSize();
     stringstream ss;
-    Print(ss);
+    ss << *this;
     return ss.str().size();
-  }
-  friend ostream& operator<<(ostream& stream, const JsonValue& v) {
-    v.Print(stream);
-    return stream;
   }
   int  getType()  const { return t; }
   bool isObject() const { return t == OBJ; }
@@ -321,8 +318,8 @@ JSONVALUENUMBEROPS(uint64_t)
 JSONVALUESTRINGOPS()
 
 template<>
-void Print(std::ostream& stream, const JsonValue& t) {
-  t.Print(stream);
+inline void Print(std::ostream& stream, const JsonValue& value) {
+  stream << value;
 }
 
 template<>

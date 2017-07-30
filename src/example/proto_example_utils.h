@@ -5,10 +5,7 @@
 
 string EmployeeStr(const MyString& name, int id) {
   stringstream ss;
-  Print(ss, name);
-  Print(ss, (const char*) "(id=");
-  Print(ss, id);
-  Print(ss, (const char*) ")");
+  ss << name << "(id=" << id << ")";
   return ss.str();
 }
 

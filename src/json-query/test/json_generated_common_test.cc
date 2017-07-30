@@ -68,7 +68,7 @@ void TestMyRangeIteratorNonEmptyArray() {
   EXPECT_EQ(JsonValue(object["abc"][0]), **begin);
   stringstream ss;
   ss << **begin;
-  EXPECT_EQ("1.322423", ss.str());
+  EXPECT_EQ("1.32242", ss.str());
   ++begin;
   EXPECT_NE(begin, end);
   EXPECT_EQ(JsonValue(object["abc"][1]), **begin);
