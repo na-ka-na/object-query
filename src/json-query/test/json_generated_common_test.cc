@@ -49,7 +49,9 @@ void TestMyRangeIteratorNonEmpty() {
   auto&& end = myit.end();
   EXPECT_NE(begin, end);
   EXPECT_EQ(JsonValue(object["abc"]), **begin);
-  EXPECT_EQ("def", Stringify(*begin));
+  stringstream ss;
+  ss << **begin;
+  EXPECT_EQ("def", ss.str());
   ++begin;
   EXPECT_EQ(begin, end);
 }
@@ -64,11 +66,15 @@ void TestMyRangeIteratorNonEmptyArray() {
   auto&& end = myit.end();
   EXPECT_NE(begin, end);
   EXPECT_EQ(JsonValue(object["abc"][0]), **begin);
-  EXPECT_EQ("1.322423", Stringify(*begin));
+  stringstream ss;
+  ss << **begin;
+  EXPECT_EQ("1.322423", ss.str());
   ++begin;
   EXPECT_NE(begin, end);
   EXPECT_EQ(JsonValue(object["abc"][1]), **begin);
-  EXPECT_EQ("456", Stringify(*begin));
+  stringstream ss1;
+  ss1 << **begin;
+  EXPECT_EQ("456", ss1.str());
   ++begin;
   EXPECT_EQ(begin, end);
 }

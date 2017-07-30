@@ -116,18 +116,18 @@ void printTuples(const vector<TupleType>& tuples) {
     sizes.push_back(header[i].size());
   }
   for (const TupleType& t : tuples) {
-    sizes[0] = max(sizes[0], Stringify(get<0>(t)).size());
-    sizes[1] = max(sizes[1], Stringify(get<1>(t)).size());
-    sizes[2] = max(sizes[2], Stringify(get<2>(t)).size());
-    sizes[3] = max(sizes[3], Stringify(get<3>(t)).size());
-    sizes[4] = max(sizes[4], Stringify(get<4>(t)).size());
-    sizes[5] = max(sizes[5], Stringify(get<5>(t)).size());
-    sizes[6] = max(sizes[6], Stringify(get<6>(t)).size());
-    sizes[7] = max(sizes[7], Stringify(get<7>(t)).size());
-    sizes[8] = max(sizes[8], Stringify(get<8>(t)).size());
-    sizes[9] = max(sizes[9], Stringify(get<9>(t)).size());
+    sizes[0] = max(sizes[0], PrintSize(get<0>(t)));
+    sizes[1] = max(sizes[1], PrintSize(get<1>(t)));
+    sizes[2] = max(sizes[2], PrintSize(get<2>(t)));
+    sizes[3] = max(sizes[3], PrintSize(get<3>(t)));
+    sizes[4] = max(sizes[4], PrintSize(get<4>(t)));
+    sizes[5] = max(sizes[5], PrintSize(get<5>(t)));
+    sizes[6] = max(sizes[6], PrintSize(get<6>(t)));
+    sizes[7] = max(sizes[7], PrintSize(get<7>(t)));
+    sizes[8] = max(sizes[8], PrintSize(get<8>(t)));
+    sizes[9] = max(sizes[9], PrintSize(get<9>(t)));
   }
-  cout << left;
+  cout << std::left;
   for (size_t i=0; i<header.size(); i++) {
     cout << ((i==0) ? "" : " | ") << setw(sizes[i]) << header[i];
   }
@@ -137,16 +137,16 @@ void printTuples(const vector<TupleType>& tuples) {
   }
   cout << endl;
   for(const TupleType& t : tuples) {
-    cout <<          setw(sizes[0]) << Stringify(get<0>(t));
-    cout << " | " << setw(sizes[1]) << Stringify(get<1>(t));
-    cout << " | " << setw(sizes[2]) << Stringify(get<2>(t));
-    cout << " | " << setw(sizes[3]) << Stringify(get<3>(t));
-    cout << " | " << setw(sizes[4]) << Stringify(get<4>(t));
-    cout << " | " << setw(sizes[5]) << Stringify(get<5>(t));
-    cout << " | " << setw(sizes[6]) << Stringify(get<6>(t));
-    cout << " | " << setw(sizes[7]) << Stringify(get<7>(t));
-    cout << " | " << setw(sizes[8]) << Stringify(get<8>(t));
-    cout << " | " << setw(sizes[9]) << Stringify(get<9>(t));
+    Print(cout <<          setw(sizes[0]), get<0>(t));
+    Print(cout << " | " << setw(sizes[1]), get<1>(t));
+    Print(cout << " | " << setw(sizes[2]), get<2>(t));
+    Print(cout << " | " << setw(sizes[3]), get<3>(t));
+    Print(cout << " | " << setw(sizes[4]), get<4>(t));
+    Print(cout << " | " << setw(sizes[5]), get<5>(t));
+    Print(cout << " | " << setw(sizes[6]), get<6>(t));
+    Print(cout << " | " << setw(sizes[7]), get<7>(t));
+    Print(cout << " | " << setw(sizes[8]), get<8>(t));
+    Print(cout << " | " << setw(sizes[9]), get<9>(t));
     cout << endl;
   }
 }

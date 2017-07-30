@@ -4,7 +4,12 @@
 #include "example1.pb.h"
 
 string EmployeeStr(const MyString& name, int id) {
-  return name.toString() + "(id=" + to_string(id) + ")";
+  stringstream ss;
+  Print(ss, name);
+  Print(ss, (const char*) "(id=");
+  Print(ss, id);
+  Print(ss, (const char*) ")");
+  return ss.str();
 }
 
 string STR(const Example1::Employee& t) {

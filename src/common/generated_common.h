@@ -82,14 +82,6 @@ public:
   MyString& operator=(const MyString& other)     { destroy(); copyFromOther(other); return *this; }
   MyString& operator=(MyString&& other) noexcept { destroy(); moveFromOther(move(other)); return *this; }
   ~MyString()                           noexcept { destroy(); }
-  inline string toString() const {
-    switch (type) {
-    case VIEW: return copyView();
-    case PTR:  return *ptr;
-    case OWN:  return own;
-    default:   THROW();
-    }
-  }
   inline size_t size() const {
     switch (type) {
     case VIEW: return strv.sz;
@@ -98,12 +90,18 @@ public:
     default:   THROW();
     }
   }
-  friend std::ostream& operator<< (std::ostream& stream, const MyString& v) {
-    switch (v.type) {
-    case VIEW: stream << v.copyView(); break;
-    case PTR:  stream << (*(v.ptr)); break;
-    case OWN:  stream << v.own; break;
+  inline void Print(std::ostream& stream) const {
+    switch (type) {
+    case VIEW: stream << copyView(); break;
+    case PTR:  stream << (*ptr); break;
+    case OWN:  stream << own; break;
     }
+  }
+  inline size_t PrintSize() const {
+    return size();
+  }
+  friend ostream& operator<<(ostream& stream, const MyString& v) {
+    v.Print(stream);
     return stream;
   }
   bool regexMatch(const std::regex& r) const {
@@ -168,27 +166,54 @@ MYSTRINGSTRINGOP(>=, bool)\
 MYSTRINGSTRINGOP(+, string)\
 
 template<typename T>
-inline string Stringify(const T& t) {
-  return to_string(t);
+void Print(std::ostream& stream, const T& t) {
+  stream << to_string(t);
+}
+template<>
+void Print(std::ostream& stream, const bool& t) {
+  stream << (t ? "true" : "false");
+}
+template<>
+void Print(std::ostream& stream, const string& t) {
+  stream << t;
+}
+template<>
+void Print(std::ostream& stream, const char* const &t) {
+  stream << t;
+}
+template<>
+void Print(std::ostream& stream, const MyString& t) {
+  t.Print(stream);
+}
+template<typename T>
+void Print(std::ostream& stream, const optional<T>& t) {
+  if (t) Print(stream, *t);
+  else stream << "NULL";
 }
 
 template<typename T>
-inline string Stringify(const T* t) {
-  return t ? Stringify<T>(*t) : "NULL";
+inline size_t PrintSize(const T& t) {
+  return to_string(t).size();
 }
-
+template<> inline size_t PrintSize(const bool& t) {
+  return t ? strlen("true") : strlen("false");
+}
+template<> inline size_t PrintSize(const string& t) {
+  return t.size();
+}
+template<> inline size_t PrintSize(const MyString& t) {
+  return t.PrintSize();
+}
 template<typename T>
-inline string Stringify(const optional<T>& t) {
-  return t ? Stringify<T>(*t) : "NULL";
+inline size_t PrintSize(const optional<T>& t) {
+  return t ? PrintSize<T>(*t) : strlen("NULL");
 }
-
-template<> inline string Stringify(const bool& t) {return t ? "true" : "false";}
-template<> inline string Stringify(const string& t) {return t;}
-template<> inline string Stringify(const MyString& t) {return t.toString();}
 
 template<typename T>
 inline string STR(const T& t) {
-  return Stringify(t);
+  stringstream ss;
+  Print(ss, t);
+  return ss.str();
 }
 
 template<typename T>

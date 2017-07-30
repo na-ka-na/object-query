@@ -236,28 +236,35 @@ public:
   ~JsonValue()                                 {destroy();}
   COMPAREOPS()
   ARITHMETICOPS()
-  string toString() const {
+  inline void Print(std::ostream& stream) const {
     switch (t) {
-    case DOUBLE : return to_string(d);
-    case INT    : return to_string(i);
-    case INT64  : return to_string(i);
-    case UINT   : return to_string(u);
-    case UINT64 : return to_string(u);
-    case STR    : return str.toString();
-    case BOOL   : return b ? "true" : "false";
-    case NILL   : return "null";
+    case DOUBLE : stream << to_string(d); break;
+    case INT    : stream << to_string(i); break;
+    case INT64  : stream << to_string(i); break;
+    case UINT   : stream << to_string(u); break;
+    case UINT64 : stream << to_string(u); break;
+    case STR    : str.Print(stream); break;
+    case BOOL   : stream << (b ? "true" : "false"); break;
+    case NILL   : stream << "null"; break;
     case OBJ    : /* fallthrough */
     case ARR    : {
       rapidjson::StringBuffer strbuf;
       rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
       rjv->Accept(writer);
-      return strbuf.GetString();
+      stream << strbuf.GetString();
+      break;
     }
     default: THROW("Invalid state");
     }
   }
-  friend std::ostream& operator<< (std::ostream& stream, const JsonValue& v) {
-    stream << v.toString();
+  inline size_t PrintSize() const {
+    if (t == STR) return str.PrintSize();
+    stringstream ss;
+    Print(ss);
+    return ss.str().size();
+  }
+  friend ostream& operator<<(ostream& stream, const JsonValue& v) {
+    v.Print(stream);
     return stream;
   }
   int  getType()  const { return t; }
@@ -314,8 +321,13 @@ JSONVALUENUMBEROPS(uint64_t)
 JSONVALUESTRINGOPS()
 
 template<>
-inline string Stringify(const JsonValue& value) {
-  return value.toString();
+void Print(std::ostream& stream, const JsonValue& t) {
+  t.Print(stream);
+}
+
+template<>
+inline size_t PrintSize(const JsonValue& value) {
+  return value.PrintSize();
 }
 
 template<>

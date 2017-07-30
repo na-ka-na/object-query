@@ -412,11 +412,11 @@ void printTuples(const vector<TupleType>& tuples) {
 )fff";
   out << "  for (const TupleType& t : tuples) {" << endl;
   for (size_t i=0; i<query.selectStmt.getSelectFields().size(); i++) {
-    out << "    sizes[" << i << "] = max(sizes[" << i << "], Stringify(get<"
-        << i << ">(t)).size());" << endl;
+    out << "    sizes[" << i << "] = max(sizes[" << i << "], PrintSize(get<"
+        << i << ">(t)));" << endl;
   }
   out << "  }" << endl;
-  out << "  cout << left;";
+  out << "  cout << std::left;";
   out << R"fff(
   for (size_t i=0; i<header.size(); i++) {
     cout << ((i==0) ? "" : " | ") << setw(sizes[i]) << header[i];
@@ -429,9 +429,8 @@ void printTuples(const vector<TupleType>& tuples) {
 )fff";
   out << "  for(const TupleType& t : tuples) {" << endl;
   for (size_t i=0; i<query.selectStmt.getSelectFields().size(); i++) {
-    out << "    cout << " << ((i==0) ? "         " : "\" | \" << ")
-        << "setw(sizes[" << i << "]) << "
-        << "Stringify(get<" << i << ">(t));" << endl;
+    out << "    Print(cout << " << ((i==0) ? "         " : "\" | \" << ")
+        << "setw(sizes[" << i << "]), " << "get<" << i << ">(t));" << endl;
   }
   out << "    cout << endl;" << endl;
   out << "  }" << endl;

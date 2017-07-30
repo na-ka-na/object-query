@@ -6,5 +6,10 @@
 using namespace std;
 
 string EmployeeStr(const JsonValue& name, const JsonValue& id) {
-  return name.toString() + "(id=" + id.toString() + ")";
+  stringstream ss;
+  Print(ss, name);
+  Print(ss, (const char*) "(id=");
+  Print(ss, id);
+  Print(ss, (const char*) ")");
+  return ss.str();
 }

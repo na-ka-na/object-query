@@ -15,20 +15,20 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 void TestArthimeticFunctions() {
   auto a = Uminus(optional<double>(1.1));
-  EXPECT_EQ("-1.100000", Stringify(a));
+  EXPECT_EQ(-1.1, *a);
 
   auto b = optional<int>(2);
   auto c = Plus(a, b);
-  EXPECT_EQ("0.900000", Stringify(c));
+  EXPECT_EQ(9, int((*c) * 10));
 
   auto d = Minus(a, b);
-  EXPECT_EQ("-3.100000", Stringify(d));
+  EXPECT_EQ(-31, int((*d) * 10));
 
   auto e = Mult(a, b);
-  EXPECT_EQ("-2.200000", Stringify(e));
+  EXPECT_EQ(-22, int((*e) * 10));
 
   auto f = Divide(a, b);
-  EXPECT_EQ("-0.550000", Stringify(f));
+  EXPECT_EQ(-55, int((*f) * 100));
 }
 
 string randomString() {
@@ -40,7 +40,9 @@ string randomString() {
 
 void checkEq(const string& expected, const MyString& actual) {
   EXPECT_EQ(expected.size(), actual.size());
-  EXPECT_EQ(expected, actual.toString());
+  stringstream ss;
+  ss << actual;
+  EXPECT_EQ(expected, ss.str());
 }
 
 void TestMyString_constructor() {

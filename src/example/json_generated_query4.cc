@@ -79,11 +79,11 @@ void printTuples(const vector<TupleType>& tuples) {
     sizes.push_back(header[i].size());
   }
   for (const TupleType& t : tuples) {
-    sizes[0] = max(sizes[0], Stringify(get<0>(t)).size());
-    sizes[1] = max(sizes[1], Stringify(get<1>(t)).size());
-    sizes[2] = max(sizes[2], Stringify(get<2>(t)).size());
+    sizes[0] = max(sizes[0], PrintSize(get<0>(t)));
+    sizes[1] = max(sizes[1], PrintSize(get<1>(t)));
+    sizes[2] = max(sizes[2], PrintSize(get<2>(t)));
   }
-  cout << left;
+  cout << std::left;
   for (size_t i=0; i<header.size(); i++) {
     cout << ((i==0) ? "" : " | ") << setw(sizes[i]) << header[i];
   }
@@ -93,9 +93,9 @@ void printTuples(const vector<TupleType>& tuples) {
   }
   cout << endl;
   for(const TupleType& t : tuples) {
-    cout <<          setw(sizes[0]) << Stringify(get<0>(t));
-    cout << " | " << setw(sizes[1]) << Stringify(get<1>(t));
-    cout << " | " << setw(sizes[2]) << Stringify(get<2>(t));
+    Print(cout <<          setw(sizes[0]), get<0>(t));
+    Print(cout << " | " << setw(sizes[1]), get<1>(t));
+    Print(cout << " | " << setw(sizes[2]), get<2>(t));
     cout << endl;
   }
 }
