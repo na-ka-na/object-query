@@ -22,6 +22,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using namespace std;
 
+namespace oq {
+
 class MyString {
   struct strview {
     const char* cs = nullptr;
@@ -458,3 +460,4 @@ public:
   }
 };
 
+} // namespace oq

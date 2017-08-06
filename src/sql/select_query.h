@@ -16,14 +16,14 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 using namespace std;
 
 // declare yylex for bison
-yy::SqlParser::symbol_type yylex(SelectQuery& query);
+oq::yy::SqlParser::symbol_type yylex(oq::SelectQuery& query);
 
 // declare yylex for flex
 #ifndef YY_TYPEDEF_YY_SCANNER_T
 #define YY_TYPEDEF_YY_SCANNER_T
 typedef void* yyscan_t;
 #endif
-#define YY_DECL yy::SqlParser::symbol_type yylex_flex(SelectQuery& query, yyscan_t yyscanner)
+#define YY_DECL oq::yy::SqlParser::symbol_type yylex_flex(oq::SelectQuery& query, yyscan_t yyscanner)
 YY_DECL;
 
 // Fwd declaration of flex functions, generated header file doesn't work for us
@@ -37,6 +37,8 @@ typedef struct yy_buffer_state* YY_BUFFER_STATE;
 YY_BUFFER_STATE yy_scan_string(const char*, yyscan_t);
 void yy_delete_buffer(YY_BUFFER_STATE, yyscan_t);
 int yylex_destroy(yyscan_t);
+
+namespace oq {
 
 class SelectQuery {
 public:
@@ -61,3 +63,4 @@ public:
   string str() const;
 };
 
+} // namespace oq

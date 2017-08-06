@@ -16,6 +16,7 @@ tuples.print('(((((STR(all_employees.id)+': ')+all_employees.name)+' (')+STR(all
 #include "protobuf_generated_common.h"
 
 using namespace std;
+using namespace oq;
 
 vector<string> header = {
   "employee",

@@ -39,6 +39,8 @@ using uint16 = ::google::protobuf::uint16;
 using uint32 = ::google::protobuf::uint32;
 using uint64 = ::google::protobuf::uint64;
 
+namespace oq {
+
 bool GetProtoFromString(const string& data, google::protobuf::Message& proto) {
   if (data.size() && ((data[0] == '{') || (data[0] == '['))) {
     // First try json format, then try binary format
@@ -116,3 +118,4 @@ public:
   }
 };
 
+} // namespace oq

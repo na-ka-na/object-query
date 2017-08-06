@@ -40,54 +40,54 @@ query.loc.step();
 
 {ws}+       query.loc.step();
 [\n]+       query.loc.lines(yyleng); query.loc.step();
-"SELECT"    return yy::SqlParser::make_SELECT(query.loc);
-"FROM"      return yy::SqlParser::make_FROM(query.loc);
-"WHERE"     return yy::SqlParser::make_WHERE(query.loc);
-"GROUP"     return yy::SqlParser::make_GROUP(query.loc);
-"HAVING"    return yy::SqlParser::make_HAVING(query.loc);
-"ORDER"     return yy::SqlParser::make_ORDER(query.loc);
-"BY"        return yy::SqlParser::make_BY(query.loc);
-"AS"        return yy::SqlParser::make_AS(query.loc);
-","         return yy::SqlParser::make_COMMA(query.loc);
-"+"         return yy::SqlParser::make_PLUS(query.loc);
-"-"         return yy::SqlParser::make_MINUS(query.loc);
-"*"         return yy::SqlParser::make_STAR(query.loc);
-"/"         return yy::SqlParser::make_DIVIDE(query.loc);
-"="         return yy::SqlParser::make_EQ(query.loc);
-"!="        return yy::SqlParser::make_NE(query.loc);
-"<"         return yy::SqlParser::make_LT(query.loc);
-">"         return yy::SqlParser::make_GT(query.loc);
-"<="        return yy::SqlParser::make_LE(query.loc);
-">="        return yy::SqlParser::make_GE(query.loc);
-"LIKE"      return yy::SqlParser::make_LIKE(query.loc);
-"IS"        return yy::SqlParser::make_IS(query.loc);
-"NOT"       return yy::SqlParser::make_NOT(query.loc);
-"NULL"      return yy::SqlParser::make_NULL(query.loc);
-"AND"       return yy::SqlParser::make_AND(query.loc);
-"OR"        return yy::SqlParser::make_OR(query.loc);
-"("         return yy::SqlParser::make_LPAREN(query.loc);
-")"         return yy::SqlParser::make_RPAREN(query.loc);
-"DISTINCT"  return yy::SqlParser::make_DISTINCT(query.loc);
-"ASC"       return yy::SqlParser::make_ASC(query.loc);
-"DESC"      return yy::SqlParser::make_DESC(query.loc);
-"TRUE"      return yy::SqlParser::make_BOOL(true, query.loc);
-"FALSE"     return yy::SqlParser::make_BOOL(false, query.loc);
-"true"      return yy::SqlParser::make_BOOL(true, query.loc);
-"false"     return yy::SqlParser::make_BOOL(false, query.loc);
+"SELECT"    return oq::yy::SqlParser::make_SELECT(query.loc);
+"FROM"      return oq::yy::SqlParser::make_FROM(query.loc);
+"WHERE"     return oq::yy::SqlParser::make_WHERE(query.loc);
+"GROUP"     return oq::yy::SqlParser::make_GROUP(query.loc);
+"HAVING"    return oq::yy::SqlParser::make_HAVING(query.loc);
+"ORDER"     return oq::yy::SqlParser::make_ORDER(query.loc);
+"BY"        return oq::yy::SqlParser::make_BY(query.loc);
+"AS"        return oq::yy::SqlParser::make_AS(query.loc);
+","         return oq::yy::SqlParser::make_COMMA(query.loc);
+"+"         return oq::yy::SqlParser::make_PLUS(query.loc);
+"-"         return oq::yy::SqlParser::make_MINUS(query.loc);
+"*"         return oq::yy::SqlParser::make_STAR(query.loc);
+"/"         return oq::yy::SqlParser::make_DIVIDE(query.loc);
+"="         return oq::yy::SqlParser::make_EQ(query.loc);
+"!="        return oq::yy::SqlParser::make_NE(query.loc);
+"<"         return oq::yy::SqlParser::make_LT(query.loc);
+">"         return oq::yy::SqlParser::make_GT(query.loc);
+"<="        return oq::yy::SqlParser::make_LE(query.loc);
+">="        return oq::yy::SqlParser::make_GE(query.loc);
+"LIKE"      return oq::yy::SqlParser::make_LIKE(query.loc);
+"IS"        return oq::yy::SqlParser::make_IS(query.loc);
+"NOT"       return oq::yy::SqlParser::make_NOT(query.loc);
+"NULL"      return oq::yy::SqlParser::make_NULL(query.loc);
+"AND"       return oq::yy::SqlParser::make_AND(query.loc);
+"OR"        return oq::yy::SqlParser::make_OR(query.loc);
+"("         return oq::yy::SqlParser::make_LPAREN(query.loc);
+")"         return oq::yy::SqlParser::make_RPAREN(query.loc);
+"DISTINCT"  return oq::yy::SqlParser::make_DISTINCT(query.loc);
+"ASC"       return oq::yy::SqlParser::make_ASC(query.loc);
+"DESC"      return oq::yy::SqlParser::make_DESC(query.loc);
+"TRUE"      return oq::yy::SqlParser::make_BOOL(true, query.loc);
+"FALSE"     return oq::yy::SqlParser::make_BOOL(false, query.loc);
+"true"      return oq::yy::SqlParser::make_BOOL(true, query.loc);
+"false"     return oq::yy::SqlParser::make_BOOL(false, query.loc);
 
 {string}    {string s = yytext; s = s.substr(1, s.size()-2);
-             return yy::SqlParser::make_STRING(s, query.loc);}
+             return oq::yy::SqlParser::make_STRING(s, query.loc);}
 
 {dig}+      {long n = std::strtol(yytext, NULL, 10);
-             return yy::SqlParser::make_LONG(n, query.loc);}
+             return oq::yy::SqlParser::make_LONG(n, query.loc);}
 
 {number}    {double d = std::strtod(yytext, NULL);
-             return yy::SqlParser::make_DOUBLE(d, query.loc);}
+             return oq::yy::SqlParser::make_DOUBLE(d, query.loc);}
 
-{iden}      return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
-{siden}     return yy::SqlParser::make_STAR_IDENTIFIER(yytext, query.loc);
+{iden}      return oq::yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
+{siden}     return oq::yy::SqlParser::make_STAR_IDENTIFIER(yytext, query.loc);
 
 .           query.mark_lexer_invalid_char(yytext[0]);
-<<EOF>>     return yy::SqlParser::make_END(query.loc);
+<<EOF>>     return oq::yy::SqlParser::make_END(query.loc);
 %%
 

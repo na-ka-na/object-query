@@ -21,6 +21,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 using namespace std;
 using namespace google::protobuf;
 
+namespace oq {
 namespace pb {
 
 class PbFieldPart {
@@ -109,3 +110,4 @@ private:
 };
 
 } // namespace pb
+} // namespace oq

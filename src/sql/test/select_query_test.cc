@@ -11,6 +11,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include "test_commons.h"
 #include "select_parts.h"
 
+using namespace oq;
+
 void TestExpr() {
   Expr x = Expr::createIdentifier("x");
   Expr y = Expr::createIdentifier("y");

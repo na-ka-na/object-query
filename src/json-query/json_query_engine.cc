@@ -12,7 +12,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include "json_query_engine.h"
 
 using namespace std;
-using namespace json;
+using namespace oq;
+using namespace oq::json;
 
 bool JsonField::operator<(const JsonField& other) const {
   return fieldParts < other.fieldParts;

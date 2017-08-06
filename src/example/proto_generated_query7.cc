@@ -16,6 +16,7 @@ tuples.print('EmployeeStr(all_employees.name,all_employees.id)', 'STR(all_employ
 #include "protobuf_generated_common.h"
 
 using namespace std;
+using namespace oq;
 
 vector<string> header = {
   "EmployeeStr(all_employees.name,all_employees.id)",

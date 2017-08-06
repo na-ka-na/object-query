@@ -16,6 +16,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using namespace std;
 
+namespace oq {
+
 enum NodeType {
   ROOT, REPEATED_MESSAGE, REPEATED_LEAF
 };
@@ -114,5 +116,7 @@ struct QueryTree {
                    const function<void(Node<FieldT>& node)>& callback);
   static void addExpr(vector<const Expr*>& exprs, const Expr* expr);
 };
+
+} // namespace oq
 
 #include "query_tree.hpp"

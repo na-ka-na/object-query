@@ -16,6 +16,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using namespace std;
 
+namespace oq {
+
 class Utils {
 public:
   template<typename T, typename It>
@@ -53,3 +55,5 @@ public:
 struct CodeGenSpec {
   vector<string> headerIncludes;
 };
+
+} // namespace oq

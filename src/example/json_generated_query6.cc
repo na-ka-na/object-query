@@ -19,6 +19,7 @@ tuples.print('all_employees.name', 'all_employees.active_direct_reports')
 #include "json_generated_common.h"
 
 using namespace std;
+using namespace oq;
 
 vector<string> header = {
   "all_employees.name",

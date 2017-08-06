@@ -5,7 +5,7 @@
 
 using namespace std;
 
-string EmployeeStr(const JsonValue& name, const JsonValue& id) {
+string EmployeeStr(const oq::JsonValue& name, const oq::JsonValue& id) {
   stringstream ss;
   ss << name << "(id=" << id << ")";
   return ss.str();

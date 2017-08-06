@@ -51,6 +51,7 @@ DEFINE_string(cppExtraLinkLibDirs, "",
               "cppExtraLinkLibs, used for the -L argument.");
 
 using namespace std;
+using namespace oq;
 
 bool validateFlags() {
   if ((FLAGS_queryType != "proto") && (FLAGS_queryType != "json")) {

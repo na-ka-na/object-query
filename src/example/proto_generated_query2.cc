@@ -20,6 +20,7 @@ tuples.print('all_employees.id', 'all_employees.name')
 #include "protobuf_generated_common.h"
 
 using namespace std;
+using namespace oq;
 
 vector<string> header = {
   "all_employees.id",

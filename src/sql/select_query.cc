@@ -10,6 +10,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include "utils.h"
 
 using namespace std;
+using namespace oq;
 
 yy::SqlParser::symbol_type yylex(SelectQuery& query) {
   return yylex_flex(query, query.yyscanner);

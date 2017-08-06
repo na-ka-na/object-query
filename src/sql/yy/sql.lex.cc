@@ -26,7 +26,7 @@
 /* %endif */
 
 /* %if-c-only */
-
+    
 /* %endif */
 
 /* %if-c-only */
@@ -58,7 +58,7 @@
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
- * if you want the limit (max/min) macros for int types.
+ * if you want the limit (max/min) macros for int types. 
  */
 #ifndef __STDC_LIMIT_MACROS
 #define __STDC_LIMIT_MACROS 1
@@ -75,7 +75,7 @@ typedef uint32_t flex_uint32_t;
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
-typedef unsigned char flex_uint8_t;
+typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
 
@@ -240,7 +240,7 @@ typedef size_t yy_size_t;
 
     #define YY_LESS_LINENO(n)
     #define YY_LINENO_REWIND_TO(ptr)
-
+    
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
 	do \
@@ -302,7 +302,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-
+    
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -344,7 +344,7 @@ struct yy_buffer_state
  */
 #define YY_CURRENT_BUFFER ( yyg->yy_buffer_stack \
                           ? yyg->yy_buffer_stack[yyg->yy_buffer_stack_top] \
-                          : (YY_BUFFER_STATE)NULL)
+                          : NULL)
 
 /* Same as previous macro, but useful when we know that the buffer stack is not
  * NULL or when we need an lvalue. For internal use only.
@@ -784,7 +784,7 @@ extern int yywrap (yyscan_t yyscanner );
 /* %not-for-header */
 
 #ifndef YY_NO_UNPUT
-
+    
 #endif
 /* %ok-for-header */
 
@@ -1088,200 +1088,200 @@ query.loc.lines(yyleng); query.loc.step();
 case 3:
 YY_RULE_SETUP
 #line 43 "../sql.ll"
-return yy::SqlParser::make_SELECT(query.loc);
+return oq::yy::SqlParser::make_SELECT(query.loc);
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 44 "../sql.ll"
-return yy::SqlParser::make_FROM(query.loc);
+return oq::yy::SqlParser::make_FROM(query.loc);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 45 "../sql.ll"
-return yy::SqlParser::make_WHERE(query.loc);
+return oq::yy::SqlParser::make_WHERE(query.loc);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
 #line 46 "../sql.ll"
-return yy::SqlParser::make_GROUP(query.loc);
+return oq::yy::SqlParser::make_GROUP(query.loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
 #line 47 "../sql.ll"
-return yy::SqlParser::make_HAVING(query.loc);
+return oq::yy::SqlParser::make_HAVING(query.loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 48 "../sql.ll"
-return yy::SqlParser::make_ORDER(query.loc);
+return oq::yy::SqlParser::make_ORDER(query.loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
 #line 49 "../sql.ll"
-return yy::SqlParser::make_BY(query.loc);
+return oq::yy::SqlParser::make_BY(query.loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
 #line 50 "../sql.ll"
-return yy::SqlParser::make_AS(query.loc);
+return oq::yy::SqlParser::make_AS(query.loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
 #line 51 "../sql.ll"
-return yy::SqlParser::make_COMMA(query.loc);
+return oq::yy::SqlParser::make_COMMA(query.loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
 #line 52 "../sql.ll"
-return yy::SqlParser::make_PLUS(query.loc);
+return oq::yy::SqlParser::make_PLUS(query.loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
 #line 53 "../sql.ll"
-return yy::SqlParser::make_MINUS(query.loc);
+return oq::yy::SqlParser::make_MINUS(query.loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
 #line 54 "../sql.ll"
-return yy::SqlParser::make_STAR(query.loc);
+return oq::yy::SqlParser::make_STAR(query.loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
 #line 55 "../sql.ll"
-return yy::SqlParser::make_DIVIDE(query.loc);
+return oq::yy::SqlParser::make_DIVIDE(query.loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
 #line 56 "../sql.ll"
-return yy::SqlParser::make_EQ(query.loc);
+return oq::yy::SqlParser::make_EQ(query.loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
 #line 57 "../sql.ll"
-return yy::SqlParser::make_NE(query.loc);
+return oq::yy::SqlParser::make_NE(query.loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
 #line 58 "../sql.ll"
-return yy::SqlParser::make_LT(query.loc);
+return oq::yy::SqlParser::make_LT(query.loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 59 "../sql.ll"
-return yy::SqlParser::make_GT(query.loc);
+return oq::yy::SqlParser::make_GT(query.loc);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
 #line 60 "../sql.ll"
-return yy::SqlParser::make_LE(query.loc);
+return oq::yy::SqlParser::make_LE(query.loc);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
 #line 61 "../sql.ll"
-return yy::SqlParser::make_GE(query.loc);
+return oq::yy::SqlParser::make_GE(query.loc);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
 #line 62 "../sql.ll"
-return yy::SqlParser::make_LIKE(query.loc);
+return oq::yy::SqlParser::make_LIKE(query.loc);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
 #line 63 "../sql.ll"
-return yy::SqlParser::make_IS(query.loc);
+return oq::yy::SqlParser::make_IS(query.loc);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 64 "../sql.ll"
-return yy::SqlParser::make_NOT(query.loc);
+return oq::yy::SqlParser::make_NOT(query.loc);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
 #line 65 "../sql.ll"
-return yy::SqlParser::make_NULL(query.loc);
+return oq::yy::SqlParser::make_NULL(query.loc);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
 #line 66 "../sql.ll"
-return yy::SqlParser::make_AND(query.loc);
+return oq::yy::SqlParser::make_AND(query.loc);
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
 #line 67 "../sql.ll"
-return yy::SqlParser::make_OR(query.loc);
+return oq::yy::SqlParser::make_OR(query.loc);
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
 #line 68 "../sql.ll"
-return yy::SqlParser::make_LPAREN(query.loc);
+return oq::yy::SqlParser::make_LPAREN(query.loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
 #line 69 "../sql.ll"
-return yy::SqlParser::make_RPAREN(query.loc);
+return oq::yy::SqlParser::make_RPAREN(query.loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
 #line 70 "../sql.ll"
-return yy::SqlParser::make_DISTINCT(query.loc);
+return oq::yy::SqlParser::make_DISTINCT(query.loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
 #line 71 "../sql.ll"
-return yy::SqlParser::make_ASC(query.loc);
+return oq::yy::SqlParser::make_ASC(query.loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
 #line 72 "../sql.ll"
-return yy::SqlParser::make_DESC(query.loc);
+return oq::yy::SqlParser::make_DESC(query.loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
 #line 73 "../sql.ll"
-return yy::SqlParser::make_BOOL(true, query.loc);
+return oq::yy::SqlParser::make_BOOL(true, query.loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
 #line 74 "../sql.ll"
-return yy::SqlParser::make_BOOL(false, query.loc);
+return oq::yy::SqlParser::make_BOOL(false, query.loc);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
 #line 75 "../sql.ll"
-return yy::SqlParser::make_BOOL(true, query.loc);
+return oq::yy::SqlParser::make_BOOL(true, query.loc);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
 #line 76 "../sql.ll"
-return yy::SqlParser::make_BOOL(false, query.loc);
+return oq::yy::SqlParser::make_BOOL(false, query.loc);
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
 #line 78 "../sql.ll"
 {string s = yytext; s = s.substr(1, s.size()-2);
-             return yy::SqlParser::make_STRING(s, query.loc);}
+             return oq::yy::SqlParser::make_STRING(s, query.loc);}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
 #line 81 "../sql.ll"
 {long n = std::strtol(yytext, NULL, 10);
-             return yy::SqlParser::make_LONG(n, query.loc);}
+             return oq::yy::SqlParser::make_LONG(n, query.loc);}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
 #line 84 "../sql.ll"
 {double d = std::strtod(yytext, NULL);
-             return yy::SqlParser::make_DOUBLE(d, query.loc);}
+             return oq::yy::SqlParser::make_DOUBLE(d, query.loc);}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
 #line 87 "../sql.ll"
-return yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
+return oq::yy::SqlParser::make_IDENTIFIER(yytext, query.loc);
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
 #line 88 "../sql.ll"
-return yy::SqlParser::make_STAR_IDENTIFIER(yytext, query.loc);
+return oq::yy::SqlParser::make_STAR_IDENTIFIER(yytext, query.loc);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
@@ -1290,7 +1290,7 @@ query.mark_lexer_invalid_char(yytext[0]);
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 91 "../sql.ll"
-return yy::SqlParser::make_END(query.loc);
+return oq::yy::SqlParser::make_END(query.loc);
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
@@ -1845,7 +1845,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
 /* %endif */
 {
 	YY_BUFFER_STATE b;
-
+    
 	b = (YY_BUFFER_STATE) yyalloc(sizeof( struct yy_buffer_state ) ,yyscanner );
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in yy_create_buffer()" );
@@ -1928,7 +1928,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
 /* %if-c-only */
 
         b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
-
+    
 /* %endif */
 /* %if-c++-only */
 /* %endif */
@@ -2058,9 +2058,9 @@ static void yyensure_buffer_stack (yyscan_t yyscanner)
 								, yyscanner);
 		if ( ! yyg->yy_buffer_stack )
 			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
-
+								  
 		memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-
+				
 		yyg->yy_buffer_stack_max = num_to_alloc;
 		yyg->yy_buffer_stack_top = 0;
 		return;
@@ -2091,12 +2091,12 @@ static void yyensure_buffer_stack (yyscan_t yyscanner)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * @param yyscanner The scanner object.
- * @return the newly allocated buffer state object.
+ * @return the newly allocated buffer state object. 
  */
 YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
-
+    
 	if ( size < 2 ||
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
@@ -2134,7 +2134,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscann
  */
 YY_BUFFER_STATE yy_scan_string (yyconst char * yystr , yyscan_t yyscanner)
 {
-
+    
 	return yy_scan_bytes(yystr,strlen(yystr) ,yyscanner);
 }
 /* %endif */
@@ -2153,7 +2153,7 @@ YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len 
 	char *buf;
 	yy_size_t n;
 	yy_size_t i;
-
+    
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;
 	buf = (char *) yyalloc(n ,yyscanner );
@@ -2233,10 +2233,10 @@ YY_EXTRA_TYPE yyget_extra  (yyscan_t yyscanner)
 int yyget_lineno  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
+    
         if (! YY_CURRENT_BUFFER)
             return 0;
-
+    
     return yylineno;
 }
 
@@ -2246,10 +2246,10 @@ int yyget_lineno  (yyscan_t yyscanner)
 int yyget_column  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-
+    
         if (! YY_CURRENT_BUFFER)
             return 0;
-
+    
     return yycolumn;
 }
 
@@ -2315,7 +2315,7 @@ void yyset_lineno (int  _line_number , yyscan_t yyscanner)
         /* lineno is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
            YY_FATAL_ERROR( "yyset_lineno called with no buffer" );
-
+    
     yylineno = _line_number;
 }
 
@@ -2330,7 +2330,7 @@ void yyset_column (int  _column_no , yyscan_t yyscanner)
         /* column is only valid if an input buffer exists. */
         if (! YY_CURRENT_BUFFER )
            YY_FATAL_ERROR( "yyset_column called with no buffer" );
-
+    
     yycolumn = _column_no;
 }
 
@@ -2419,20 +2419,20 @@ int yylex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_t* ptr_yy_globals )
         errno = EINVAL;
         return 1;
     }
-
+	
     *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
-
+	
     if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
-
+    
     /* By setting to 0xAA, we expose bugs in
     yy_init_globals. Leave at 0x00 for releases. */
     memset(*ptr_yy_globals,0x00,sizeof(struct yyguts_t));
-
+    
     yyset_extra (yy_user_defined, *ptr_yy_globals);
-
+    
     return yy_init_globals ( *ptr_yy_globals );
 }
 

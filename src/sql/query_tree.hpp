@@ -1,4 +1,6 @@
 
+namespace oq {
+
 template <typename FieldT>
 void Node<FieldT>::walkNode(
     Node<FieldT>* parent,
@@ -209,6 +211,7 @@ void QueryTree<FieldT>::printCode(
   }
   out << "#include \"" << generatedCommonHeader() << "\"" << endl << endl;
   out << "using namespace std;" << endl;
+  out << "using namespace oq;" << endl;
   out << endl;
 
   // select fields header
@@ -449,3 +452,5 @@ void printTuples(const vector<TupleType>& tuples) {
   out << "  printTuples(tuples);" << endl;
   out << "}" << endl;
 }
+
+} // namespace oq

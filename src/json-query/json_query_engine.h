@@ -19,6 +19,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 
 using namespace std;
 
+namespace oq {
 namespace json {
 
 class JsonField : public Field {
@@ -69,4 +70,5 @@ private:
   ostream& out;
 };
 
-} // namespace pb
+} // namespace json
+} // namespace oq

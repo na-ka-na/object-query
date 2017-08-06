@@ -32,7 +32,7 @@
 
 /**
  ** \file stack.hh
- ** Define the yy::stack class.
+ ** Define the oq::yy::stack class.
  */
 
 #ifndef YY_YY_STACK_HH_INCLUDED
@@ -40,8 +40,8 @@
 
 # include <vector>
 
-
-namespace yy {
+#line 12 "../sql.yy" // stack.hh:151
+namespace oq { namespace yy {
 #line 46 "stack.hh" // stack.hh:151
   template <class T, class S = std::vector<T> >
   class stack
@@ -150,8 +150,8 @@ namespace yy {
     unsigned int range_;
   };
 
-
-} // yy
+#line 12 "../sql.yy" // stack.hh:151
+} } // oq::yy
 #line 156 "stack.hh" // stack.hh:151
 
 #endif // !YY_YY_STACK_HH_INCLUDED

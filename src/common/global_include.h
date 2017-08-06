@@ -24,6 +24,8 @@ ostream& operator<<(ostream& os, const optional<T>& obj) {
   return os;
 }
 
+namespace oq {
+
 class Assert {
 public:
   template<typename... Args>
@@ -60,3 +62,6 @@ if (!(expr)) { \
 #define THROW(...) \
   throw Assert::CreateException("thrown", __func__, __FILE__, __LINE__, ##__VA_ARGS__);
 #endif
+
+} // namespace oq
+

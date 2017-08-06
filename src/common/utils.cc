@@ -9,6 +9,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include "utils.h"
 #include "global_include.h"
 
+using namespace oq;
+
 const function<string(const string&)> Utils::string2str = [](const string& str) {return str;};
 
 vector<string> Utils::splitDotIdentifier(const string& identifier) {
@@ -34,3 +36,4 @@ string Utils::makeSingular(const string& name) {
     return "each_" + name;
   }
 }
+

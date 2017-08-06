@@ -11,6 +11,8 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include "test_commons.h"
 #include "protobuf_generated_common.h"
 
+using namespace oq;
+
 void TestMyRangeIteratorEmpty() {
   ::google::protobuf::RepeatedField<int> rf;
   auto&& myit = Iterators::mk_pb_iterator(&rf);

@@ -32,7 +32,7 @@
 
 /**
  ** \file location.hh
- ** Define the yy::location class.
+ ** Define the oq::yy::location class.
  */
 
 #ifndef YY_YY_LOCATION_HH_INCLUDED
@@ -40,8 +40,8 @@
 
 # include "position.hh"
 
-
-namespace yy {
+#line 12 "../sql.yy" // location.cc:337
+namespace oq { namespace yy {
 #line 46 "location.hh" // location.cc:337
   /// Abstract a location.
   class location
@@ -186,7 +186,7 @@ namespace yy {
     return ostr;
   }
 
-
-} // yy
+#line 12 "../sql.yy" // location.cc:337
+} } // oq::yy
 #line 192 "location.hh" // location.cc:337
 #endif // !YY_YY_LOCATION_HH_INCLUDED

@@ -27,6 +27,7 @@ tuples.print('financial.quarterly_profits', 'all_employees.name', 'all_employees
 #include "json_generated_common.h"
 
 using namespace std;
+using namespace oq;
 
 vector<string> header = {
   "financial.quarterly_profits",

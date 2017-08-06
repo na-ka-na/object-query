@@ -32,7 +32,7 @@
 
 /**
  ** \file sql.tab.hh
- ** Define the yy::parser class.
+ ** Define the oq::yy::parser class.
  */
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
@@ -40,7 +40,7 @@
 #ifndef YY_YY_SQL_TAB_HH_INCLUDED
 # define YY_YY_SQL_TAB_HH_INCLUDED
 // //                    "%code requires" blocks.
-#line 18 "../sql.yy" // lalr1.cc:392
+#line 19 "../sql.yy" // lalr1.cc:392
 
 #include "../select_parts.h"
 
@@ -119,8 +119,8 @@
 # define YYDEBUG 0
 #endif
 
-
-namespace yy {
+#line 12 "../sql.yy" // lalr1.cc:392
+namespace oq { namespace yy {
 #line 125 "sql.tab.hh" // lalr1.cc:392
 
 
@@ -1707,8 +1707,8 @@ namespace yy {
   }
 
 
-
-} // yy
+#line 12 "../sql.yy" // lalr1.cc:392
+} } // oq::yy
 #line 1713 "sql.tab.hh" // lalr1.cc:392
 
 

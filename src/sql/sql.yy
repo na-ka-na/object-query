@@ -9,6 +9,7 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.4"
 %defines
+%define api.namespace {oq::yy}
 %define parser_class_name {SqlParser}
 %define api.token.constructor
 %define api.value.type variant
@@ -182,7 +183,7 @@ order_by_field: expr                   {$$=OrderByField::create($1,false);}
  ;
 
 %%
-void yy::SqlParser::error(const yy::SqlParser::location_type& loc,
-                          const std::string& msg) {
+void oq::yy::SqlParser::error(const oq::yy::SqlParser::location_type& loc,
+                              const std::string& msg) {
   query.mark_parse_error(loc, msg);
 }

@@ -24,6 +24,7 @@ tuples.print('all_employees.id', '(financial.quarterly_revenues/all_employees.ac
 #include "json_generated_common.h"
 
 using namespace std;
+using namespace oq;
 
 vector<string> header = {
   "all_employees.id",
