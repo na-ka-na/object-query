@@ -29,11 +29,11 @@ DEFINE_string(codeGenPrefix, "generated_query",
               "optional, prefix for generated code files and binary");
 
 DEFINE_string(cppProtoHeader, "",
-              "\033[1mrequired\033[0m, path/to/compiled/proto/header.pb.h. See "
+              "\033[1mrequired for protobuf-query\033[0m, path/to/compiled/proto/header.pb.h. See "
               "src/protobuf-query/example/CMakeLists.txt for an example of how "
               "proto is compiled, you may add your proto there to build it.");
 DEFINE_string(cppProtoLib, "",
-              "\033[1mrequired\033[0m, path/to/built/proto/library.so which "
+              "\033[1mrequired for protobuf-query\033[0m, path/to/built/proto/library.so which "
               "contains the proto defintion, either .so or .dylib");
 
 DEFINE_string(cppExtraIncludes, "",
