@@ -19,11 +19,16 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <type_traits>
 #include <vector>
 #include <regex>
+#include "global_include.h"
+
+#ifndef RAPIDJSON_ASSERT
+#define RAPIDJSON_ASSERT(x) if (!(x)) throw oq::Assert::CreateException(string(#x), __func__, __FILE__, __LINE__);
+#endif // RAPIDJSON_ASSERT
+
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/filereadstream.h"
-#include "global_include.h"
 #include "generated_common.h"
 
 using namespace std;

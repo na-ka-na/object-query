@@ -11,6 +11,9 @@ You may obtain the License at http://www.apache.org/licenses/LICENSE-2.0
 #include <string>
 #include <ostream>
 #include <sstream>
+#include <exception>
+#include <execinfo.h>
+#include <cstring>
 #include <experimental/optional>
 
 template<typename T>
@@ -36,6 +39,7 @@ public:
     ss << "ASSERT " << expr << " at " << file << ":"
        << line << " " << function << " msg:";
     FormatMsg(ss, args...);
+    FetchBacktrace(ss);
     return runtime_error(ss.str());
   }
 private:
@@ -47,6 +51,17 @@ private:
   template<typename Type>
   static void FormatMsg(std::ostream& oss, Type inst) {
     oss << " " << inst;
+  }
+  static void FetchBacktrace (std::stringstream& ss) {
+    void* callstack[128];
+    int i, frames = backtrace(callstack, 128);
+    char** strs = backtrace_symbols(callstack, frames);
+    ss << "\nBackTrace::\n======================";
+    for (i = 0; i < frames; ++i) {
+      ss << "\n" << strs[i];
+    }
+    ss << "\n======================";
+    free(strs);
   }
   static void FormatMsg(std::ostream&) {}
 };

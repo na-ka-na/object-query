@@ -337,7 +337,6 @@ public:
       it.fn = fn;
       it.singular = 0;
       it.curr = curr;
-      it.setElemPtr();
       return it;
     }
 
@@ -347,16 +346,7 @@ public:
       it.fn = fn;
       it.singular = begin ? 1 : 2;
       it.singular_elem = singular_elem;
-      it.setElemPtr();
       return it;
-    }
-
-    inline void setElemPtr() {
-      switch (singular) {
-      case 0: elemptr = (*fn)(&**curr, elem); break;
-      case 1: elemptr = (*fn)(singular_elem, elem); break;
-      case 2: elemptr = nullptr;
-      }
     }
 
     inline ConstIterator& operator++() {
@@ -366,7 +356,6 @@ public:
         singular = 2;
         singular_elem = nullptr;
       }
-      setElemPtr();
       return *this;
     }
 
@@ -386,7 +375,12 @@ public:
     }
 
     inline const T* operator*() const {
-      return elemptr;
+      switch (singular) {
+      case 0: return (*fn)(&**curr, elem);;
+      case 1: return (*fn)(singular_elem, elem);
+      case 2: return nullptr;
+      }
+      THROW();
     }
 
     friend std::ostream& operator<< (std::ostream& stream, const ConstIterator& it) {
@@ -399,8 +393,7 @@ public:
     It* curr = nullptr;
     const E* singular_elem = nullptr;
     int singular = 0; // 0 for normal case, 1 for begin, 2 for end
-    T elem;
-    const T* elemptr;
+    mutable T elem;
   };
 
   static MyRangeIterator mk_singular(
