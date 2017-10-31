@@ -135,10 +135,13 @@ string PbFieldPart::code_type() const {
 }
 
 string PbFieldPart::accessor() const {
+  string descriptorName = descriptor->name();
+  std::transform(descriptorName.begin(), descriptorName.end(),
+                 descriptorName.begin(), ::tolower);
   switch (part_type) {
-  case NORMAL : return descriptor->name() + "()";
-  case SIZE : return descriptor->name() + "_size()";
-  case HAS : return "has_" + descriptor->name() + "()";
+  case NORMAL : return descriptorName + "()";
+  case SIZE : return descriptorName + "_size()";
+  case HAS : return "has_" + descriptorName + "()";
   default : THROW("Unhandled type");
   }
 }
